@@ -12,7 +12,7 @@ A class wrapping Artifactory APIs.
 
 There can be as many Artifactory instances as needed.
 
-This module depends on the #::tooling.base.artifactory module.
+This module depends on the #::.base.artifactory module.
 """
 
 from typing import Any, Dict, List, Optional
@@ -26,8 +26,9 @@ class Artifactory(Base):
     There can be as many Artifactory instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel.commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URL
 
@@ -46,10 +47,10 @@ class Artifactory(Base):
     # Sample use
 
     ```python
-    >>> from tooling import Artifactory
+    >>> from zabel.elements import wrappers
     >>>
     >>> url = 'https://artifactory.example.com/artifactory/api/'
-    >>> af = Artifactory(url, user, token)
+    >>> af = wrappers.Artifactory(url, user, token)
     >>> af.get_users()
     ```
     """
