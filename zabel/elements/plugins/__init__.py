@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Martin Lafaix (martin.lafaix@external.engie.com)
+# Copyright (c) 2019-2020 Martin Lafaix (martin.lafaix@external.engie.com)
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
@@ -7,10 +7,10 @@
 # SPDX-License-Identifier: EPL-2.0
 
 """
-The **zabel.plugins** library abstract base classes.
+The **zabel.elements** plugins base classes library.
 
 It provides wrappers for the built-in low-level tooling classes (those
-defined in the **zabel.builtins** module).
+defined in the **zabel.elements.wrappers** module).
 
 Those abstract service wrappers implement an `__init__` constructor with
 the following three parameters:
