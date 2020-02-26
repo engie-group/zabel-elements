@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Credentials
+credentials.json
+
+# VisualStudio noise
+.vs/
+src/src.pyproj
+
+# VisualStudio Code noise
+.vscode/
+
+# pytype
+**/pytype_output/
+**/.mypy_cache/
+**/.pytype/
+
+# automatic documentation generation
+docs/_build/
+src/classes.dot
+src/classes.png
+src/packages.dot
+src/packages.png
