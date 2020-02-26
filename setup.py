@@ -21,7 +21,7 @@ setup(
     author='Martin Lafaix',
     author_email='martin.lafaix@external.engie.com',
 
-    license=' Eclipse Public License 2.0',
+    license='Eclipse Public License 2.0',
 
     packages=find_namespace_packages(include=['zabel.*']),
 
