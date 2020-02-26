@@ -10,7 +10,7 @@ from setuptools import setup, find_namespace_packages
 
 
 setup(
-    name='zabel-plugins',
+    name='zabel-elements',
 
     version='0.10.0',
 
