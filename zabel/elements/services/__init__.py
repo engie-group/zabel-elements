@@ -105,7 +105,7 @@ class Artifactory(clients.Artifactory, ManagedService):
         super().__init__(env['url'], user, token)
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -167,7 +167,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
         super().__init__(env['url'], user, token, env.get('cookies'))
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -242,7 +242,7 @@ class Confluence(clients.Confluence, ManagedService):
         )
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -308,7 +308,7 @@ class GitHub(clients.GitHub, ManagedService):
         )
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -444,7 +444,7 @@ class Jira(clients.Jira, ManagedService):
         )
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -501,7 +501,7 @@ class SonarQube(clients.SonarQube, ManagedService):
         super().__init__(env['url'], token)
 
     def get_internal_member_id(self, member_id: str) -> str:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
@@ -562,7 +562,7 @@ class SquashTM(clients.SquashTM, ManagedService):
         super().__init__(env['url'], user, token)
 
     def get_internal_member_id(self, member_id: str) -> int:
-        ...
+        raise NotImplementedError
 
     @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
