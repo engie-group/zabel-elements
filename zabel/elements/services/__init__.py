@@ -56,7 +56,7 @@ from zabel.commons.utils import api_call
 from zabel.commons.interfaces import Utility, ManagedService
 from zabel.commons.credentials import Credentials
 
-from zabel.elements import wrappers
+from zabel.elements import clients
 
 ########################################################################
 
@@ -74,7 +74,7 @@ def _get_string_credentials(
 # Wrappers around low-level APIs
 
 
-class Artifactory(wrappers.Artifactory, ManagedService):
+class Artifactory(clients.Artifactory, ManagedService):
     """Abstract base _Artifactory_ class.
 
     Provides a default implementation for the following three
@@ -139,7 +139,7 @@ class Artifactory(wrappers.Artifactory, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class CloudBeesJenkins(wrappers.CloudBeesJenkins, ManagedService):
+class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
     """Abstract base _CloudBeesJenkins_ class.
 
     Provides a default implementation for the following three
@@ -200,7 +200,7 @@ class CloudBeesJenkins(wrappers.CloudBeesJenkins, ManagedService):
         return self.list_members()[member_id]
 
 
-class Confluence(wrappers.Confluence, ManagedService):
+class Confluence(clients.Confluence, ManagedService):
     """Abstract base _Confluence_ class.
 
     Provides a default implementation for the following three
@@ -273,7 +273,7 @@ class Confluence(wrappers.Confluence, ManagedService):
         return self.get_user(member_id)
 
 
-class GitHub(wrappers.GitHub, ManagedService):
+class GitHub(clients.GitHub, ManagedService):
     """Abstract base _GitHub_ class.
 
     Provides a default implementation for the following three
@@ -339,7 +339,7 @@ class GitHub(wrappers.GitHub, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class Kubernetes(wrappers.Kubernetes, Utility):
+class Kubernetes(clients.Kubernetes, Utility):
     """Abstract base _Kubernetes_ class.
 
     Provides a default implementation for the following #::Utility
@@ -402,7 +402,7 @@ class Kubernetes(wrappers.Kubernetes, Utility):
         )
 
 
-class Jira(wrappers.Jira, ManagedService):
+class Jira(clients.Jira, ManagedService):
     """Abstract base _Jira_ class.
 
     Provides a default implementation for the following three
@@ -475,7 +475,7 @@ class Jira(wrappers.Jira, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SonarQube(wrappers.SonarQube, ManagedService):
+class SonarQube(clients.SonarQube, ManagedService):
     """Abstract base _SonarQube_ class.
 
     Provides a default implementation for the following three
@@ -534,7 +534,7 @@ class SonarQube(wrappers.SonarQube, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SquashTM(wrappers.SquashTM, ManagedService):
+class SquashTM(clients.SquashTM, ManagedService):
     """Abstract base _SquashTM_ class.
 
     Provides a default implementation for the following three
