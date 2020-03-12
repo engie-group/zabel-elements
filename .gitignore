@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 
+# Packaging stuff
+build/
+dist/
+zabel_elements.egg-info/
+
 # Credentials
 credentials.json
 
