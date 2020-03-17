@@ -61,13 +61,17 @@ class GitHub:
 
     ```python
     # standard use
+    from zabel.elements.clients import GitHub
+
     url = 'https://github.example.com/api/v3/'
-    gh = tooling.GitHub(url, user, token)
+    gh = GitHub(url, user, token)
     gh.list_users()
 
     # enabling management features
+    from zabel.elements import clients
+
     mngt = 'https://github.example.com/'
-    gh = tooling.GitHub(url, user, token, mngt)
+    gh = GitHub(url, user, token, mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """

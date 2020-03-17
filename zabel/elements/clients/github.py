@@ -52,7 +52,7 @@ class GitHub(Base):
     # Sample use
 
     ```python
-    >>> from tooling import GitHub
+    >>> from zabel.elements.clients import GitHub
     >>>
     >>> # standard use
     >>> url = 'https://github.example.com/api/v3/'
