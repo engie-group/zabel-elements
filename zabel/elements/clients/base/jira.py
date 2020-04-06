@@ -1000,7 +1000,9 @@ class Jira:
         return self._parse_data(uri, pat_name, pat_id, pat_inactive)
 
     @api_call
-    def delete_workflowscheme(self, scheme_id_or_name: Union[int, str]) -> None:
+    def delete_workflowscheme(
+        self, scheme_id_or_name: Union[int, str]
+    ) -> None:
         """Delete workflowscheme.
 
         # Required parameters
@@ -1019,14 +1021,18 @@ class Jira:
         ensure_instance('scheme_id_or_name', (int, str))
 
         if not isinstance(scheme_id_or_name, int):
-            scheme_id = _get_scheme_id(scheme_name, self.list_workflowschemes())
+            scheme_id = _get_scheme_id(
+                scheme_name, self.list_workflowschemes()
+            )
             scheme = self._get_json(f'workflowscheme/{scheme_id}')
             if scheme['name'] != scheme_id_or_name:
                 raise ApiError('Scheme %s not found.' % scheme_name)
         else:
             scheme_id = scheme_id_or_name
 
-        requests.delete(self._get_url(f'workflowscheme/{scheme_id}'), auth=self.auth)
+        requests.delete(
+            self._get_url(f'workflowscheme/{scheme_id}'), auth=self.auth
+        )
 
     ####################################################################
     # JIRA project
