@@ -844,7 +844,10 @@ class Confluence:
 
     @api_call
     def get_page(
-        self, page_id: Union[str, int], expand: str = 'body.storage,version'
+        self,
+        page_id: Union[str, int],
+        expand: str = 'body.storage,version',
+        version: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Return the definition of a page.
 
@@ -855,6 +858,7 @@ class Confluence:
         # Optional parameters
 
         - expand: a string (`'body.storage,version'` by default)
+        - version: an integer or None (None by default)
 
         # Returned value
 
@@ -897,7 +901,9 @@ class Confluence:
         ensure_instance('page_id', (str, int))
         ensure_instance('expand', str)
 
-        result = self._get(f'content/{page_id}', params={'expand': expand})
+        params = {'expand': expand}
+        add_if_specified(params, 'version', version)
+        result = self._get(f'content/{page_id}', params=params)
         return result  # type: ignore
 
     @api_call
