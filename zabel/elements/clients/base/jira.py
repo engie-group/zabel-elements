@@ -1022,11 +1022,11 @@ class Jira:
 
         if not isinstance(scheme_id_or_name, int):
             scheme_id = _get_scheme_id(
-                scheme_name, self.list_workflowschemes()
+                scheme_id_or_name, self.list_workflowschemes()
             )
             scheme = self._get_json(f'workflowscheme/{scheme_id}')
             if scheme['name'] != scheme_id_or_name:
-                raise ApiError('Scheme %s not found.' % scheme_name)
+                raise ApiError('Scheme %s not found.' % scheme_id_or_name)
         else:
             scheme_id = scheme_id_or_name
 

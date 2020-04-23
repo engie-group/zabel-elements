@@ -117,7 +117,7 @@ class Jira(Base):
     # Sample use
 
     ```python
-    >>> from tooling import Jira
+    >>> from zabel.elements.clients import Jira
     >>>
     >>> url = 'https://jira.example.com'
     >>> jc = Jira(url, basic_auth=(user, token))
