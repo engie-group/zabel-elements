@@ -123,10 +123,10 @@ class Jira:
     # Sample use
 
     ```python
-    >>> import tooling
+    >>> from zabel.elements.clients import Jira
     >>>
     >>> url = 'https://jira.example.com'
-    >>> jc = tooling.Jira(url, basic_auth=(user, token))
+    >>> jc = Jira(url, basic_auth=(user, token))
     >>> jc.list_users()
     ```
 
@@ -1063,6 +1063,8 @@ class Jira:
     #
     # list_project_roles
     # get_project_role
+    # add_project_role_actors
+    # remove_project_role_actor
 
     @api_call
     def list_projects(
@@ -1108,6 +1110,42 @@ class Jira:
 
         result = self._get_json('project', params={'expand': expand})
         return result  # type: ignore
+
+    @api_call
+    def list_projectoverviews(self):
+        """Return list of project overviews.
+
+        # Returned value
+
+        A list of _project overviews_.  Each project overview is a
+        dictionary with the following entries:
+
+        - admin: a boolean
+        - hasDefaultAvatar: a boolean
+        - id: an integer
+        - issueCount: an integer or None
+        - key: a string
+        - lastUpdatedTimestamp: an integer (a timestamp) or None
+        - lead: a string
+        - leadProfileLink: a string
+        - name: a string
+        - projectAdmin: a boolean
+        - projectCategoryId: ... or None
+        - projectTypeKey: a string
+        - projectTypeName: a string
+        - recent: a boolean
+        - url: a string or None
+        """
+        result = requests.get(
+            join_url(self.url, '/secure/project/BrowseProjects.jspa'),
+            auth=self.auth,
+        )
+        upd = result.text.split(
+            'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
+        )[1].split('\n')[0][:-2]
+        return json.loads(
+            upd.replace('\\"', '"').replace('\\\\', '\\').replace("\\\'", "'")
+        )
 
     @api_call
     def get_project(
@@ -1919,6 +1957,80 @@ class Jira:
         result = self._get_json(f'project/{project_id_or_key}/role/{role_id}')
         return result  # type: ignore
 
+    @api_call
+    def add_project_role_actors(
+        self,
+        project_id_or_key: Union[int, str],
+        role_id: Union[int, str],
+        groups: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Add an actor (group or user) to a project role.
+
+        You can only specify either `groups` or `users`.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+        - role_id: an integer or a string
+        - groups: a list of strings
+        - users: a list of strings
+
+        # Returned value
+
+        A project role.  Refer to #get_project_role() for details.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+        ensure_instance('role_id', (str, int))
+        ensure_onlyone('groups', 'users')
+        ensure_noneorinstance('groups', list)
+        ensure_noneorinstance('users', list)
+
+        if groups is not None:
+            data = {'group': groups}
+        else:
+            data = {'user': users}
+        print(json.dumps(data))
+        result = self.session().post(
+            self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
+            data=json.dumps(data),
+        )
+        return result  # type: ignore
+
+    @api_call
+    def remove_project_role_actor(
+        self,
+        project_id_or_key: Union[int, str],
+        role_id: Union[int, str],
+        group: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> None:
+        """Remove an actor from project role.
+
+        You can only specify either `group` or `user`.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+        - role_id: an integer or a string
+        - group: a string
+        - user: a string
+        """
+        ensure_instance('project_id_or_key', (str, int))
+        ensure_instance('role_id', (str, int))
+        ensure_onlyone('group', 'user')
+        ensure_noneorinstance('group', str)
+        ensure_noneorinstance('user', str)
+
+        if group is not None:
+            params = {'group': group}
+        else:
+            params = {'user': user}
+        return self.session().delete(
+            self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
+            params=params,
+        )
+
     ####################################################################
     # JIRA roles
     #
@@ -1970,15 +2082,24 @@ class Jira:
         A list of _users_.  Each user is a string (the user 'name').
 
         All known users are returned, including inactive ones.
-
-        TODO only return the first 1000 entries for each letter.
         """
         users = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
-            for user in self._client().search_users(
-                letter, includeInactive=True, maxResults=1000
-            ):
-                users[user.name] = True
+            exhausted = False
+            start = 0
+            while not exhausted:
+                results = self._client().search_users(
+                    letter,
+                    includeInactive=True,
+                    maxResults=1000,
+                    startAt=start,
+                )
+                for user in results:
+                    users[user.name] = True
+                if len(results) == 1000:
+                    start += 1000
+                else:
+                    exhausted = True
 
         return list(users.keys())
 

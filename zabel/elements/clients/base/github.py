@@ -492,31 +492,31 @@ class GitHub:
         A list of _repositories_.  Each repository is a dictionary with
         the following entries:
 
-        - archive_url: a string
-        - assignees_url: a string
-        - blobs_url: a string
-        - branches_url: a string
+        + archive_url: a string
+        + assignees_url: a string
+        + blobs_url: a string
+        + branches_url: a string
         - clone_url: a string
-        - collaborators_url: a string
-        - comments_url: a string
-        - commits_url: a string
-        - compare_url: a string
-        - contents_url: a string
-        - contributors_url: a string
+        + collaborators_url: a string
+        + comments_url: a string
+        + commits_url: a string
+        + compare_url: a string
+        + contents_url: a string
+        + contributors_url: a string
         - created_at: a string (a timestamp)
         - default_branch: a string
-        - deployments_url: a string
-        - description: a string
-        - downloads_url: a string
-        - events_url: a string
-        - fork: a boolean
+        + deployments_url: a string
+        + description: a string
+        + downloads_url: a string
+        + events_url: a string
+        + fork: a boolean
         - forks: an integer
         - forks_count: an integer
-        - forks_url: a string
-        - full_name: a string
-        - git_commits_url: a string
-        - git_refs_url: a string
-        - git_tags_url: a string
+        + forks_url: a string
+        + full_name: a string
+        + git_commits_url: a string
+        + git_refs_url: a string
+        + git_tags_url: a string
         - git_url: a string
         - has_downloads: a boolean
         - has_issues: a boolean
@@ -524,42 +524,43 @@ class GitHub:
         - has_projects: a boolean
         - has_wiki: a boolean
         - homepage
-        - hooks_url: a string
-        - html_url: a string
-        - id: an integer
-        - issue_comment_url
-        - issue_events_url
-        - issues_url: a string
-        - keys_url: a string
-        - labels_url: a string
+        + hooks_url: a string
+        + html_url: a string
+        + id: an integer
+        + issue_comment_url
+        + issue_events_url
+        + issues_url: a string
+        + keys_url: a string
+        + labels_url: a string
         - language: a string
-        - languages_url: a string
-        - merges_url: a string
-        - milestones_url: a string
+        + languages_url: a string
+        + merges_url: a string
+        + milestones_url: a string
         - mirror_url: a string
-        - name: a string
-        - notifications_url: a string
+        + name: a string
+        + node_id: a string
+        + notifications_url: a string
         - open_issues: an integer
         - open_issues_count: an integer
-        - owner: a dictionary
+        + owner: a dictionary
         - permissions: a dictionary
-        - private: a boolean
-        - pulls_url: a string
+        + private: a boolean
+        + pulls_url: a string
         - pushed_at: a string (a timestamp)
-        - releases_url
+        + releases_url
         - size: an integer
         - ssh_url: a string
         - stargazers_count: an integer
-        - stargazers_url: a string
-        - statuses_url: a string
-        - subscribers_url: a string
-        - subscription_url: a string
+        + stargazers_url: a string
+        + statuses_url: a string
+        + subscribers_url: a string
+        + subscription_url: a string
         - svn_url: a string
-        - tags_url: a string
-        - teams_url: a string
-        - trees_url: a string
+        + tags_url: a string
+        + teams_url: a string
+        + trees_url: a string
         - updated_at: a string (a timestamp)
-        - url: a string
+        + url: a string
         - watchers: an integer
         - watchers_count: an integer
         """
