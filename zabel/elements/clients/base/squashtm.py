@@ -12,8 +12,9 @@ A base class wrapping Squash-TM APIs.
 
 There can be as many SquashTM instances as needed.
 
-This module depends on three **commons** module, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+This module depends on the **requests** public library.  It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 
 A base class wrapper only implements 'simple' API requests.  It handles
 pagination if appropriate, but does not process the results or compose
@@ -70,10 +71,10 @@ class SquashTM:
     # Sample use
 
     ```python
-    >>> import tooling
+    >>> from zabel.elements.clients import SquashTM
     >>>
     >>> url = 'https://squash-tm.example.com/squash/api/rest/latest/'
-    >>> tm = tooling.SquashTM(url, user, token)
+    >>> tm = SquashTM(url, user, token)
     >>> tm.list_projects()
     ```
     """

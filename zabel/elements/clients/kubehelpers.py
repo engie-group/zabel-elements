@@ -11,7 +11,7 @@
 A set of helpers for working with Kubernetes APIs.
 
 This module depends on the public **kubernetes** library.  It also
-depends on one **commons** module, #::commons.exceptions.
+depends on one **zabel-commons** module, #::zabel.commons.exceptions.
 """
 
 from typing import Any, Callable, Dict, IO, Iterable, List, Mapping, Union

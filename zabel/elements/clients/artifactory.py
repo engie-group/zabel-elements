@@ -47,10 +47,10 @@ class Artifactory(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements import wrappers
+    >>> from zabel.elements.clients import Artifactory
     >>>
     >>> url = 'https://artifactory.example.com/artifactory/api/'
-    >>> af = wrappers.Artifactory(url, user, token)
+    >>> af = Artifactory(url, user, token)
     >>> af.get_users()
     ```
     """

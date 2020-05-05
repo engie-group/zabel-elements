@@ -12,7 +12,7 @@ A class wrapping Kubernetes APIs.
 
 There can be as many Kubernetes instances as needed.
 
-This module depends on the #::tooling.base.Kubernetes module.
+This module depends on the #::.base.Kubernetes module.
 """
 
 from typing import Any, IO, Union
@@ -29,7 +29,7 @@ class Kubernetes(Base):
     There can be as many _Kubernetes_ instances as needed.
 
     This module depends on the public **kubernetes** library.  It also
-    depends on one **commons** module, #::commons.utils.
+    depends on one **zabel-commons** module, #::zabel.commons.utils.
 
     # Reference URL
 
@@ -47,7 +47,7 @@ class Kubernetes(Base):
     configuration file:
 
     ```python
-    >>> from tooling import Kubernetes
+    >>> from zabel.elements.clients import Kubernetes
     >>>
     >>> k8s = Kubernetes()
     >>> namespaces = k8s.list_namespaces()
@@ -56,7 +56,7 @@ class Kubernetes(Base):
     Using explicit configuration:
 
     ```python
-    >>> from tooling import Kubernetes
+    >>> from zabel.elements.clients import Kubernetes
     >>>
     >>> K8S_URL = 'https://kubernetes.example.com'
     >>> k8s = Kubernetes(

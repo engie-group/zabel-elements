@@ -13,8 +13,8 @@ A class wrapping Jira APIs.
 There can be as many Jira instances as needed.
 
 This module depends on the public **requests** and **jira.JIRA**
-libraries.  It also depends on two **commons** modules,
-#::commons.exceptions and #::commons.utils.
+libraries.  It also depends on two **zabel-commons** modules,
+#::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
@@ -88,11 +88,11 @@ class Jira:
     Reference URL:
 
     <https://docs.atlassian.com/jira/REST/server/>
-    <https://docs.atlassian.com/software/jira/docs/api/REST/7.11.0>
+    <https://docs.atlassian.com/software/jira/docs/api/REST/8.7.1>
 
     Agile reference:
 
-    <https://docs.atlassian.com/jira-software/REST/7.3.1/>
+    <https://docs.atlassian.com/jira-software/REST/8.7.1/>
 
     Using the python library:
 

@@ -28,8 +28,9 @@ class Confluence(Base):
     There can be as many Confluence instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URL
 
@@ -58,7 +59,7 @@ class Confluence(Base):
     # Sample use
 
     ```python
-    >>> from tooling import Confluence
+    >>> from zabel.elements.clients import Confluence
     >>>
     >>> url = 'https://confluence.example.com'
     >>> confluence = Confluence(url, user, token)

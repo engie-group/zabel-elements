@@ -12,7 +12,7 @@ A class wrapping CloudBeesJenkins APIs.
 
 There can be as many CloudBeesJenkins instances as needed.
 
-This module depends on the #::tooling.base.jenkins module.
+This module depends on the #::.base.jenkins module.
 """
 
 from typing import Any, Dict, Iterable, List
@@ -111,7 +111,7 @@ class CloudBeesJenkins(Base):
     There can be as many CloudBeesJenkins instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
+    depends on three **zabel-commons** modules, #::commons.exceptions,
     #::commons.sessions, and #::commons.utils.
 
     # Description
@@ -157,8 +157,8 @@ class CloudBeesJenkins(Base):
 
     # Sample use
 
-    ```
-    >>> from tooling import Jenkins
+    ```python
+    >>> from zabel.elements.clients import Jenkins
     >>>
     >>> url = 'https://pse.example.com'
     >>> jenkins = Jenkins(url, user, token)

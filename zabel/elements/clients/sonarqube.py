@@ -12,7 +12,7 @@ A class wrapping SonarQube APIs.
 
 There can be as many SonarQube instances as needed.
 
-This module depends on the #::tooling.base.sonarqube module.
+This module depends on the #::.base.sonarqube module.
 """
 
 from .base.sonarqube import SonarQube as Base
@@ -24,8 +24,9 @@ class SonarQube(Base):
     There can be as many SonarQube instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URL
 
@@ -71,7 +72,7 @@ class SonarQube(Base):
     # Sample use
 
     ```python
-    >>> from tooling import SonarQube
+    >>> from zabel.elements.clients import SonarQube
     >>>
     >>> url = 'https://sonar.example.com/sonar/api/'
     >>> sq = SonarQube(url, token)

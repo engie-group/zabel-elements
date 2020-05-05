@@ -32,13 +32,14 @@ class GitHub(Base):
     There can be as many GitHub instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URLs
 
     - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.16/v3>
+    - <https://developer.github.com/enterprise/2.20/v3>
     - <https://stackoverflow.com/questions/10625190>
 
     # Implemented features

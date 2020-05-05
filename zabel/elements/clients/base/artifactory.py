@@ -13,8 +13,8 @@ A base class wrapping Artifactory APIs.
 There can be as many Artifactory instances as needed.
 
 This module depends on the public **requests** library.  It also depends
-on three **commons** modules, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 
 A base class wrapper only implements 'simple' API requests.  It handles
 pagination if appropriate, but does not process the results or compose
@@ -105,10 +105,10 @@ class Artifactory:
     # Sample use
 
     ```python
-    >>> import tooling
+    >>> from zabel.elements.clients import Artifactory
     >>>
     >>> url = 'https://artifactory.example.com/artifactory/api/'
-    >>> af = tooling.Artifactory(url, user, token)
+    >>> af = Artifactory(url, user, token)
     >>> af.list_users()
     ```
     """

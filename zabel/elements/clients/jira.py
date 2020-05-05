@@ -12,7 +12,7 @@ A class wrapping Jira APIs.
 
 There can be as many Jira instances as needed.
 
-This module depends on the #::tooling.base.jira module.
+This module depends on the #::.base.jira module.
 """
 
 from typing import Any, Dict, Iterable, List, Optional, Union
@@ -29,17 +29,17 @@ class Jira(Base):
     There can be as many Jira instances as needed.
 
     This class depends on the public **requests** and **jira.JIRA**
-    libraries.  It also depends on two **commons** modules,
-    #::commons.exceptions and #::commons.utils.
+    libraries.  It also depends on two **zabel-commons** modules,
+    #::zabel.commons.exceptions and #::zabel.commons.utils.
 
     # Reference URLs
 
     - <https://docs.atlassian.com/jira/REST/server/>
-    - <https://docs.atlassian.com/software/jira/docs/api/REST/8.2.0/>
+    - <https://docs.atlassian.com/software/jira/docs/api/REST/8.7.1/>
 
     # Agile references
 
-    - <https://docs.atlassian.com/jira-software/REST/8.2.0/>
+    - <https://docs.atlassian.com/jira-software/REST/8.7.1/>
 
     # Using the jira.JIRA python library
 

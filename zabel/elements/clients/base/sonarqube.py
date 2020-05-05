@@ -12,8 +12,9 @@ A base class wrapping SonarQube APIs.
 
 There can be as many SonarQube instances as needed.
 
-This module depends on three **commons** modules, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+This module depends on the public **requests** library.  It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 
 A base class wrapper only implements 'simple' API requests.  It handles
 pagination if appropriate, but does not process the results or compose
@@ -118,8 +119,10 @@ class SonarQube:
     # Sample use
 
     ```python
+    >>> from zabel.elements.clients import SonarQube
+    >>>
     >>> url = 'https://sonar.example.com/sonar/api/'
-    >>> sq = tooling.SonarQube(url, token)
+    >>> sq = SonarQube(url, token)
     >>> sq.search_users()
     ```
     """

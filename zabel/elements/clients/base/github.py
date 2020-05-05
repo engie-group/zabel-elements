@@ -12,8 +12,9 @@ A class wrapping GitHub APIs.
 
 There can be as many GitHub instances as needed.
 
-This module depends on three **commons** modules, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+This module depends on the **requests** public library.  It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
@@ -71,7 +72,7 @@ class GitHub:
     from zabel.elements import clients
 
     mngt = 'https://github.example.com/'
-    gh = GitHub(url, user, token, mngt)
+    gh = clients.GitHub(url, user, token, mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """
@@ -253,6 +254,8 @@ class GitHub:
     # get_organization
     # TODO update_organization
     # list_organization_repositories
+    # list_organization_members
+    # list_organization_outsidecollaborators
     # get_organization_membership
     # add_organization_membership
     #
@@ -392,6 +395,49 @@ class GitHub:
 
         result = self._post('admin/organizations', json=data)
         return result  # type: ignore
+
+    @api_call
+    def list_organization_members(
+        self, login: str, role: str = 'all'
+    ) -> List[Dict[str, Any]]:
+        """Return the list of organization members.
+
+        # Required parameters
+
+        - login: a non-empty string
+
+        # Optional parameters
+
+        - role: a non-empty string, one of 'all', 'member', or 'admin'
+          ('all' by default)
+
+        # Returned value
+
+        A list of _members_.  Each member is a dictionary.
+        """
+        ensure_nonemptystring('login')
+        ensure_in('role', ('all', 'member', 'admin'))
+
+        return self._collect_data(f'orgs/{login}/members')
+
+    @api_call
+    def list_organization_outsidecollaborators(
+        self, login: str
+    ) -> List[Dict[str, Any]]:
+        """Return the list of organization outside collaborators.
+
+        # Required parameters
+
+        - login: a non-empty string
+
+        # Returned value
+
+        A list of _members_ (outside collaborators).  Each member is a
+        dictionary.
+        """
+        ensure_nonemptystring('login')
+
+        return self._collect_data(f'orgs/{login}/outside_collaborators')
 
     @api_call
     def get_organization_membership(

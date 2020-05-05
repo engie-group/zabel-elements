@@ -12,8 +12,9 @@ A class wrapping Confluence APIs.
 
 There can be as many Confluence instances as needed.
 
-This module depends on three **commons** modules, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+This class depends on the public **requests** library.  It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
 from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
@@ -75,8 +76,10 @@ class Confluence:
     # Sample use
 
     ```python
+    >>> from zabel.elements.clients import Confluence
+    >>>
     >>> url = 'https://confluence.example.com'
-    >>> confluence = tooling.Confluence(url, basic_auth=(user, token))
+    >>> confluence = Confluence(url, basic_auth=(user, token))
     >>> confluence.get_users()
     ```
     """

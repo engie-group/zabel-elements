@@ -12,7 +12,7 @@ A class wrapping SquashTM APIs.
 
 There can be as many SquashTM instances as needed.
 
-This module depends on the #::tooling.base.squashtm module.
+This module depends on the #::.base.squashtm module.
 """
 
 from .base.squashtm import SquashTM as Base
@@ -24,8 +24,9 @@ class SquashTM(Base):
     There can be as many SquashTM instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URLs
 
@@ -49,7 +50,7 @@ class SquashTM(Base):
     # Sample use
 
     ```python
-    >>> from tooling import SquashTM
+    >>> from zabel.elements.clients import SquashTM
     >>>
     >>> url = 'https://squash-tm.example.com/squash/api/rest/latest/'
     >>> tm = SquashTM(url, user, token)

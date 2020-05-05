@@ -11,7 +11,7 @@
 There can be as many _Kubernetes_ instances as needed.
 
 This module depends on the public **kubernetes** library.  It also
-depends on one **commons** module, #::commons.utils.
+depends on one **zabel-commons** module, #::zabel.commons.utils.
 
 A base class wrapper only implements 'simple' API requests.  It handles
 pagination if appropriate, but does not process the results or compose
@@ -60,7 +60,7 @@ class Kubernetes:
     Using explicit configuration:
 
     ```python
-    >>> from tooling import Kubernetes
+    >>> from zabel.elements.clients import Kubernetes
     >>>
     >>> K8S_URL = 'https://kubernetes.example.com'
     >>> k8s = Kubernetes(

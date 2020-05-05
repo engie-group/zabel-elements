@@ -12,8 +12,9 @@ A class wrapping CloudBeesJenkin APIs.
 
 There can be as many CloudBeesJenkins instances as needed.
 
-This module depends on three **commons** modules, #::commons.exceptions,
-#::commons.sessions, and #::commons.utils.
+This module depends on the public **requests** library.  It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Union
@@ -58,10 +59,18 @@ class CloudBeesJenkins:
     handling groups and roles.
 
     Item creations and handling functions make use of two functions
-    provided by the _commons.utils_ module: `xml_to_dict` and
+    provided by the _zabel.commons.utils_ module: `xml_to_dict` and
     `dict_to_xml`.
 
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
+
+    ```python
+    >>> from tooling import Jenkins
+    >>>
+    >>> url = 'https://pse.example.com'
+    >>> jenkins = Jenkins(url, user, token)
+    >>> jenkins.list_oc_managedmasters()
+    ```
     """
 
     def __init__(
