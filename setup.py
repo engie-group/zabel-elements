@@ -22,7 +22,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name='zabel-elements',
-    version='0.11.0',
+    version='0.12.0',
     description='The Zabel default clients and services',
     long_description='',
     url='https://github.com/engie-corp/zabel',
