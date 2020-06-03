@@ -89,6 +89,7 @@ class Jira:
 
     <https://docs.atlassian.com/jira/REST/server/>
     <https://docs.atlassian.com/software/jira/docs/api/REST/8.7.1>
+    <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
     Agile reference:
 
@@ -1990,7 +1991,6 @@ class Jira:
             data = {'group': groups}
         else:
             data = {'user': users}
-        print(json.dumps(data))
         result = self.session().post(
             self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
             data=json.dumps(data),
@@ -3177,11 +3177,104 @@ class Jira:
     ####################################################################
     # JIRA Service Desk
     #
-    # create_request_comment
+    # create_request
+    # get_request
+    # add_request_comment
+    # list_queues
     # list_queue_issues
+    # list_requesttypes
 
     @api_call
-    def create_request_comment(
+    def create_request(
+        self,
+        servicedesk_id: str,
+        requesttype_id: str,
+        fields: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Create a new customer request on specified service desk.
+
+        # Required parameters:
+
+        - servicedesk_id: a non-empty string
+        - requesttype_id: a non-empty string
+        - fields: a dictionary
+
+        The `fields` dictionary content depends on the request type (as
+        specified by `requesttype_id`).  It typically has at least the
+        following two entries:
+
+        - summary: a string
+        - description: a string
+
+        # Returned value
+
+        The created _request_ details.  Please refer to #get_request()
+        for more information.
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('requesttype_id')
+        # ensure_instance('fields', list)
+
+        result = requests.post(
+            join_url(self.SERVICEDESK_BASE_URL, 'request'),
+            json={
+                'serviceDeskId': servicedesk_id,
+                'requestTypeId': requesttype_id,
+                'requestFieldValues': fields,
+            },
+            auth=self.auth,
+        )
+        return result
+
+    @api_call
+    def get_request(
+        self, request_id_or_key: str, expand: Optional['str'] = None
+    ) -> Dict[str, Any]:
+        """Return request details.
+
+        # Required parameters:
+
+        - request_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+
+        # Returned value:
+
+        The _request_ details, a dictionary, with the following entries:
+
+        - issueId: a string
+        - issueKey: a string
+        - requestTypeId: a string
+        - serviceDeskId: a string
+        - createDate: a dictionary
+        - reporter: a dictionary
+        - active: a boolean
+        - timeZone: a string
+        - currentStatus: a dictionary
+        - requestFieldValues: a dictionary
+
+        There may be additional fields depending on the specified
+        `expand` parameter.
+        """
+        ensure_nonemptystring('request_id_or_key')
+        ensure_noneorinstance('expand', str)
+
+        if expand is not None:
+            params = {'expand': expand}
+        else:
+            params = None
+        return requests.get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
+            ),
+            params=params,
+            auth=self.auth,
+        )
+
+    @api_call
+    def add_request_comment(
         self, request_id_or_key: str, body: str, public: bool = False
     ) -> Dict[str, Any]:
         """Create a public or private comment on request.
@@ -3238,26 +3331,63 @@ class Jira:
         return result  # type: ignore
 
     @api_call
-    def list_queue_issues(
-        self, servicedesk_id: int, queue_id: int
-    ) -> List[Dict[str, Any]]:
-        """Return a list of issues that are in a given queue.
+    def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
+        """Return a list of queues for a given service desk.
 
         # Required parameters
 
-        - servicedesk_id: an integer
-        - queue_id: an integer
+        - servicedesk_id: a non-empty string
 
         # Returned value
 
         A list of dictionaries.
         """
-        ensure_instance('servicedesk_id', int)
-        ensure_instance('queue_id', int)
+        ensure_nonemptystring('servicedesk_id')
+
+        return self._collect_sd_data(
+            f'servicedesk/{serviceDeskIdsk_id}/queue',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+    @api_call
+    def list_queue_issues(
+        self, servicedesk_id: str, queue_id: str
+    ) -> List[Dict[str, Any]]:
+        """Return a list of issues that are in a given queue.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - queue_id: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('queue_id')
 
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/queue/{queue_id}/issue',
             headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+    @api_call
+    def list_requesttypes(self, servicedesk_id: str) -> List[Dict[str, Any]]:
+        """Return a list of service desk request types.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('servicedesk_id')
+
+        return self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/requesttype'
         )
 
     ####################################################################
