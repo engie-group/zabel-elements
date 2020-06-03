@@ -65,7 +65,7 @@ class CloudBeesJenkins:
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
 
     ```python
-    >>> from tooling import Jenkins
+    >>> from zabel.elements.clients import Jenkins
     >>>
     >>> url = 'https://pse.example.com'
     >>> jenkins = Jenkins(url, user, token)

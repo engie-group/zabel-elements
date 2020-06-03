@@ -6,19 +6,20 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""The low-level **tooling** library.
+"""The low-level **clients** library.
 
-The **tooling** library provides a wrapper class per tool.
+The **zabel.elements.clients** library provides a wrapper class per
+tool.
 
-It relies on the **commons** library, using its #::commons.exceptions
-module for the _ApiError_ exception class, its #::commons.sessions
-module for HTTPS session handling, and its #::commons.utils
-module that contains useful functions.
+It relies on the **zabel-commons** library, using its
+#::zabel.commons.exceptions module for the _ApiError_ exception class,
+its #::zabel.commons.sessions module for HTTPS session handling,
+and its #::zabel.commons.utils module that contains useful functions.
 
 # Conventions
 
 If an existing library already provides all the needed functionality,
-there is no need to add it to this tooling library.
+there is no need to add it to this clients library.
 
 If an existing library already provides some of the needed
 functionality, a wrapper class can be written that will use this
@@ -38,9 +39,9 @@ from the base class and contain no additional code.
 
 At import time, wrapper classes should not import libraries not part of
 the Python standard library or **requests** or modules part of the
-**commons** library.  That way, projects not needing some tool do not
-have to install its required dependencies.  Wrappers classes may import
-libraries in their `__init__` methods, though.
+**zabel-commons** library.  That way, projects not needing some tool do
+not have to install its required dependencies.  Wrappers classes may
+import libraries in their `__init__` methods, though.
 
 If an API call is successful, it will return a value (possibly None).
 If not, it will raise an _ApiError_ exception.

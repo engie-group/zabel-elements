@@ -7,9 +7,9 @@
 # SPDX-License-Identifier: EPL-2.0
 
 """
-The **zabel.elements** plugins base classes library.
+The **zabel.elements.services** base classes library.
 
-It provides wrappers for the built-in low-level tooling classes (those
+It provides wrappers for the built-in low-level clients classes (those
 defined in the **zabel.elements.clients** module).
 
 Those abstract service wrappers implement an `__init__` constructor with

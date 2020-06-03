@@ -12,7 +12,7 @@ A class wrapping Confluence APIs.
 
 There can be as many Confluence instances as needed.
 
-This module depends on the #::tooling.base.confluence module.
+This module depends on the #::.base.confluence module.
 """
 
 from typing import Any, Dict, List, Union

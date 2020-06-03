@@ -51,7 +51,7 @@ class Kubernetes:
     configuration file:
 
     ```python
-    >>> from tooling import Kubernetes
+    >>> from zabel.elements.clients import Kubernetes
     >>>
     >>> k8s = Kubernetes()
     >>> namespaces = k8s.list_namespaces()

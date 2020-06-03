@@ -12,7 +12,7 @@ A class wrapping GitHub APIs.
 
 There can be as many GitHub instances as needed.
 
-This module depends on the #::tooling.base.github module.
+This module depends on the #::.base.github module.
 """
 
 from typing import List
