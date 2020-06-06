@@ -20,17 +20,27 @@
 from setuptools import setup, find_namespace_packages
 
 
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
+
 setup(
     name='zabel-elements',
-    version='1.0.0',
+    version='1.0.1',
     description='The Zabel default clients and services',
-    long_description='',
-    url='https://github.com/engie-corp/zabel',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/engie-group/zabel',
     author='Martin Lafaix',
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    # install_requires=['requests>=2.23'],
     install_requires=['requests>=2.23', 'zabel-commons>=1.0'],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: Eclipse Public License 2.0 (EPL-2.0)',
+        'Operating System :: OS Independent',
+        'Topic :: Software Development :: Libraries',
+    ],
     python_requires='>= 3.6.5',
 )
