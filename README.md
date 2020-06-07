@@ -1,24 +1,42 @@
 # zabel-elements
 
-The standard tools library for Zabel.
+## Overview
 
-It contains two parts:
+This is part of the Zabel platform.  The **zabel-elements** package
+contains the standard _elements_ library for Zabel.
 
-1. The **zabel.elements.clients** module
-2. The **zabel.elements.services** base classes module
+An element is a service such as _Artifactory_ or _Jenkins_ or a LDAP server
+that can be used or managed by the Zabel platform.
 
-The tools handled in this library are:
+This package provides the necessary wrappers for some elements commonly
+found in many workplaces, namely:
 
 - Artifactory
+- CloudBeesJenkins
 - Confluence
 - GitHub
-- CloudBeesJenkins
 - Jira
 - Kubernetes (in alpha)
 - SonarQube
 - SquashTM
 
-## zabel.elements.clients
+You can use this library independently of the Zabel platform, as it has
+no specific dependencies on it.
+
+In particular, the **zabel.elements.clients** module may be of interest if
+you want to perform some configuration tasks from your own Python code.
+
+We are open to contribution of new wrappers, or extensions of existing
+wrappers.  But elements can be provided in their own packages to.
+
+## Architecture
+
+It contains two parts:
+
+- The **zabel.elements.clients** module
+- The **zabel.elements.services** base classes module
+
+### zabel.elements.clients
 
 The **zabel.elements.clients** library provides a wrapper class per
 tool.
@@ -28,7 +46,7 @@ _zabel.commons.exceptions_ module for the _ApiError_ exception class,
 its _zabel.commons.sessions_ module for HTTPS session handling,
 and its _zabel.commons.utils_ module that contains useful functions.
 
-### Conventions
+#### Conventions
 
 If an existing library already provides all the needed functionality,
 there is no need to add it to this clients library.
@@ -72,7 +90,7 @@ be raised.
     and may simplify technical details (pagination is automatically
     performed if needed).
 
-## zabel.elements.services
+### zabel.elements.services
 
 It provides wrappers for the built-in low-level clients classes (those
 defined in the **zabel.elements.clients** module).
@@ -96,7 +114,19 @@ takes a canonical user ID and returns the internal key for that user.
 They should also provide concrete implementations for the remaining
 methods provided by the #::ManagedService interface.
 
-### Conventions
+#### Conventions
 
 Utilities must implement the _Utility_ interface and managed services
 must implement the _ManagedService_ interface.
+
+## License
+
+```text
+Copyright (c) 2019-2020 Martin Lafaix (martin.lafaix@external.engie.com) and others
+
+This program and the accompanying materials are made
+available under the terms of the Eclipse Public License 2.0
+which is available at https://www.eclipse.org/legal/epl-2.0/
+
+SPDX-License-Identifier: EPL-2.0
+```
