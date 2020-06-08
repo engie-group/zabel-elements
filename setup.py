@@ -25,7 +25,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='zabel-elements',
-    version='1.0.2',
+    version='1.1.0',
     description='The Zabel default clients and services',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -34,7 +34,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['requests>=2.23', 'zabel-commons>=1.0'],
+    install_requires=['requests>=2.23', 'zabel-commons>=1.1'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 3',

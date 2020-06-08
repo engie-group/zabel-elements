@@ -20,21 +20,30 @@ found in many workplaces, namely:
 - SonarQube
 - SquashTM
 
+Elements are of two kinds: _ManagedServices_, that represent services
+that are managed by the Zabel platform, and _Utilities_, that represent
+services that are used by the Zabel platform.  In the above list,
+Kubernetes is a utility.  The other elements are managed services.
+
 You can use this library independently of the Zabel platform, as it has
 no specific dependencies on it.
 
 In particular, the **zabel.elements.clients** module may be of interest if
 you want to perform some configuration tasks from your own Python code.
 
-We are open to contribution of new wrappers, or extensions of existing
-wrappers.  But elements can be provided in their own packages to.
+Contribution of new wrappers, or extensions of existing wrappers are welcomed.
+But elements can be provided in their own packages too.
 
 ## Architecture
 
 It contains two parts:
 
 - The **zabel.elements.clients** module
-- The **zabel.elements.services** base classes module
+- The **zabel.elements.images** base classes module
+
+There is one _image_ per client (hence one image per element).  Images are
+classes with a standardized constructor and a `run()` method, and are how
+code is packaged so that it can be deployed on the Zabel platform.
 
 ### zabel.elements.clients
 
@@ -90,12 +99,12 @@ be raised.
     and may simplify technical details (pagination is automatically
     performed if needed).
 
-### zabel.elements.services
+### zabel.elements.images
 
-It provides wrappers for the built-in low-level clients classes (those
-defined in the **zabel.elements.clients** module).
+It provides image wrappers for the built-in low-level clients classes
+(those defined in the **zabel.elements.clients** module).
 
-Those abstract service wrappers implement an `__init__` constructor with
+Those abstract image wrappers implement an `__init__` constructor with
 the following two parameters:
 
 - `name`: a string, the service name
