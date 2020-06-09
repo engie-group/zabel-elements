@@ -1,0 +1,53 @@
+site_name: zabel-elements
+
+generate:
+  - clients.md:
+    - zabel.elements.clients++
+  - clients/artifactory.md:
+    - zabel.elements.clients.Artifactory@
+  - clients/confluence.md:
+    - zabel.elements.clients.Confluence@
+  - clients/github.md:
+    - zabel.elements.clients.GitHub@
+  - clients/jenkins.md:
+    - zabel.elements.clients.CloudBeesJenkins@
+  - clients/jira.md:
+    - zabel.elements.clients.Jira@
+  - clients/kubernetes.md:
+    - zabel.elements.clients.Kubernetes@
+  - clients/sonarqube.md:
+    - zabel.elements.clients.SonarQube@
+  - clients/squashtm.md:
+    - zabel.elements.clients.SquashTM@
+  - images.md:
+    - zabel.elements.images++
+
+pages:
+  - Home: index.md << ../README.md
+  - Installation: installation.md << installation.md
+  - API Documentation:
+    - Clients:
+      - Overview: clients.md
+      - Tools:
+        - Artifactory: clients/artifactory.md
+        - CloudBeesJenkins: clients/jenkins.md
+        - Confluence: clients/confluence.md
+        - GitHub: clients/github.md
+        - Kubernetes: clients/kubernetes.md
+        - Jira: clients/jira.md
+        - SonarQube: clients/sonarqube.md
+        - SquashTM: clients/squashtm.md
+    - Images:
+      - Overview: tooling.md
+
+sort: name
+theme:
+  name: 'material'
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - smarty
+
+headers: markdown

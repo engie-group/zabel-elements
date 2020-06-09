@@ -26,7 +26,7 @@ with open('README.md', 'r') as fh:
 setup(
     name='zabel-elements',
     version='1.1.0',
-    description='The Zabel default clients and services',
+    description='The Zabel default clients and images',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/engie-group/zabel',

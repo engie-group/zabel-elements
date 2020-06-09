@@ -5,8 +5,8 @@
 This is part of the Zabel platform.  The **zabel-elements** package
 contains the standard _elements_ library for Zabel.
 
-An element is a service such as _Artifactory_ or _Jenkins_ or a LDAP server
-that can be used or managed by the Zabel platform.
+An element is an external service such as _Artifactory_ or _Jenkins_ or a
+LDAP server that can be used or managed by the Zabel platform.
 
 This package provides the necessary wrappers for some elements commonly
 found in many workplaces, namely:
@@ -45,7 +45,7 @@ There is one _image_ per client (hence one image per element).  Images are
 classes with a standardized constructor and a `run()` method, and are how
 code is packaged so that it can be deployed on the Zabel platform.
 
-### zabel.elements.clients
+## zabel.elements.clients
 
 The **zabel.elements.clients** library provides a wrapper class per
 tool.
@@ -55,7 +55,7 @@ _zabel.commons.exceptions_ module for the _ApiError_ exception class,
 its _zabel.commons.sessions_ module for HTTPS session handling,
 and its _zabel.commons.utils_ module that contains useful functions.
 
-#### Conventions
+### Conventions
 
 If an existing library already provides all the needed functionality,
 there is no need to add it to this clients library.
@@ -99,7 +99,7 @@ be raised.
     and may simplify technical details (pagination is automatically
     performed if needed).
 
-### zabel.elements.images
+## zabel.elements.images
 
 It provides image wrappers for the built-in low-level clients classes
 (those defined in the **zabel.elements.clients** module).
@@ -123,7 +123,7 @@ takes a canonical user ID and returns the internal key for that user.
 They should also provide concrete implementations for the remaining
 methods provided by the #::ManagedService interface.
 
-#### Conventions
+### Conventions
 
 Utilities must implement the _Utility_ interface and managed services
 must implement the _ManagedService_ interface.
