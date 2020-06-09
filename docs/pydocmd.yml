@@ -38,7 +38,7 @@ pages:
         - SonarQube: clients/sonarqube.md
         - SquashTM: clients/squashtm.md
     - Images:
-      - Overview: tooling.md
+      - Overview: images.md
 
 sort: name
 theme:
