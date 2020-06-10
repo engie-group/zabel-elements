@@ -30,7 +30,7 @@ git clone https://github.com/engie-group/zabel-elements.git
 And use `pip3` to install it:
 
 ```bash
-pip3 install install --upgrade .
+pip3 install --upgrade .
 ```
 
 ## Credentials Setup
@@ -79,7 +79,7 @@ relevant scopes, as a token with no associated scopes is quite useless :) ):
 
 ![GitHub scopes](img/GitHub_personal_tokens_scopes.png)
 
-### Jenkins
+#### Jenkins
 
 In order to get your Jenkins API token, go to your settings page:
 
@@ -119,27 +119,27 @@ section below.
 
 ## Confluence&Jira Application Link
 
-In order to be able to communicate with Confluence or Jira, an _application link_
-may have to be declared on Confluence or Jira.
+In order to be able to communicate with Confluence or Jira with OAuth tokens,
+an _application link_ may have to be declared on Confluence or Jira.
 
 An application link is a link that allows applications (_your_ code) to access
-Confluence or Jira.
+a Confluence or Jira instance.
 
 ### Declaring an Application
 
 In order to declare an application link:
 
 - As a system administrator, go to the Applications page in the JIRA ADMINISTRATION
-    area.
+  area.
 - Select 'Applications Links' in the vertical menu.
 - Enter a dummy URL (say, <https://automation.example.com>) and press
-    'Create new link'.
+  'Create new link'.
 - In the 'Confirm Application URL' dialog, press 'Continue'.
 - Enter an application name (here, `Zabel Automation`), and press 'Continue'.
 - The application link will be created. Edit it by clicking on the 'pen' action.
 - Go to the 'Incoming Authentication' tab.
 - Specify a Customer key (say, `ZABEL_KEY`) and a Customer name (say, `Zabel Automation`,
-    it will be the name displayed in the OAuth tokens page).
+  it will be the name displayed in the OAuth tokens page).
 - Create a new key pair, using the following commands:
 
 ```bash
@@ -147,16 +147,17 @@ openssl genrsa -out zabel_automation_jira.pem 2048
 openssl rsa -pubout -in zabel_automation_jira.pem -out zabel_automation_jira.pub
 ```
 
-- In the 'Public key' area, enter the generated public key (you may include the `---BEGIN PUBLIC KEY---` and `---END PUBLIC KEY---` part).
+- In the 'Public key' area, enter the generated public key (you may include the
+  `---BEGIN PUBLIC KEY---` and `---END PUBLIC KEY---` part).
 - Press 'Save' (you may have to scroll down).
 - Press 'Close'
 
 That's it.
 
 !!! note
-    If you do not have administrator rights on Confluence (or Jira), please
-    contact your adminstration team, providing them with a public key (keep the
-    private key private).
+    If you do not have administrator rights on the Confluence (or Jira) instance,
+    please contact your administration team, providing them with a public key (keep
+    the private key private).
 
 ### OAuth Authentication
 
@@ -167,7 +168,9 @@ A token generator is available (`oauth_token_generator.py`) in the
 <https://github.tools.digital.engie.com/GBSEngieDigitalWalnut/tools-scripts-misc>
 repository.
 
-This script is in Python 3. It requires two external libraries, **tlslite** and **oauth2**.
+This script is in Python 3. It requires two external libraries, **tlslite-ng** and
+**oauth2**.  (It will work with the legacy **tlslite** library, but please note that
+the **tlslite** library is not supported for Python 3.7 and higher.)
 
 This script is interactive: it provides a link, that has to be accessed in a 10-minute
 gap, that will validate it and create the final token.  The generated token will have

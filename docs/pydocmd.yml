@@ -1,4 +1,4 @@
-site_name: zabel-elements
+site_name: Zabel Elements
 
 generate:
   - clients.md:
