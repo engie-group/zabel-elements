@@ -3224,7 +3224,7 @@ class Jira:
             },
             auth=self.auth,
         )
-        return result
+        return result  # type: ignore
 
     @api_call
     def get_request(
@@ -3265,13 +3265,14 @@ class Jira:
             params = {'expand': expand}
         else:
             params = None
-        return requests.get(
+        response = requests.get(
             join_url(
                 self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
             ),
             params=params,
             auth=self.auth,
         )
+        return response  # type: ignore
 
     @api_call
     def add_request_comment(
@@ -3345,7 +3346,7 @@ class Jira:
         ensure_nonemptystring('servicedesk_id')
 
         return self._collect_sd_data(
-            f'servicedesk/{serviceDeskIdsk_id}/queue',
+            f'servicedesk/{servicedesk_id}/queue',
             headers={'X-ExperimentalApi': 'opt-in'},
         )
 
