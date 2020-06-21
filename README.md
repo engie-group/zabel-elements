@@ -6,7 +6,7 @@ This is part of the Zabel platform.  The **zabel-elements** package
 contains the standard _elements_ library for Zabel.
 
 An element is an external service such as _Artifactory_ or _Jenkins_ or a
-LDAP server that can be used or managed by the Zabel platform.
+LDAP server that can be used or managed by Zabel.
 
 This package provides the necessary wrappers for some elements commonly
 found in many workplaces, namely:
@@ -21,8 +21,8 @@ found in many workplaces, namely:
 - SquashTM
 
 Elements are of two kinds: _ManagedServices_, that represent services
-that are managed by the Zabel platform, and _Utilities_, that represent
-services that are used by the Zabel platform.  In the above list,
+that are managed by Zabel, and _Utilities_, that represent
+services that are used by Zabel.  In the above list,
 Kubernetes is a utility.  The other elements are managed services.
 
 You can use this library independently of the Zabel platform, as it has
