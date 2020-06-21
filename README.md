@@ -6,7 +6,7 @@ This is part of the Zabel platform.  The **zabel-elements** package
 contains the standard _elements_ library for Zabel.
 
 An element is an external service such as _Artifactory_ or _Jenkins_ or a
-LDAP server that can be used or managed by Zabel.
+LDAP server that can be managed or used by Zabel.
 
 This package provides the necessary wrappers for some elements commonly
 found in many workplaces, namely:
@@ -20,16 +20,24 @@ found in many workplaces, namely:
 - SonarQube
 - SquashTM
 
-Elements are of two kinds: _ManagedServices_, that represent services
-that are managed by Zabel, and _Utilities_, that represent
-services that are used by Zabel.  In the above list,
-Kubernetes is a utility.  The other elements are managed services.
+Elements are of two kinds: _ManagedServices_, that represent services that are
+managed by Zabel, and _Utilities_, that represent services that are used by Zabel.
 
-You can use this library independently of the Zabel platform, as it has
-no specific dependencies on it.
+Managed services host project resources.  They typically are the tools that project
+members interact with directly.
 
-In particular, the **zabel.elements.clients** module may be of interest if
-you want to perform some configuration tasks from your own Python code.
+Utilities may also host project resources, but they typically are not used directly
+by project members.  They are either referentials, or some low-level infrastructure,
+necessary for the managed services to function, but otherwise not seen by project
+members.  A LDAP server would probably be a utility, used both as a referential and as
+an access control tool.
+
+In the above list, Kubernetes is a utility.  The other elements are managed services.
+
+You can use this library independently of the Zabel platform, as it has no
+specific dependencies on it.  In particular, the **zabel.elements.clients**
+module may be of interest if you want to perform some configuration tasks
+from your own Python code.
 
 Contribution of new wrappers, or extensions of existing wrappers are welcomed.
 But elements can be provided in their own packages too.
