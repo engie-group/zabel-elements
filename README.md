@@ -27,10 +27,10 @@ Managed services host project resources.  They typically are the tools that proj
 members interact with directly.
 
 Utilities may also host project resources, but they typically are not used directly
-by project members.  They are either referentials, or some low-level infrastructure,
-necessary for the managed services to function, but otherwise not seen by project
-members.  A LDAP server would probably be a utility, used both as a referential and as
-an access control tool.
+by project members.  They are either references or some low-level infrastructure
+services necessary for the managed services to function, but otherwise not seen by
+project members.  A LDAP server would probably be a utility, used both as a reference
+and as an access control tool.
 
 In the above list, Kubernetes is a utility.  The other elements are managed services.
 
@@ -66,7 +66,7 @@ and its _zabel.commons.utils_ module that contains useful functions.
 ### Conventions
 
 If an existing library already provides all the needed functionality,
-there is no need to add it to this clients library.
+there is no need to add it to this library.
 
 If an existing library already provides some of the needed
 functionality, a wrapper class can be written that will use this
@@ -79,7 +79,7 @@ inherits from the base part and possibly extends it.
 The base part may not exist if an already existing library
 provides wrappers for the needed low-level calls.  In such a
 case, there is no need for a base class and the regular class may simply
-use the existing library as a client, and inherit from `object`.
+use the existing library as a client and inherit from `object`.
 
 Similarly, the regular part may be empty, in that it may simply inherit
 from the base class and contain no additional code.
@@ -103,7 +103,7 @@ Base classes do not try to provide features not offered by the tool API.
 
 Their methods closely match the underlying API.
 
-They offer an uniform (or, at least, harmonized) naming convention,
+They offer a uniform (or, at least, harmonized) naming convention,
 and may simplify technical details (pagination is automatically
 performed if needed).
 
