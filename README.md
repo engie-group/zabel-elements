@@ -64,8 +64,8 @@ If an existing library already provides some of the needed
 functionality, a wrapper class can be written that will use this
 existing library as a client.
 
-Wrapper classes have two parts: (1) a _base_ part that implements single
-API calls (and possibly pagination), and (2) a _regular_ part, that
+Wrapper classes have two parts: a _base_ part that implements single
+API calls (and possibly pagination), and a _regular_ part that
 inherits from the base part and possibly extends it.
 
 The base part may not exist if an already existing library
@@ -89,19 +89,19 @@ If a wrapper class method is called with an obviously invalid parameter
 (wrong type, not a permitted value, ...), a _ValueError_ exception will
 be raised.
 
-!!! note
-    Base classes do not try to provide features not offered by the
-    tool API.
+#### Note
 
-    Their methods closely match the underlying API
+Base classes do not try to provide features not offered by the tool API.
 
-    They offer an uniform (or, at least, harmonized) naming convention,
-    and may simplify technical details (pagination is automatically
-    performed if needed).
+Their methods closely match the underlying API.
+
+They offer an uniform (or, at least, harmonized) naming convention,
+and may simplify technical details (pagination is automatically
+performed if needed).
 
 ## zabel.elements.images
 
-It provides image wrappers for the built-in low-level clients classes
+It provides image wrappers for the built-in clients classes
 (those defined in the **zabel.elements.clients** module).
 
 Those abstract image wrappers implement an `__init__` constructor with
@@ -111,7 +111,7 @@ the following two parameters:
 - `env`: a dictionary, the service parameters
 
 Managed services also implement at least the `list_members()` method of
-the #::ManagedService interface.  They may provide `get_member()` if a
+the _ManagedService_ interface.  They may provide `get_member()` if a
 fast implementation is available.
 
 Concrete classes deriving those abstract managed services wrappers
@@ -121,7 +121,7 @@ canonical user ID, as well as a `get_internal_member_id()` method that
 takes a canonical user ID and returns the internal key for that user.
 
 They should also provide concrete implementations for the remaining
-methods provided by the #::ManagedService interface.
+methods provided by the _ManagedService_ interface.
 
 ### Conventions
 
