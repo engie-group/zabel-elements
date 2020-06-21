@@ -27,10 +27,10 @@ Managed services host project resources.  They typically are the tools that proj
 members interact with directly.
 
 Utilities may also host project resources, but they typically are not used directly
-by project members.  They are either references or some low-level infrastructure
-services necessary for the managed services to function, but otherwise not seen by
-project members.  A LDAP server would probably be a utility, used both as a reference
-and as an access control tool.
+by project members.  They are either references or infrastructure services necessary
+for the managed services to function, but otherwise not seen by project members.
+A LDAP server would probably be a utility, used both as a reference and as an access
+control tool.
 
 In the above list, Kubernetes is a utility.  The other elements are managed services.
 
@@ -70,7 +70,7 @@ there is no need to add it to this library.
 
 If an existing library already provides some of the needed
 functionality, a wrapper class can be written that will use this
-existing library as a client.
+existing library as a client.  Do not inherit from it.
 
 Wrapper classes have two parts: a _base_ part that implements single
 API calls (and possibly pagination), and a _regular_ part that
