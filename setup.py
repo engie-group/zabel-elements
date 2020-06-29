@@ -15,7 +15,9 @@
 #
 # Build and publish (assuming a proper ~/.pypirc)
 #
-#     python3 setup.py bdist_wheel upload -r artifactory
+#     rm -r build/ dist/
+#     python3 setup.py bdist_wheel [upload -r local]
+#     twine upload [--repository testpypi] dist/*
 
 from setuptools import setup, find_namespace_packages
 
