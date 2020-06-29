@@ -55,7 +55,7 @@ code is packaged so that it can be deployed on the Zabel platform.
 
 ## zabel.elements.clients
 
-The **zabel.elements.clients** library provides a wrapper class per
+The **zabel.elements.clients** module provides a wrapper class per
 tool.
 
 It relies on the **zabel-commons** library, using its
@@ -63,7 +63,7 @@ _zabel.commons.exceptions_ module for the _ApiError_ exception class,
 its _zabel.commons.sessions_ module for HTTPS session handling,
 and its _zabel.commons.utils_ module that contains useful functions.
 
-### Conventions
+### Conventions for Clients
 
 If an existing library already provides all the needed functionality,
 there is no need to add it to this library.
@@ -109,8 +109,9 @@ performed if needed).
 
 ## zabel.elements.images
 
-It provides image wrappers for the built-in clients classes
-(those defined in the **zabel.elements.clients** module).
+The **zabel.elements.images** module provides image wrappers for the
+built-in clients classes (those defined in the **zabel.elements.clients**
+module).
 
 Those abstract image wrappers implement an `__init__` constructor with
 the following two parameters:
@@ -131,7 +132,7 @@ takes a canonical user ID and returns the internal key for that user.
 They should also provide concrete implementations for the remaining
 methods provided by the _ManagedService_ interface.
 
-### Conventions
+### Conventions for Images
 
 Utilities must implement the _Utility_ interface and managed services
 must implement the _ManagedService_ interface.
