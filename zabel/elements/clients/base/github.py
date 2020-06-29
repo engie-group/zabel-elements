@@ -47,7 +47,7 @@ class GitHub:
     # Reference URL
 
     - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.16/v3>
+    - <https://developer.github.com/enterprise/2.20/v3>
     - <https://stackoverflow.com/questions/10625190>
 
     # Implemented features
@@ -528,6 +528,8 @@ class GitHub:
     # create_repository
     # TODO update_repository
     # TODO delete_repository
+    # list_repository_commits
+    # get_repository_commit
 
     @api_call
     def list_repositories(self) -> List[Dict[str, Any]]:
@@ -850,6 +852,249 @@ class GitHub:
         )
         return result  # type: ignore
 
+    @api_call
+    def list_repository_commits(
+        self,
+        organization_name: str,
+        repository_name: str,
+        sha: Optional['str'] = None,
+        path: Optional['str'] = None,
+        author: Optional['str'] = None,
+        since: Optional['str'] = None,
+        until: Optional['str'] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return the list of commits.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - sha: a string or None (None by default)
+        - path: a string or None (None by default)
+        - author: a non-empty string or None (None by default)
+        - since: a non-empty string (an ISO 8601 timestamp) or None
+          (None by default)
+        - until: a non-empty string (an ISO 8601 timestamp) or None
+          (None by default)
+
+        # Return value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        params = {}
+        add_if_specified(params, 'sha', sha)
+        add_if_specified(params, 'path', path)
+        add_if_specified(params, 'author', author)
+        add_if_specified(params, 'since', since)
+        add_if_specified(params, 'until', until)
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/commits',
+            params=params,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_commit(
+        self, organization_name: str, repository_name: str, ref: str
+    ) -> Dict[str, Any]:
+        """Return a specific commit."""
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/commits/{ref}'
+        )
+        return result  # type: ignore
+
+    ####################################################################
+    # GitHub repository contents
+    #
+    # get_repository_readme
+    # get_repository_content
+
+    @api_call
+    def get_repository_readme(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: Optional[str] = None,
+        format_: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the repository README.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - ref: a non-empty string or None (None by default)
+        - format_: the custom media type (a non-empty string) or None
+          (None by default)
+
+        # Returned value
+
+        A dictionary by default.  May be something else if `format_` is
+        specified.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_noneornonemptystring('ref')
+        ensure_noneornonemptystring('format_')
+
+        params = {'ref': ref} if ref is not None else None
+        headers = {'Accept': format_} if format_ is not None else None
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/readme',
+            params=params,
+            headers=headers,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_content(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        ref: Optional[str] = None,
+        format_: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the file or directory content.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+
+        # Optional parameters
+
+        - ref: a non-empty string or None (None by default)
+        - format_: the custom media type (a non-empty string) or None
+          (None by default)
+
+        # Returned value
+
+        A dictionary or a list of dictionaries by default.  May be
+        something else if `format_` is specified
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_noneornonemptystring('ref')
+        ensure_noneornonemptystring('format_')
+
+        params = {'ref': ref} if ref is not None else None
+        headers = {'Accept': format_} if format_ is not None else None
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/contents/{path}',
+            params=params,
+            headers=headers,
+        )
+        return result  # type: ignore
+
+    ####################################################################
+    # GitHub git database API
+    #
+    # create_repository_tag
+    # create_repository_ref
+
+    @api_call
+    def create_repository_tag(
+        self,
+        organization_name: str,
+        repository_name: str,
+        tag: str,
+        message: str,
+        object_: str,
+        type_: str,
+        tagger: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Create a tag.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - tag: a non-empty string
+        - message: a string
+        - object_: a non-empty string
+        - type_: a string
+
+        # Optional parameters
+
+        - tagger: a dictionary or None (None by default)
+
+        # Returned value
+
+        A _tag_.  A tag is a dictionary with the following entries:
+
+        - node_id: a string
+        - tag: a string
+        - sha: a string
+        - url: a string
+        - message: a string
+        - tagger: a dictionary
+        - object: a dictionary
+        - verification: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('tag')
+        ensure_instance('message', str)
+        ensure_nonemptystring('object_')
+        ensure_nonemptystring('type_')
+
+        data = {
+            'tag': tag,
+            'message': message,
+            'object': object_,
+            'type': type_,
+        }
+        add_if_specified(data, 'tagger', tagger)
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/git/tags', json=data
+        )
+        return result  # type: ignore
+
+    @api_call
+    def create_repository_ref(
+        self, organization_name: str, repository_name: str, ref: str, sha: str
+    ) -> Dict[str, Any]:
+        """Create a reference.
+
+        # Required parameters
+
+        - ref: a non-empty string
+        - sha: a non-empty string
+
+        # Returned value
+
+        A _reference_.  A reference is a dictionary with the following
+        entries:
+
+        - node_id: a string
+        - ref: a string
+        - url: a string
+        - object: a dictionary
+        """
+        ensure_nonemptystring('ref')
+        ensure_nonemptystring('sha')
+
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/git/refs',
+            json={'ref': ref, 'sha': sha},
+        )
+        return result  # type: ignore
+
     ####################################################################
     # GitHub hook operations
     #
@@ -1037,11 +1282,14 @@ class GitHub:
     # a return value)
 
     def _get(
-        self, api: str, headers: Optional[Mapping[str, str]] = None
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         """Return GitHub API call results, as Response."""
         api_url = join_url(self.url, api)
-        return self.session().get(api_url, headers=headers)
+        return self.session().get(api_url, headers=headers, params=params)
 
     def _collect_data(
         self,
