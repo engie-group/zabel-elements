@@ -110,7 +110,7 @@ class SquashTM:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}: {self.url!r}, {self.auth[0]}!r>'
+        return f'<{self.__class__.__name__}: {self.url!r}, {self.auth[0]!r}>'
 
     ####################################################################
     # squash-tm projects
