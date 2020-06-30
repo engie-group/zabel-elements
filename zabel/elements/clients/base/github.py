@@ -887,7 +887,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        params = {}
+        params: Dict[str, Any] = {}
         add_if_specified(params, 'sha', sha)
         add_if_specified(params, 'path', path)
         add_if_specified(params, 'author', author)
@@ -917,6 +917,8 @@ class GitHub:
     #
     # get_repository_readme
     # get_repository_content
+    # create_repository_file
+    # update_repository_file
 
     @api_call
     def get_repository_readme(
@@ -936,7 +938,7 @@ class GitHub:
         # Optional parameters
 
         - ref: a non-empty string or None (None by default)
-        - format_: the custom media type (a non-empty string) or None
+        - format_: a custom media type (a non-empty string) or None
           (None by default)
 
         # Returned value
@@ -966,7 +968,7 @@ class GitHub:
         path: str,
         ref: Optional[str] = None,
         format_: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> Any:
         """Return the file or directory content.
 
         # Required parameters
@@ -998,6 +1000,122 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/contents/{path}',
             params=params,
             headers=headers,
+        )
+        if result.status_code // 100 == 2:
+            try:
+                return result.json()
+            except:
+                return result.text
+        return result  # type: ignore
+
+    @api_call
+    def create_repository_file(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        message: str,
+        content: str,
+        branch: Optional[str] = None,
+        committer: Optional[Dict[str, str]] = None,
+        author: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new repository file.
+
+        The created file must not already exist.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+        - message: a string
+        - content: a string (Base64-encoded)
+
+        # Optional parameters
+
+        - branch: a string or None (None by default)
+        - commiter: a dictionary or None (None by default)
+        - author: a dictionary or None (None by default)
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_instance('message', str)
+        ensure_instance('content', str)
+        ensure_noneornonemptystring('branch')
+        ensure_noneorinstance('committer', dict)
+        ensure_noneorinstance('author', dict)
+
+        data = {'message': message, 'content': content}
+        add_if_specified(data, 'branch', branch)
+        add_if_specified(data, 'committer', committer)
+        add_if_specified(data, 'author', author)
+
+        result = self._put(
+            f'repos/{organization_name}/{repository_name}/contents/{path}',
+            json=data,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def update_repository_file(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        message: str,
+        content: str,
+        sha: str,
+        branch: Optional[str] = None,
+        committer: Optional[Dict[str, str]] = None,
+        author: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Update a repository file.
+
+        The file must already exist on the repository.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+        - message: a string
+        - content: a string (Base64-encoded)
+        - sha: a non-empty strin
+
+        # Optional parameters
+
+        - branch: a string or None (None by default)
+        - commiter: a dictionary or None (None by default)
+        - author: a dictionary or None (None by default)
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_instance('message', str)
+        ensure_instance('content', str)
+        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('branch')
+        ensure_noneorinstance('committer', dict)
+        ensure_noneorinstance('author', dict)
+
+        data = {'message': message, 'content': content, 'sha': sha}
+        add_if_specified(data, 'branch', branch)
+        add_if_specified(data, 'committer', committer)
+        add_if_specified(data, 'author', author)
+
+        result = self._put(
+            f'repos/{organization_name}/{repository_name}/contents/{path}',
+            json=data,
         )
         return result  # type: ignore
 
