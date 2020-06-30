@@ -88,7 +88,7 @@ At import time, wrapper classes should not import libraries not part of
 the Python standard library or **requests** or modules part of the
 **zabel-commons** library.  That way, projects not needing some tool do
 not have to install its required dependencies.  Wrappers classes may
-import libraries in their `__init__` methods, though.
+import libraries in their `__init__()` methods, though.
 
 If an API call is successful, it will return a value (possibly None).
 If not, it will raise an _ApiError_ exception.
@@ -113,11 +113,11 @@ The **zabel.elements.images** module provides image wrappers for the
 built-in clients classes (those defined in the **zabel.elements.clients**
 module).
 
-Those abstract image wrappers implement an `__init__` constructor with
+Those abstract image wrappers implement an `__init__()` constructor with
 the following two parameters:
 
-- `name`: a string, the service name
-- `env`: a dictionary, the service parameters
+- `name`: a string, a name
+- `env`: a dictionary, the image parameters
 
 Managed services also implement at least the `list_members()` method of
 the _ManagedService_ interface.  They may provide `get_member()` if a
