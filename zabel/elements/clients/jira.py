@@ -17,6 +17,8 @@ This module depends on the #::.base.jira module.
 
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+import re
+
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import api_call
 
@@ -212,3 +214,80 @@ class Jira(Base):
             all_sprints += self.list_board_sprints(board['id'])
 
         return {s: _get_sprint_id(s, all_sprints) for s in sprints}
+
+    @api_call
+    def list_picker_users(
+        self,
+        servicedesk_id: str,
+        query: str,
+        field_name: str,
+        project_id: str,
+        fieldconfig_id: int,
+        _: int,
+    ) -> List[Dict[str, Any]]:
+        """Return list of users matching query hint.
+
+        Simulates /rest/servicedesk/{n}/customer/user-search.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - query: a string
+        - field_name: a string
+        - project_id: a string
+        - fieldconfig_id: an integer
+        - _: an integer
+
+        # Returned value
+
+        A list of user infos.  Each user info is a dictionary with the
+        following fields:
+
+        - id: a string
+        - emailAddress: a string
+        - displayName: a string
+        - avatar: a string (an URL)
+        """
+
+        def _email(html: str) -> str:
+            text = html.replace('<strong>', '').replace('</strong>', '')
+            return text.split(' - ')[1].split(' ')[0]
+
+        def _avatar(url: str) -> str:
+            if 'avatarId=' in url:
+                return (
+                    f'/rest/servicedesk/{servicedesk_id}/servicedesk/customer/avatar/'
+                    + url.split('avatarId=')[1]
+                    + '?size=xsmall'
+                )
+            return url
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_instance('query', str)
+        ensure_instance('field_name', str)
+        ensure_instance('project_id', str)
+
+        picked = self._get(
+            f'/rest/api/2/user/picker?query={query}',
+            params={'maxResults': 10, 'showAvatar': True},
+        ).json()['users']
+
+        if picked:
+            return [
+                {
+                    'id': user['name'],
+                    'displayName': user['displayName'],
+                    'emailAddress': email(user['html']),
+                    'avatar': avatar(user['avatarUrl']),
+                }
+                for user in picked
+            ]
+        if len(query) == 6 and re.match(r'^[a-zA-Z]+[0-9]+$'):
+            return [
+                {
+                    'id': query.upper(),
+                    'emailAddress': query.lower() + '@engie.com',
+                    'avatar': f'/rest/servicedesk/{servicedesk_id}/servicedesk/customer/avatar/15000?size=xsmall',
+                }
+            ]
+        return []
