@@ -17,8 +17,6 @@ This module depends on the #::.base.jira module.
 
 from typing import Any, Dict, Iterable, List, Optional, Union
 
-import re
-
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import api_call
 
@@ -247,6 +245,8 @@ class Jira(Base):
         - emailAddress: a string
         - displayName: a string
         - avatar: a string (an URL)
+
+        An empty list if no existing active user matches.
         """
 
         def _email(html: str) -> str:
