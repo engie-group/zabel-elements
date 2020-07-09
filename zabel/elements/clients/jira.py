@@ -272,22 +272,12 @@ class Jira(Base):
             params={'maxResults': 10, 'showAvatar': True},
         ).json()['users']
 
-        if picked:
-            return [
-                {
-                    'id': user['name'],
-                    'displayName': user['displayName'],
-                    'emailAddress': email(user['html']),
-                    'avatar': avatar(user['avatarUrl']),
-                }
-                for user in picked
-            ]
-        if len(query) == 6 and re.match(r'^[a-zA-Z]+[0-9]+$'):
-            return [
-                {
-                    'id': query.upper(),
-                    'emailAddress': query.lower() + '@engie.com',
-                    'avatar': f'/rest/servicedesk/{servicedesk_id}/servicedesk/customer/avatar/15000?size=xsmall',
-                }
-            ]
-        return []
+        return [
+            {
+                'id': user['name'],
+                'displayName': user['displayName'],
+                'emailAddress': email(user['html']),
+                'avatar': avatar(user['avatarUrl']),
+            }
+            for user in picked
+        ]
