@@ -238,15 +238,13 @@ class Jira(Base):
 
         # Returned value
 
-        A list of user infos.  Each user info is a dictionary with the
-        following fields:
+        A possibly empty list of _user infos_.  Each user info is a
+        dictionary with the following fields:
 
         - id: a string
         - emailAddress: a string
         - displayName: a string
         - avatar: a string (an URL)
-
-        An empty list if no existing active user matches.
         """
 
         def _email(html: str) -> str:
