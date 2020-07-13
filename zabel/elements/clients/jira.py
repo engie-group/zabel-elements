@@ -18,7 +18,11 @@ This module depends on the #::.base.jira module.
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from zabel.commons.exceptions import ApiError
-from zabel.commons.utils import api_call
+from zabel.commons.utils import (
+    api_call,
+    ensure_instance,
+    ensure_nonemptystring,
+)
 
 from .base.jira import Jira as Base
 
@@ -274,8 +278,8 @@ class Jira(Base):
             {
                 'id': user['name'],
                 'displayName': user['displayName'],
-                'emailAddress': email(user['html']),
-                'avatar': avatar(user['avatarUrl']),
+                'emailAddress': _email(user['html']),
+                'avatar': _avatar(user['avatarUrl']),
             }
             for user in picked
         ]

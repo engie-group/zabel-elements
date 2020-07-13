@@ -267,7 +267,7 @@ class GitHub(Base):
         return self.update_repository_file(
             organization_name,
             repository_name,
-            pth,
+            path,
             message,
             str(base64.b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
             sha,
