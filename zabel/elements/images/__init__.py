@@ -51,6 +51,8 @@ __all__ = [
 
 from typing import Any, Dict, Iterable, Optional
 
+import json
+
 from zabel.commons.utils import api_call
 from zabel.commons.interfaces import ManagedService, Utility
 
@@ -181,7 +183,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
         token = _get_credential(name, 'token', env)
         cookies = None
         if _has_credentials(name, ('cookies',), env):
-            cookies = _get_credential(name, 'cookies', env)
+            cookies = json.loads(_get_credential(name, 'cookies', env))
         super().__init__(url, user, token, cookies)
 
     def get_internal_member_id(self, member_id: str) -> str:
@@ -343,7 +345,7 @@ class GitHub(clients.GitHub, ManagedService):
         mngt = None
         if _has_credentials(name, ('mngt',), env):
             mngt = _get_credential(name, 'mngt', env)
-        super().__init__(url, user, token, env.get('mngt'))
+        super().__init__(url, user, token, mngt)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -442,7 +444,7 @@ class Kubernetes(clients.Kubernetes, Utility):
         api_key = _maybe_get_credential(name, 'api_key', env)
         ssl_ca_cert = _maybe_get_credential(name, 'ssl_ca_cert', env)
         verify = _maybe_get_credential(name, 'verify', env)
-        config = None
+        config: Optional[Dict[str, Any]] = None
         if config_file is None and context is None:
             if url and api_key:
                 config = {'url': url, 'api_key': api_key}
