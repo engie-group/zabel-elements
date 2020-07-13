@@ -323,8 +323,8 @@ class CloudBeesJenkins:
     # get_managedmaster_endpoint
     # list_managedmaster_projects
     # list_managedmaster_roles
-    # get_managedmaster_plugin
     # list_managedmaster_users
+    # list_managedmaster_plugins
     # install_managedmaster_plugins
     # provision_and_start_managedmaster
     # get_managedmaster_metrics

@@ -139,8 +139,8 @@ class Confluence:
     def __repr__(self) -> str:
         if self.basic_auth:
             rep = self.basic_auth[0]
-        elif self.oauth:
-            rep = self.oauth['consumer_key']
+        else:
+            rep = self.oauth['consumer_key']  # type: ignore
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
 
     ####################################################################
@@ -297,8 +297,8 @@ class Confluence:
 
         if user_name is not None:
             params = {'username': user_name}
-        elif key is not None:
-            params = {'key': key}
+        else:
+            params = {'key': key}  # type: ignore
         add_if_specified(params, 'expand', expand)
 
         result = self._get('user', params=params)
@@ -341,8 +341,8 @@ class Confluence:
 
         if user_name is not None:
             params = {'username': user_name}
-        elif key is not None:
-            params = {'key': key}
+        else:
+            params = {'key': key}  # type: ignore
         add_if_specified(params, 'expand', expand)
 
         return self._collect_data('user/memberof', params=params)

@@ -197,8 +197,8 @@ class Jira:
     def __repr__(self) -> str:
         if self.basic_auth:
             rep = self.basic_auth[0]
-        elif self.oauth:
-            rep = self.oauth['consumer_key']
+        else:
+            rep = self.oauth['consumer_key']  # type: ignore
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
 
     def _client(self) -> 'jira.JIRA':
@@ -1029,7 +1029,7 @@ class Jira:
             if scheme['name'] != scheme_id_or_name:
                 raise ApiError('Scheme %s not found.' % scheme_id_or_name)
         else:
-            scheme_id = scheme_id_or_name
+            scheme_id = str(scheme_id_or_name)
 
         requests.delete(
             self._get_url(f'workflowscheme/{scheme_id}'), auth=self.auth
@@ -1990,7 +1990,7 @@ class Jira:
         if groups is not None:
             data = {'group': groups}
         else:
-            data = {'user': users}
+            data = {'user': users}  # type: ignore
         result = self.session().post(
             self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
             data=json.dumps(data),
@@ -2025,7 +2025,7 @@ class Jira:
         if group is not None:
             params = {'group': group}
         else:
-            params = {'user': user}
+            params = {'user': user}  # type: ignore
         return self.session().delete(
             self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
             params=params,
@@ -2849,7 +2849,8 @@ class Jira:
         #list_issue_comments() for more information.
         """
         url = self._get_url(f'issue/{issue_id_or_key}/comment')
-        return self.session().post(url, data=json.dumps(fields))
+        result = self.session().post(url, data=json.dumps(fields))
+        return result  # type: ignore
 
     @api_call
     def add_issue_link(
@@ -2878,7 +2879,8 @@ class Jira:
             'inwardIssue': {'key': inward_issue_id_or_key},
             'outwardIssue': {'key': outward_issue_id_or_key},
         }
-        return self.session().post(url, data=json.dumps(data))
+        result = self.session().post(url, data=json.dumps(data))
+        return result  # type: ignore
 
     @api_call
     def list_issue_transitions(
@@ -3262,7 +3264,7 @@ class Jira:
         ensure_noneorinstance('expand', str)
 
         if expand is not None:
-            params = {'expand': expand}
+            params: Optional[Dict[str, str]] = {'expand': expand}
         else:
             params = None
         response = requests.get(
@@ -3559,7 +3561,9 @@ class Jira:
     def _get(
         self,
         uri: str,
-        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
     ) -> requests.Response:
         return requests.get(
             join_url(self.url, uri), params=params, auth=self.auth
@@ -3586,7 +3590,7 @@ class Jira:
         more = True
         with requests.Session() as session:
             session.auth = self.auth
-            session.headers = headers
+            session.headers = headers  # type: ignore
             while more:
                 response = session.get(api_url, params=_params)
                 if response.status_code // 100 != 2:

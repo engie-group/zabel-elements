@@ -15,14 +15,21 @@ There can be as many GitHub instances as needed.
 This module depends on the #::.base.github module.
 """
 
-from typing import List
+from typing import Any, Dict, List, Optional
 
 import base64
 import csv
 import time
 
 from zabel.commons.exceptions import ApiError
-from zabel.commons.utils import api_call, ensure_nonemptystring, join_url
+from zabel.commons.utils import (
+    api_call,
+    ensure_instance,
+    ensure_nonemptystring,
+    ensure_noneorinstance,
+    ensure_noneornonemptystring,
+    join_url,
+)
 
 from .base.github import GitHub as Base
 
