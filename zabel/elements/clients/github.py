@@ -17,6 +17,7 @@ This module depends on the #::.base.github module.
 
 from typing import List
 
+import base64
 import csv
 import time
 
@@ -101,3 +102,169 @@ class GitHub(Base):
         if not what[-1]:
             what = what[:-1]
         return what
+
+    ####################################################################
+    # GitHub repository contents
+    #
+    # get_repository_textfile
+    # create_repository_textfile
+    # update_repository_textfile
+
+    def get_repository_textfile(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        ref: Optional[str] = None,
+    ) -> Any:
+        """Return the text file content.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+
+        # Optional parameters
+
+        - ref: a non-empty string or None (None by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - path: a string
+        - sha: a string
+        - size: an integer
+        - content: a string
+        - url, html_url, git_url, download_url: strings
+        - _links: a dictionnary
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_noneornonemptystring('ref')
+
+        result = self.get_repository_content(
+            organization_name, repository_name, path, ref
+        )
+        if result.get('encoding') != 'base64':
+            raise ApiError('Content not in base64')
+        if result.get('type') != 'file':
+            raise ApiError('Content is not a file')
+        result['content'] = str(base64.b64decode(result['content']), 'utf-8')
+        del result['encoding']
+        return result
+
+    def create_repository_textfile(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        message: str,
+        content: str,
+        branch: Optional[str] = None,
+        committer: Optional[Dict[str, str]] = None,
+        author: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new repository text file.
+
+        The created text file must not already exist.  `content` is
+        expected to be an utf-8-encoded string.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+        - message: a string
+        - content: a string
+
+        # Optional parameters
+
+        - branch: a string or None (None by default)
+        - commiter: a dictionary or None (None by default)
+        - author: a dictionary or None (None by default)
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_instance('message', str)
+        ensure_instance('content', str)
+        ensure_noneornonemptystring('branch')
+        ensure_noneorinstance('committer', dict)
+        ensure_noneorinstance('author', dict)
+
+        return self.create_repository_file(
+            organization_name,
+            repository_name,
+            path,
+            message,
+            str(base64.b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
+            branch,
+            committer,
+            author,
+        )
+
+    def update_repository_textfile(
+        self,
+        organization_name: str,
+        repository_name: str,
+        path: str,
+        message: str,
+        content: str,
+        sha: str,
+        branch: Optional[str] = None,
+        committer: Optional[Dict[str, str]] = None,
+        author: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Update a repository text file.
+
+        The file must already exist on the repository.  `encoded` is
+        expected to be an utf-8-encoded string.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - path: a string
+        - message: a string
+        - content: a string
+        - sha: a non-empty string
+
+        # Optional parameters
+
+        - branch: a string or None (None by default)
+        - commiter: a dictionary or None (None by default)
+        - author: a dictionary or None (None by default)
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('path', str)
+        ensure_instance('message', str)
+        ensure_instance('content', str)
+        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('branch')
+        ensure_noneorinstance('committer', dict)
+        ensure_noneorinstance('author', dict)
+
+        return self.update_repository_file(
+            organization_name,
+            repository_name,
+            pth,
+            message,
+            str(base64.b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
+            sha,
+            branch,
+            committer,
+            author,
+        )

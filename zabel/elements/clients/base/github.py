@@ -1086,7 +1086,7 @@ class GitHub:
         - path: a string
         - message: a string
         - content: a string (Base64-encoded)
-        - sha: a non-empty strin
+        - sha: a non-empty string
 
         # Optional parameters
 
