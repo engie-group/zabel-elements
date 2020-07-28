@@ -39,7 +39,7 @@ specific dependencies on it.  In particular, the **zabel.elements.clients**
 module may be of interest if you want to perform some configuration tasks
 from your own Python code.
 
-Contribution of new wrappers, or extensions of existing wrappers are welcomed.
+Contributions of new wrappers, or extensions of existing wrappers are welcomed.
 But elements can be provided in their own packages too.
 
 ## Architecture
@@ -78,8 +78,8 @@ inherits from the base part and possibly extends it.
 
 The base part may not exist if an already existing library
 provides wrappers for the needed low-level calls.  In such a
-case, there is no need for a base class and the regular class may simply
-use the existing library as a client and inherit from `object`.
+case, the regular class may simply use the existing library as
+a client and inherit from `object`.
 
 Similarly, the regular part may be empty, in that it may simply inherit
 from the base class and contain no additional code.
