@@ -13,10 +13,7 @@ It provides wrappers for the built-in low-level clients classes (those
 defined in the **zabel.elements.clients** module).
 
 Those abstract service wrappers implement an `__init__` constructor with
-the following two parameters:
-
-- `name`: a string, the service name
-- `env`: a dictionary, the service parameters
+no parameter.
 
 Managed services also implement at least the `list_members()` method of
 the #::ManagedService interface.  They may provide `get_member()` if a
@@ -52,6 +49,7 @@ __all__ = [
 from typing import Any, Dict, Iterable, Optional
 
 import json
+import os
 
 from zabel.commons.utils import api_call
 from zabel.commons.interfaces import ManagedService, Utility
@@ -61,26 +59,19 @@ from zabel.elements import clients
 ########################################################################
 
 
-def _get_credential(name: str, item: str, env: Dict[str, Any]) -> str:
-    value = env.get(f'{name.upper()}_{item.upper()}')
-    if not isinstance(value, str):
-        raise ValueError(f'Credentials {item} for {name} must be a string.')
+def _get_credential(key: str,) -> str:
+    value = os.environ.get(key)
+    if value is None:
+        raise ValueError(f'Environment variable {key} not defined.')
     return value
 
 
-def _maybe_get_credential(
-    name: str, item: str, env: Dict[str, Any]
-) -> Optional[str]:
-    value = env.get(f'{name.upper()}_{item.upper()}')
-    if value is not None and not isinstance(value, str):
-        raise ValueError(f'Credentials {item} for {name} must be a string.')
-    return value
+def _maybe_get_credential(key: str) -> Optional[str]:
+    return os.environ.get(key)
 
 
-def _has_credentials(
-    name: str, items: Iterable[str], env: Dict[str, Any]
-) -> bool:
-    return all(env.get(f'{name.upper()}_{item.upper()}') for item in items)
+def _has_credentials(*keys) -> bool:
+    return all(os.environ.get(key) for key in keys)
 
 
 ########################################################################
@@ -93,17 +84,17 @@ class Artifactory(clients.Artifactory, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variables must exist:
 
-    - {NAME}_URL: a string
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - ARTIFACTORY_URL: a string
+    - ARTIFACTORY_USER: a string
+    - ARTIFACTORY_TOKEN: a string
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `ARTIFACTORY_URL` entry refers to the API entry point:
 
         https://artifactory.example.com/artifactory/api/
 
@@ -112,10 +103,10 @@ class Artifactory(clients.Artifactory, ManagedService):
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
-        user = _get_credential(name, 'user', env)
-        token = _get_credential(name, 'token', env)
+    def __init__(self) -> None:
+        url = _get_credential('ARTIFACTORY_URL')
+        user = _get_credential('ARTIFACTORY_USER')
+        token = _get_credential('ARTIFACTORY_TOKEN')
         super().__init__(url, user, token)
 
     def get_internal_member_id(self, member_id: str) -> str:
@@ -159,31 +150,31 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variables must exist:
 
-    - {NAME}_URL: a string
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - JENKINS_URL: a string
+    - JENKINS_USER: a string
+    - JENKINS_TOKEN: a string
 
-    It may also have a `{NAME}_COOKIES` entry (a string).
+    The environment may also contain a `JENKINS_COOKIES` entry.
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `JENKINS_URL` entry refers to the API entry point:
 
         https://cbj.example.com
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
-        user = _get_credential(name, 'user', env)
-        token = _get_credential(name, 'token', env)
+    def __init__(self) -> None:
+        url = _get_credential('JENKINS_URL')
+        user = _get_credential('JENKINS_USER')
+        token = _get_credential('JENKINS_TOKEN')
         cookies = None
-        if _has_credentials(name, ('cookies',), env):
-            cookies = json.loads(_get_credential(name, 'cookies', env))
+        if _has_credentials('JENKINS_COOKIES'):
+            cookies = json.loads(_get_credential('JENKINS_COOKIES'))
         super().__init__(url, user, token, cookies)
 
     def get_internal_member_id(self, member_id: str) -> str:
@@ -226,27 +217,28 @@ class Confluence(clients.Confluence, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variable must exist:
 
-    - {NAME}_URL: a string
+    - CONFLUENCE_URL: a string
 
-    It also must have either the two following entries (basic auth):
+    The environment also must have either the two following entries
+    (basic auth):
 
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - CONFLUENCE_USER: a string
+    - CONFLUENCE_TOKEN: a string
 
     Or the four following entries (oauth):
 
-    - {NAME}_KEYCERT: a string
-    - {NAME}_CONSUMERKEY: a string
-    - {NAME}_ACCESSTOKEN: a string
-    - {NAME}_ACCESSSECRET: a string
+    - CONFLUENCE_KEYCERT: a string
+    - CONFLUENCE_CONSUMERKEY: a string
+    - CONFLUENCE_ACCESSTOKEN: a string
+    - CONFLUENCE_ACCESSSECRET: a string
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `CONFLUENCE_URL` entry refers to the API entry point:
 
         https://confluence.example.com
 
@@ -255,25 +247,26 @@ class Confluence(clients.Confluence, ManagedService):
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
+    def __init__(self) -> None:
+        url = _get_credential('CONFLUENCE_URL')
         basic_auth = oauth = None
-        if _has_credentials(name, ('user', 'token'), env):
+        if _has_credentials('CONFLUENCE_USER', 'CONFLUENCE_TOKEN'):
             basic_auth = (
-                _get_credential(name, 'user', env),
-                _get_credential(name, 'token', env),
+                _get_credential('CONFLUENCE_USER'),
+                _get_credential('CONFLUENCE_TOKEN'),
             )
         if _has_credentials(
-            name,
-            ('keycert', 'consumerkey', 'accesstoken', 'accesssecret'),
-            env,
+            'CONFLUENCE_KEYCERT',
+            'CONFLUENCE_CONSUMERKEY',
+            'CONFLUENCE_ACCESSTOKEN',
+            'CONFLUENCE_ACCESSSECRET',
         ):
             oauth = {
-                'key_cert': _get_credential(name, 'keycert', env),
-                'consumer_key': _get_credential(name, 'consumerkey', env),
-                'access_token': _get_credential(name, 'accesstoken', env),
+                'key_cert': _get_credential('CONFLUENCE_KEYCERT'),
+                'consumer_key': _get_credential('CONFLUENCE_CONSUMERKEY'),
+                'access_token': _get_credential('CONFLUENCE_ACCESSTOKEN'),
                 'access_token_secret': _get_credential(
-                    name, 'accesssecret', env
+                    'CONFLUENCE_ACCESSSECRET'
                 ),
             }
         super().__init__(url, basic_auth=basic_auth, oauth=oauth)
@@ -316,35 +309,35 @@ class GitHub(clients.GitHub, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variables must exist:
 
-    - {NAME}_URL: a string
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - GITHUB_URL: a string
+    - GITHUB_USER: a string
+    - GITHUB_TOKEN: a string
 
-    It may also have a `{NAME}_MNGT` entry (a string).
+    The environment may also have a `GITHUB_MNGT` entry (a string).
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `GITHUB_URL` entry refers to the API entry point:
 
         https://github.example.com/api/v3/
 
-    The `{NAME}_MNGT` entry is the management entry point:
+    The `GITHUB_MNGT` entry is the management entry point:
 
         https://github.example.com/
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
-        user = _get_credential(name, 'user', env)
-        token = _get_credential(name, 'token', env)
+    def __init__(self) -> None:
+        url = _get_credential('GITHUB_URL')
+        user = _get_credential('GITHUB_USER')
+        token = _get_credential('GITHUB_TOKEN')
         mngt = None
-        if _has_credentials(name, ('mngt',), env):
-            mngt = _get_credential(name, 'mngt', env)
+        if _has_credentials('GITHUB_MNGT'):
+            mngt = _get_credential('GITHUB_MNGT')
         super().__init__(url, user, token, mngt)
 
     def get_internal_member_id(self, member_id: str) -> str:
@@ -385,65 +378,68 @@ class Kubernetes(clients.Kubernetes, Utility):
     Provides a default implementation for the following #::Utility
     method:
 
-    - `__init__(name, env)`
+    - `__init__()`
 
-    The `env` dictionary may be empty, in which case the current user's
-    `~/.kube/config` config file with its default context will be used.
+    The environment may contain none of the following `KUBERNETES_xxx`
+    entries, in which case the current user's `~/.kube/config` config
+    file with its default context will be used.
 
     Alternatively, it may contain some of the following entries:
 
-    - {NAME}_CONFIGFILE: a string (a fully qualified file name)
-    - {NAME}_CONTEXT: a string
+    - KUBERNETES_CONFIGFILE: a string (a fully qualified file name)
+    - KUBERNETES_CONTEXT: a string
 
-    - {NAME}_CONFIG_URL: a string (an URL)
-    - {NAME}_CONFIG_API_KEY: a string
-    - {NAME}_CONFIG_VERIFY: a string
-    - {NAME}_CONFIG_SSL_CA_CERT: a string (a base64-encoded certificate)
+    - KUBERNETES_CONFIG_URL: a string (an URL)
+    - KUBERNETES_CONFIG_API_KEY: a string
+    - KUBERNETES_CONFIG_VERIFY: a string
+    - KUBERNETES_CONFIG_SSL_CA_CERT: a string (a base64-encoded
+      certificate)
 
     # Reusing an existing config file
 
-    If `{NAME}_CONFIGFILE` and/or `{NAME}_CONTEXT` are present, there
-    must be no `{NAME}_CONFIG_xxx` entries.
+    If `KUBERNETES_CONFIGFILE` and/or `KUBERNETES_CONTEXT` are present,
+    there must be no `KUBERNETES_CONFIG_xxx` entries.
 
-    If `{NAME}_CONFIGFILE` is present, the specified config file
+    If `KUBERNETES_CONFIGFILE` is present, the specified config file
     will be used.  If not present, the default Kubernetes config file
     will be used (`~/.kube/config`, usually).
 
-    If `{NAME}_CONTEXT` is present, the instance will use the specified
-    Kubernetes context.  If not present, the default context will be
-    used instead.
+    If `KUBERNETES_CONTEXT` is present, the instance will use the
+    specified Kubernetes context.  If not present, the default context
+    will be used instead.
 
     # Specifying an explicit configuration (no config file needed)
 
-    If `{NAME}_CONFIG_xxx` entries are present, they provide an explicit
-    configuration.  The possibly existing `~/.kube/config` config file
-    will be ignored.
+    If `KUBERNETES_CONFIG_xxx` entries are present, they provide an
+    explicit configuration.  The possibly existing `~/.kube/config`
+    config file will be ignored.
 
-    In this case, `{NAME}_CONFIG_URL` is mandatory.  It is the top-level
-    API point.  E.g.:
+    In this case, `KUBERNETES_CONFIG_URL` is mandatory.  It is the
+    top-level API point.  E.g.:
 
         https://FOOBARBAZ.example.com
 
-    `{NAME}_CONFIG_API_KEY` is also mandatory.  It will typically be a
-    JWT token.
+    `KUBERNETES_CONFIG_API_KEY` is also mandatory.  It will typically be
+    a JWT token.
 
     The following two additional entries may be present:
 
-    `{NAME}_CONFIG_VERIFY` can be set to 'false' (case insensitive) if
-    disabling certificate checks for Kubernetes communication is
-    required.  Tons of warnigns will occur if this is set to 'false'.
+    `KUBERNETES_CONFIG_VERIFY` can be set to 'false' (case insensitive)
+    if disabling certificate checks for Kubernetes communication is
+    required.  Tons of warnings will occur if this is set to 'false'.
 
-    `{NAME}_CONFIG_SSL_CA_CERT` is a base64-encoded certificate.
+    `KUBERNETES_CONFIG_SSL_CA_CERT` is a base64-encoded certificate.
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        config_file = _maybe_get_credential(name, 'configfile', env)
-        context = _maybe_get_credential(name, 'context', env)
-        url = _maybe_get_credential(name, 'url', env)
-        api_key = _maybe_get_credential(name, 'api_key', env)
-        ssl_ca_cert = _maybe_get_credential(name, 'ssl_ca_cert', env)
-        verify = _maybe_get_credential(name, 'verify', env)
+    def __init__(self) -> None:
+        config_file = _maybe_get_credential('KUBERNETES_CONFIGFILE')
+        context = _maybe_get_credential('KUBERNETES_CONTEXT')
+        url = _maybe_get_credential('KUBERNETES_URL')
+        api_key = _maybe_get_credential('KUBERNETES_API_KEY')
+        ssl_ca_cert = _maybe_get_credential('KUBERNETES_SSL_CA_CERT')
+        verify = _maybe_get_credential('KUBERNETES_VERIFY')
+
         config: Optional[Dict[str, Any]] = None
         if config_file is None and context is None:
             if url and api_key:
@@ -465,27 +461,28 @@ class Jira(clients.Jira, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variable must exist:
 
-    - {NAME}_URL: a string
+    - JIRA_URL: a string
 
-    It also must have either the two following entries (basic auth):
+    The environment also must have either the two following entries
+    (basic auth):
 
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - JIRA_USER: a string
+    - JIRA_TOKEN: a string
 
     Or the four following entries (oauth):
 
-    - {NAME}_KEYCERT: a string
-    - {NAME}_CONSUMERKEY: a string
-    - {NAME}_ACCESSTOKEN: a string
-    - {NAME}_ACCESSSECRET: a string
+    - JIRA_KEYCERT: a string
+    - JIRA_CONSUMERKEY: a string
+    - JIRA_ACCESSTOKEN: a string
+    - JIRA_ACCESSSECRET: a string
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `JIRA_URL` entry refers to the API entry point:
 
         https://jira.example.com
 
@@ -494,26 +491,25 @@ class Jira(clients.Jira, ManagedService):
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
+    def __init__(self) -> None:
+        url = _get_credential('JIRA_URL')
         basic_auth = oauth = None
-        if _has_credentials(name, ('user', 'token'), env):
+        if _has_credentials('JIRA_USER', 'JIRA_TOKEN'):
             basic_auth = (
-                _get_credential(name, 'user', env),
-                _get_credential(name, 'token', env),
+                _get_credential('JIRA_USER'),
+                _get_credential('JIRA_TOKEN'),
             )
         if _has_credentials(
-            name,
-            ('keycert', 'consumerkey', 'accesstoken', 'accesssecret'),
-            env,
+            'JIRA_KEYCERT',
+            'JIRA_CONSUMERKEY',
+            'JIRA_ACCESSTOKEN',
+            'JIRA_ACCESSSECRET',
         ):
             oauth = {
-                'key_cert': _get_credential(name, 'keycert', env),
-                'consumer_key': _get_credential(name, 'consumerkey', env),
-                'access_token': _get_credential(name, 'accesstoken', env),
-                'access_token_secret': _get_credential(
-                    name, 'accesssecret', env
-                ),
+                'key_cert': _get_credential('JIRA_KEYCERT'),
+                'consumer_key': _get_credential('JIRA_CONSUMERKEY'),
+                'access_token': _get_credential('JIRA_ACCESSTOKEN'),
+                'access_token_secret': _get_credential('JIRA_ACCESSSECRET'),
             }
         super().__init__(url, basic_auth=basic_auth, oauth=oauth)
 
@@ -555,24 +551,24 @@ class SonarQube(clients.SonarQube, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variables must exist:
 
-    - {NAME}_URL: a string
-    - {NAME}_TOKEN: a string
+    - SONARQUBE_URL: a string
+    - SONARQUBE_TOKEN: a string
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `SONARQUBE_URL` entry refers to the API entry point:
 
         https://sonar.example.com/sonar/api/
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
-        token = _get_credential(name, 'token', env)
+    def __init__(self) -> None:
+        url = _get_credential('SONARQUBE_URL')
+        token = _get_credential('SONARQUBE_TOKEN')
         super().__init__(url, token)
 
     def get_internal_member_id(self, member_id: str) -> str:
@@ -615,26 +611,26 @@ class SquashTM(clients.SquashTM, ManagedService):
     Provides a default implementation for the following three
     #::ManagedService methods:
 
-    - `__init__(name, env)`
+    - `__init__()`
     - `list_members`
     - `get_member`
 
-    The `env` dictionary must have at least the following entries:
+    The following environment variables must exist:
 
-    - {NAME}_URL: a string
-    - {NAME}_USER: a string
-    - {NAME}_TOKEN: a string
+    - SQUASHTM_URL: a string
+    - SQUASHTM_USER: a string
+    - SQUASHTM_TOKEN: a string
 
-    The `{NAME}_URL` entry refers to the API entry point:
+    The `SQUASHTM_URL` entry refers to the API entry point:
 
         https://squash-tm.example.com/squash/api/rest/latest/
     """
 
     # pylint: disable=abstract-method
-    def __init__(self, name: str, env: Dict[str, Any]) -> None:
-        url = _get_credential(name, 'url', env)
-        user = _get_credential(name, 'user', env)
-        token = _get_credential(name, 'token', env)
+    def __init__(self) -> None:
+        url = _get_credential('SQUASHTM_URL')
+        user = _get_credential('SQUASHTM_USER')
+        token = _get_credential('SQUASHTM_TOKEN')
         super().__init__(url, user, token)
 
     def get_internal_member_id(self, member_id: str) -> int:

@@ -114,10 +114,7 @@ built-in clients classes (those defined in the **zabel.elements.clients**
 module).
 
 Those abstract image wrappers implement an `__init__()` constructor with
-the following two parameters:
-
-- `name`: a string, a name
-- `env`: a dictionary, the image parameters
+no parameter.
 
 Managed services also implement at least the `list_members()` method of
 the _ManagedService_ interface.  They may provide `get_member()` if a
