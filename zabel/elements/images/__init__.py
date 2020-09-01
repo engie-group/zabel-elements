@@ -51,12 +51,16 @@ from typing import Any, Dict, Iterable, Optional
 import json
 import os
 
+from bottle import Bottle, request, response
+
 from zabel.commons.utils import api_call
+from zabel.commons.servers import entrypoint, DEFAULT_HEADERS
 from zabel.commons.interfaces import ManagedService, Utility
 
 from zabel.elements import clients
 
 ########################################################################
+# Helpers
 
 
 def _get_credential(key: str,) -> str:
@@ -74,11 +78,72 @@ def _has_credentials(*keys) -> bool:
     return all(os.environ.get(key) for key in keys)
 
 
+def _read_server_params(args, host, port):
+    host = args[args.index('--host') + 1] if '--host' in args else host
+    port = int(args[args.index('--port') + 1]) if '--port' in args else port
+    return host, port
+
+
+class _ManagedService(ManagedService):
+    def __init__(self):
+        self.port = 8080
+        self.host = 'localhost'
+        self.app = None
+
+    def run(self, *args):
+        """Make a bottle app for instance.
+
+        # Required parameters
+
+        - instance
+        """
+
+        def wrap(handler, rbac: bool):
+            def inner(*args, **kwargs):
+                for header, value in DEFAULT_HEADERS.items():
+                    response.headers[header] = value
+                if rbac:
+                    try:
+                        user = self._ensure_authn()
+                    except ValueError as err:
+                        resp = err.args[0]
+                        response.status = resp['code']
+                        return resp
+                try:
+                    result = json.dumps(handler(*args, **kwargs))
+                    return result
+                except ValueError as err:
+                    resp = err.args[0]
+                    response.status = resp['code']
+                    return resp
+
+            return inner
+
+        self.app = Bottle()
+
+        for name in dir(self):
+            try:
+                method = getattr(self, name)
+                for endpoint in getattr(method, 'entrypoint routes', []):
+                    self.app.route(
+                        path=endpoint['path']
+                        .replace('{', '<')
+                        .replace('}', '>'),
+                        method=endpoint['methods'],
+                        callback=wrap(method, endpoint['rbac']),
+                    )
+            except Exception as err:
+                print('Failed to get process entry', err)
+
+        host, port = _read_server_params(args, host=self.host, port=self.port)
+        self.app.run(host=host, port=port)
+
+
 ########################################################################
 # Wrappers around low-level APIs
 
 
-class Artifactory(clients.Artifactory, ManagedService):
+class Artifactory(clients.Artifactory, _ManagedService):
     """Abstract base _Artifactory_ class.
 
     Provides a default implementation for the following three
@@ -107,12 +172,13 @@ class Artifactory(clients.Artifactory, ManagedService):
         url = _get_credential('ARTIFACTORY_URL')
         user = _get_credential('ARTIFACTORY_USER')
         token = _get_credential('ARTIFACTORY_TOKEN')
-        super().__init__(url, user, token)
+        clients.Artifactory.__init__(self, url, user, token)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
 
-    @api_call
+    @entrypoint('/v1/members', methods=['GET'], rbac=False)
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
@@ -126,7 +192,7 @@ class Artifactory(clients.Artifactory, ManagedService):
             for user in self.list_users_details()
         }
 
-    @api_call
+    @entrypoint('/v1/members/{member_id}', methods=['GET'], rbac=False)
     def get_member(self, member_id: str) -> Dict[str, Any]:
         """Return details on user.
 
@@ -144,7 +210,7 @@ class Artifactory(clients.Artifactory, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
+class CloudBeesJenkins(clients.CloudBeesJenkins, _ManagedService):
     """Abstract base _CloudBeesJenkins_ class.
 
     Provides a default implementation for the following three
@@ -175,7 +241,8 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
         cookies = None
         if _has_credentials('JENKINS_COOKIES'):
             cookies = json.loads(_get_credential('JENKINS_COOKIES'))
-        super().__init__(url, user, token, cookies)
+        clients.CloudBeesJenkins.__init__(self, url, user, token, cookies)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -211,7 +278,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
         return self.list_members()[member_id]
 
 
-class Confluence(clients.Confluence, ManagedService):
+class Confluence(clients.Confluence, _ManagedService):
     """Abstract base _Confluence_ class.
 
     Provides a default implementation for the following three
@@ -269,7 +336,10 @@ class Confluence(clients.Confluence, ManagedService):
                     'CONFLUENCE_ACCESSSECRET'
                 ),
             }
-        super().__init__(url, basic_auth=basic_auth, oauth=oauth)
+        clients.Confluence.__init__(
+            self, url, basic_auth=basic_auth, oauth=oauth
+        )
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -303,7 +373,7 @@ class Confluence(clients.Confluence, ManagedService):
         return self.get_user(member_id)
 
 
-class GitHub(clients.GitHub, ManagedService):
+class GitHub(clients.GitHub, _ManagedService):
     """Abstract base _GitHub_ class.
 
     Provides a default implementation for the following three
@@ -338,7 +408,8 @@ class GitHub(clients.GitHub, ManagedService):
         mngt = None
         if _has_credentials('GITHUB_MNGT'):
             mngt = _get_credential('GITHUB_MNGT')
-        super().__init__(url, user, token, mngt)
+        clients.GitHub.__init__(self, url, user, token, mngt)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -452,10 +523,11 @@ class Kubernetes(clients.Kubernetes, Utility):
                 raise ValueError('URL defined but no API_KEY specified.')
             elif api_key:
                 raise ValueError('API_KEY defined but no URL specifics.')
-        super().__init__(config_file, context, config)
+        clients.Kubernetes.__init__(self, config_file, context, config)
+        _ManagedService.__init__(self)
 
 
-class Jira(clients.Jira, ManagedService):
+class Jira(clients.Jira, _ManagedService):
     """Abstract base _Jira_ class.
 
     Provides a default implementation for the following three
@@ -511,7 +583,8 @@ class Jira(clients.Jira, ManagedService):
                 'access_token': _get_credential('JIRA_ACCESSTOKEN'),
                 'access_token_secret': _get_credential('JIRA_ACCESSSECRET'),
             }
-        super().__init__(url, basic_auth=basic_auth, oauth=oauth)
+        clients.Jira.__init__(self, url, basic_auth=basic_auth, oauth=oauth)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -545,7 +618,7 @@ class Jira(clients.Jira, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SonarQube(clients.SonarQube, ManagedService):
+class SonarQube(clients.SonarQube, _ManagedService):
     """Abstract base _SonarQube_ class.
 
     Provides a default implementation for the following three
@@ -569,7 +642,8 @@ class SonarQube(clients.SonarQube, ManagedService):
     def __init__(self) -> None:
         url = _get_credential('SONARQUBE_URL')
         token = _get_credential('SONARQUBE_TOKEN')
-        super().__init__(url, token)
+        clients.SonarQube.__init__(self, url, token)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
@@ -605,7 +679,7 @@ class SonarQube(clients.SonarQube, ManagedService):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SquashTM(clients.SquashTM, ManagedService):
+class SquashTM(clients.SquashTM, _ManagedService):
     """Abstract base _SquashTM_ class.
 
     Provides a default implementation for the following three
@@ -631,7 +705,8 @@ class SquashTM(clients.SquashTM, ManagedService):
         url = _get_credential('SQUASHTM_URL')
         user = _get_credential('SQUASHTM_USER')
         token = _get_credential('SQUASHTM_TOKEN')
-        super().__init__(url, user, token)
+        clients.SquashTM.__init__(self, url, user, token)
+        _ManagedService.__init__(self)
 
     def get_internal_member_id(self, member_id: str) -> int:
         raise NotImplementedError
