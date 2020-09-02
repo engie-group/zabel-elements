@@ -82,7 +82,7 @@ def _read_server_params(args, host, port):
     return host, port
 
 
-class BasicServer:
+class BasicServerImpl:
     def run(self, *args):
         """Make a bottle app for instance.
 
@@ -121,18 +121,21 @@ class BasicServer:
         self.app = Bottle()
 
         for name in dir(self):
-            try:
-                method = getattr(self, name)
-                for endpoint in getattr(method, 'entrypoint routes', []):
-                    self.app.route(
-                        path=endpoint['path']
-                        .replace('{', '<')
-                        .replace('}', '>'),
-                        method=endpoint['methods'],
-                        callback=wrap(method, endpoint['rbac']),
-                    )
-            except Exception as err:
-                print('Failed to get process entry', err)
+            method = getattr(self, name, None)
+            if method:
+                # The 'entrypoint routes' attr may be on a super method
+                sms = [getattr(c, name, None) for c in self.__class__.mro()]
+                eps = [getattr(m, 'entrypoint routes', None) for m in sms]
+                first = next((epr for epr in eps if epr), None)
+                if first:
+                    for endpoint in first:
+                        self.app.route(
+                            path=endpoint['path']
+                            .replace('{', '<')
+                            .replace('}', '>'),
+                            method=endpoint['methods'],
+                            callback=wrap(method, endpoint['rbac']),
+                        )
 
         host, port = _read_server_params(args, host=self.host, port=self.port)
         self.app.run(host=host, port=port)
@@ -142,7 +145,7 @@ class BasicServer:
 # Wrappers around low-level APIs
 
 
-class Artifactory(clients.Artifactory, ManagedService, BasicServer):
+class Artifactory(clients.Artifactory, ManagedService, BasicServerImpl):
     """Abstract base _Artifactory_ class.
 
     Provides a default implementation for the following three
@@ -208,7 +211,9 @@ class Artifactory(clients.Artifactory, ManagedService, BasicServer):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService, BasicServer):
+class CloudBeesJenkins(
+    clients.CloudBeesJenkins, ManagedService, BasicServerImpl
+):
     """Abstract base _CloudBeesJenkins_ class.
 
     Provides a default implementation for the following three
@@ -275,7 +280,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService, BasicServer):
         return self.list_members()[member_id]
 
 
-class Confluence(clients.Confluence, ManagedService, BasicServer):
+class Confluence(clients.Confluence, ManagedService, BasicServerImpl):
     """Abstract base _Confluence_ class.
 
     Provides a default implementation for the following three
@@ -367,7 +372,7 @@ class Confluence(clients.Confluence, ManagedService, BasicServer):
         return self.get_user(member_id)
 
 
-class GitHub(clients.GitHub, ManagedService, BasicServer):
+class GitHub(clients.GitHub, ManagedService, BasicServerImpl):
     """Abstract base _GitHub_ class.
 
     Provides a default implementation for the following three
@@ -436,7 +441,7 @@ class GitHub(clients.GitHub, ManagedService, BasicServer):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class Kubernetes(clients.Kubernetes, Utility, BasicServer):
+class Kubernetes(clients.Kubernetes, Utility, BasicServerImpl):
     """Abstract base _Kubernetes_ class.
 
     Provides a default implementation for the following #::Utility
@@ -519,7 +524,7 @@ class Kubernetes(clients.Kubernetes, Utility, BasicServer):
         super().__init__(config_file, context, config)
 
 
-class Jira(clients.Jira, ManagedService, BasicServer):
+class Jira(clients.Jira, ManagedService, BasicServerImpl):
     """Abstract base _Jira_ class.
 
     Provides a default implementation for the following three
@@ -609,7 +614,7 @@ class Jira(clients.Jira, ManagedService, BasicServer):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SonarQube(clients.SonarQube, ManagedService, BasicServer):
+class SonarQube(clients.SonarQube, ManagedService, BasicServerImpl):
     """Abstract base _SonarQube_ class.
 
     Provides a default implementation for the following three
@@ -669,7 +674,7 @@ class SonarQube(clients.SonarQube, ManagedService, BasicServer):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SquashTM(clients.SquashTM, ManagedService, BasicServer):
+class SquashTM(clients.SquashTM, ManagedService, BasicServerImpl):
     """Abstract base _SquashTM_ class.
 
     Provides a default implementation for the following three
