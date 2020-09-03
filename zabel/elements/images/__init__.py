@@ -52,7 +52,7 @@ import json
 import os
 
 from zabel.commons.utils import api_call
-from zabel.commons.servers import entrypoint, DEFAULT_HEADERS
+from zabel.commons.servers import DEFAULT_HEADERS
 from zabel.commons.interfaces import ManagedService, Utility
 
 from zabel.elements import clients
@@ -90,7 +90,7 @@ class BasicServerImpl:
 
         - instance
         """
-        from bottle import Bottle, response
+        from bottle import Bottle, request, response
 
         def wrap(handler, rbac: bool):
             def inner(*args, **kwargs):
@@ -103,6 +103,8 @@ class BasicServerImpl:
                         resp = err.args[0]
                         response.status = resp['code']
                         return resp
+                if request.json:
+                    kwargs['body'] = request.json
                 try:
                     result = json.dumps(handler(*args, **kwargs))
                     return result
@@ -126,16 +128,12 @@ class BasicServerImpl:
                 # The 'entrypoint routes' attr may be on a super method
                 sms = [getattr(c, name, None) for c in self.__class__.mro()]
                 eps = [getattr(m, 'entrypoint routes', None) for m in sms]
-                first = next((epr for epr in eps if epr), None)
-                if first:
-                    for endpoint in first:
-                        self.app.route(
-                            path=endpoint['path']
-                            .replace('{', '<')
-                            .replace('}', '>'),
-                            method=endpoint['methods'],
-                            callback=wrap(method, endpoint['rbac']),
-                        )
+                for route in next((routes for routes in eps if routes), []):
+                    self.app.route(
+                        path=route['path'].replace('{', '<').replace('}', '>'),
+                        method=route['methods'],
+                        callback=wrap(method, route['rbac']),
+                    )
 
         host, port = _read_server_params(args, host=self.host, port=self.port)
         self.app.run(host=host, port=port)
@@ -179,7 +177,7 @@ class Artifactory(clients.Artifactory, ManagedService, BasicServerImpl):
     def get_internal_member_id(self, member_id: str) -> str:
         raise NotImplementedError
 
-    @entrypoint('/v1/members', methods=['GET'], rbac=False)
+    @api_call
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
@@ -193,7 +191,7 @@ class Artifactory(clients.Artifactory, ManagedService, BasicServerImpl):
             for user in self.list_users_details()
         }
 
-    @entrypoint('/v1/members/{member_id}', methods=['GET'], rbac=False)
+    @api_call
     def get_member(self, member_id: str) -> Dict[str, Any]:
         """Return details on user.
 
