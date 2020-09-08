@@ -83,12 +83,71 @@ def _read_server_params(args, host, port):
 
 
 class BasicServerImpl:
+    """Basic Server Implementation.
+
+    All _Service_ images are expected to expose some entrypoints and
+    make them available through a web server.
+
+    This class provides a default implementation of such a server and
+    exposes the defined entrypoints.
+
+    It add one method, `run()` that takes any number of string
+    arguments.  It starts a web server on the host and port provided
+    via `--host` and `--port` arguments, or, if not specified, via the
+    `host` and `port` instance attributes, or `localhost` on port 8080
+    if none of the above are available:
+
+    ```python
+    # Explicit host and port
+    foo.run('--host', '0.0.0.0', '--port', 80)
+
+    # Explicit host, default port (8080)
+    foo.run('--host', '192.168.12.34')
+
+    # Host specified for the object, default port (8080)
+    foo.host = '10.0.0.1'
+    foo.run()
+
+    # Default host and port (localhost:8080)
+    foo.run()
+    ```
+
+    The exposed entrypoints are those defined on all instance members.
+    The entrypoint definitions are inherited (i.e., you don't have to
+    redefine them if they are already defined).
+
+    ```python
+    class Foo(BasicServerImpl):
+        @entrypoint('/foo/bar')
+        def get_bar():
+            ...
+
+    class FooBar(Foo):
+        def get_bar():
+            return 'foobar.get_bar'
+
+    FooBar().run()  # curl localhost:8080/foo/bar -> foobar.get_bar
+    ```
+
+    **Note**: The web server is implemented by Bottle.  If you prefer or
+    need to use another wsgi server, simple override the `run()` method
+    in your class.  Your class will then have no dependency with Bottle.
+    """
+
     def run(self, *args):
-        """Make a bottle app for instance.
+        """Start a bottle app for instance.
 
-        # Required parameters
+        # Optional parameters
 
-        - instance
+        An series of strings.  See class definition for more details.
+
+        # Returned value
+
+        Does not return.
+
+        # Raised exception
+
+        If the server thread dies, dumps the stack trace on stdout.
         """
         from bottle import Bottle, request, response
 
@@ -136,7 +195,10 @@ class BasicServerImpl:
                     )
 
         host, port = _read_server_params(args, host=self.host, port=self.port)
-        self.app.run(host=host, port=port)
+        try:
+            self.app.run(host=host, port=port)
+        except Exception as err:
+            print(err)
 
 
 ########################################################################
