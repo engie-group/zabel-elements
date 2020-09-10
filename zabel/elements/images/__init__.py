@@ -85,7 +85,7 @@ def _read_server_params(args, host, port):
 class BasicServerImpl:
     """Basic Server Implementation.
 
-    All _Service_ images are expected to expose some entrypoints and
+    All _BaseService_ images are expected to expose some entrypoints and
     make them available through a web server.
 
     This class provides a default implementation of such a server and
@@ -99,7 +99,7 @@ class BasicServerImpl:
 
     ```python
     # Explicit host and port
-    foo.run('--host', '0.0.0.0', '--port', 80)
+    foo.run('--host', '0.0.0.0', '--port', '80')
 
     # Explicit host, default port (8080)
     foo.run('--host', '192.168.12.34')
@@ -129,9 +129,14 @@ class BasicServerImpl:
     FooBar().run()  # curl localhost:8080/foo/bar -> foobar.get_bar
     ```
 
-    **Note**: The web server is implemented by Bottle.  If you prefer or
-    need to use another wsgi server, simple override the `run()` method
-    in your class.  Your class will then have no dependency with Bottle.
+    **Note**: You can redefine the entrypoint attached to a method.
+    Simply add a new `@entrypoint` decorator to the method.  And, if
+    you want to disable the entrypoint, use `[]` as the path.
+
+    **Note**: The web server is implemented using Bottle.  If you prefer
+    or need to use another wsgi server, simple override the `run()`
+    method in your class.  Your class will then have no dependency on
+    Bottle.
     """
 
     def run(self, *args):
@@ -139,15 +144,12 @@ class BasicServerImpl:
 
         # Optional parameters
 
-        An series of strings.  See class definition for more details.
+        - *args: strings.  See class definition for more details.
 
         # Returned value
 
-        Does not return.
-
-        # Raised exception
-
-        If the server thread dies, dumps the stack trace on stdout.
+        If the server thread dies, returns the exception.  Does not
+        return otherwise.
         """
         from bottle import Bottle, request, response
 
@@ -198,7 +200,7 @@ class BasicServerImpl:
         try:
             self.app.run(host=host, port=port)
         except Exception as err:
-            print(err)
+            return err
 
 
 ########################################################################
