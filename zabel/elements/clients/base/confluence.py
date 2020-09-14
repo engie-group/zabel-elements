@@ -17,7 +17,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
 
@@ -89,6 +89,7 @@ class Confluence:
         url: str,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
+        verify: bool = True,
     ) -> None:
         """Create a Confluence instance object.
 
@@ -106,6 +107,14 @@ class Confluence:
         - url: a non-empty string
         - basic_auth: a string tuple (user, token)
         - oauth: a dictionary
+
+        # Optional parameters
+
+        - verify: a boolean (True by default)
+
+        `verify` can be set to False if disabling certificate checks for
+        Confluence communication is required.  Tons of warnings will
+        occur if this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_onlyone('basic_auth', 'oauth')
@@ -115,6 +124,7 @@ class Confluence:
         self.url = url
         self.basic_auth = basic_auth
         self.oauth = oauth
+        self.verify = verify
 
         if basic_auth is not None:
             self.auth = basic_auth
@@ -131,7 +141,7 @@ class Confluence:
                 rsa_key=oauth['key_cert'],
                 signature_type='auth_header',
             )
-        self.session = prepare_session(self.auth)
+        self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
         return '{self.__class__.__name__}: {self.url}'

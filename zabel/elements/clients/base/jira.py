@@ -141,6 +141,7 @@ class Jira:
         url: str,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
+        verify: bool = True,
     ) -> None:
         """Create a Jira instance object.
 
@@ -159,6 +160,14 @@ class Jira:
         - access_token_secret: a string
         - consumer_key: a string
         - key_cert: a string
+
+        # Optional parameters
+
+        - verify: a boolean (True by default)
+
+        `verify` can be set to False if disabling certificate checks for
+        Jira communication is required.  Tons of warnings will occur if
+        this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_onlyone('basic_auth', 'oauth')
@@ -186,6 +195,7 @@ class Jira:
             )
 
         self.client = None
+        self.verify = verify
         self.UPM_BASE_URL = join_url(url, 'rest/plugins/1.0/')
         self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
         self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
@@ -207,7 +217,11 @@ class Jira:
             from jira import JIRA
 
             self.client = JIRA(
-                options={'server': self.url, 'agile_rest_path': 'agile'},
+                options={
+                    'server': self.url,
+                    'agile_rest_path': 'agile',
+                    'verify': self.verify,
+                },
                 basic_auth=self.basic_auth,
                 oauth=self.oauth,
             )
@@ -1032,7 +1046,9 @@ class Jira:
             scheme_id = str(scheme_id_or_name)
 
         requests.delete(
-            self._get_url(f'workflowscheme/{scheme_id}'), auth=self.auth
+            self._get_url(f'workflowscheme/{scheme_id}'),
+            auth=self.auth,
+            verify=self.verify,
         )
 
     ####################################################################
@@ -1140,6 +1156,7 @@ class Jira:
         result = requests.get(
             join_url(self.url, '/secure/project/BrowseProjects.jspa'),
             auth=self.auth,
+            verify=self.verify,
         )
         upd = result.text.split(
             'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
@@ -1573,7 +1590,9 @@ class Jira:
             pss = [
                 ps['id']
                 for ps in requests.get(
-                    self._get_url('priorityschemes'), auth=self.auth
+                    self._get_url('priorityschemes'),
+                    auth=self.auth,
+                    verify=self.verify,
                 ).json()['schemes']
                 if ps['name'] == scheme_id_or_name
             ]
@@ -1871,6 +1890,7 @@ class Jira:
             ),
             json={'url': url, 'name': description, 'icon': ''},
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2502,7 +2522,10 @@ class Jira:
 
         data = {'name': board_name, 'type': board_type, 'filterId': filter_id}
         result = requests.post(
-            join_url(self.AGILE_BASE_URL, 'board'), json=data, auth=self.auth
+            join_url(self.AGILE_BASE_URL, 'board'),
+            json=data,
+            auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2526,7 +2549,9 @@ class Jira:
         ensure_instance('board_id', int)
 
         result = requests.delete(
-            join_url(self.AGILE_BASE_URL, f'board/{board_id}'), auth=self.auth,
+            join_url(self.AGILE_BASE_URL, f'board/{board_id}'),
+            auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2574,6 +2599,7 @@ class Jira:
             join_url(self.GREENHOPPER_BASE_URL, 'rapidviewconfig/editmodel'),
             params={'rapidViewId': board_id},
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2622,6 +2648,7 @@ class Jira:
             join_url(self.GREENHOPPER_BASE_URL, 'rapidviewconfig/boardadmins'),
             json={'id': board_id, 'boardAdmins': board_admins},
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2714,6 +2741,7 @@ class Jira:
                 'mappedColumns': columns_definitions,
             },
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -2746,6 +2774,7 @@ class Jira:
             ),
             json={'rapidViewId': board_id, 'showDaysInColumn': days_in_column},
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -3225,6 +3254,7 @@ class Jira:
                 'requestFieldValues': fields,
             },
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -3273,6 +3303,7 @@ class Jira:
             ),
             params=params,
             auth=self.auth,
+            verify=self.verify,
         )
         return response  # type: ignore
 
@@ -3330,6 +3361,7 @@ class Jira:
             ),
             json={'body': body, 'public': public},
             auth=self.auth,
+            verify=self.verify,
         )
         return result  # type: ignore
 
@@ -3443,9 +3475,9 @@ class Jira:
 
         Not all entries are present for all plugins.
         """
-        return requests.get(self.UPM_BASE_URL, auth=self.auth).json()[
-            'plugins'
-        ]
+        return requests.get(
+            self.UPM_BASE_URL, auth=self.auth, verify=self.verify
+        ).json()['plugins']
 
     @api_call
     def get_server_info(self, do_health_check: bool = False) -> Dict[str, Any]:
@@ -3566,14 +3598,19 @@ class Jira:
         ] = None,
     ) -> requests.Response:
         return requests.get(
-            join_url(self.url, uri), params=params, auth=self.auth
+            join_url(self.url, uri),
+            params=params,
+            auth=self.auth,
+            verify=self.verify,
         )
 
     def _post(
         self, api: str, json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
         api_url = self._get_url(api)
-        return requests.post(api_url, json=json, auth=self.auth)
+        return requests.post(
+            api_url, json=json, auth=self.auth, verify=self.verify
+        )
 
     def _collect_data(
         self,
@@ -3591,6 +3628,7 @@ class Jira:
         with requests.Session() as session:
             session.auth = self.auth
             session.headers = headers  # type: ignore
+            session.verify = self.verify
             while more:
                 response = session.get(api_url, params=_params)
                 if response.status_code // 100 != 2:
@@ -3669,6 +3707,7 @@ class Jira:
             },
             cookies=cookies,
             auth=self.auth,
+            verify=self.verify,
         )
 
     def _get_projectconfig_scheme(

@@ -79,6 +79,7 @@ class CloudBeesJenkins:
         user: str,
         token: str,
         cookies: Optional[Dict[str, str]] = None,
+        verify: bool = True,
     ) -> None:
         """Create a CloudBeesJenkins instance object.
 
@@ -89,13 +90,18 @@ class CloudBeesJenkins:
         - user: a string, the account used to access the API
         - token: a string, the token used to access the API
 
-        # Optional parameters
-
-        - cookies: a dictionary or None (None by default)
-
         Sample `url` value:
 
         `'https://pse.example.com'`
+
+        # Optional parameters
+
+        - cookies: a dictionary or None (None by default)
+        - verify: a boolean (True by default)
+
+        `verify` can be set to False if disabling certificate checks for
+        Jenkins communication is required.  Tons of warnings will occur
+        if this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_instance('user', str)
@@ -105,10 +111,11 @@ class CloudBeesJenkins:
         self.url = url
         self.auth = (user, token)
         self.cookies = cookies
+        self.verify = verify
         self.crumb: Optional[Dict[str, str]] = None
         self.crumb_master: Optional[str] = None
         self._endpoints: Dict[str, str] = {}
-        self.session = prepare_session(self.auth, self.cookies)
+        self.session = prepare_session(self.auth, self.cookies, verify=verify)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'

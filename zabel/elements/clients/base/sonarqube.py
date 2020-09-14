@@ -127,8 +127,11 @@ class SonarQube:
     ```
     """
 
-    def __init__(self, url: str, token: str) -> None:
+    def __init__(self, url: str, token: str, verify: bool = True,) -> None:
         """Create a SonarQube instance object.
+
+        If a required operation is not allowed for the specified token,
+        an _ApiError_ will be raised.
 
         # Required parameters
 
@@ -138,15 +141,21 @@ class SonarQube:
         The `url` parameter is the top-level API point. E.g.,
         `https://sonar.example.com/sonar/api/`
 
-        If a required operation is not allowed for the specified token,
-        an _ApiError_ will be raised.
+        # Optional parameters
+
+        - verify: a boolean (True by default)
+
+        `verify` can be set to False if disabling certificate checks for
+        SonarQube communication is required.  Tons of warnings will
+        occur if this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_instance('token', str)
 
         self.url = url
         self.auth = (token, '')
-        self.session = prepare_session(self.auth)
+        self.verify = verify
+        self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'

@@ -83,6 +83,7 @@ class GitHub:
         user: str,
         token: str,
         management_url: Optional[str] = None,
+        verify: bool = True,
     ) -> None:
         """Create a GitHub instance object.
 
@@ -99,6 +100,11 @@ class GitHub:
 
         - management_url: a non-empty string or None (None by
           default)
+        - verify: a boolean (True by default)
+
+        `verify` can be set to False if disabling certificate checks for
+        GitHub communication is required.  Tons of warnings will occur
+        if this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_instance('user', str)
@@ -108,7 +114,8 @@ class GitHub:
         self.url = url
         self.auth = (user, token)
         self.management_url = management_url
-        self.session = prepare_session(self.auth)
+        self.verify = verify
+        self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
