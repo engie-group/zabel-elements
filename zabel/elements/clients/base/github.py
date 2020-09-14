@@ -425,7 +425,9 @@ class GitHub:
         ensure_nonemptystring('login')
         ensure_in('role', ('all', 'member', 'admin'))
 
-        return self._collect_data(f'orgs/{login}/members')
+        return self._collect_data(
+            f'orgs/{login}/members', params={'role': role}
+        )
 
     @api_call
     def list_organization_outsidecollaborators(
