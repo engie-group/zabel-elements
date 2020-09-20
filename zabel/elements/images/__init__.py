@@ -52,7 +52,6 @@ import json
 import os
 
 from zabel.commons.utils import api_call
-from zabel.commons.servers import DEFAULT_HEADERS
 from zabel.commons.interfaces import ManagedService, Utility
 
 from zabel.elements import clients
