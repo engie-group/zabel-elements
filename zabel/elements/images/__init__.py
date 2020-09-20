@@ -76,138 +76,11 @@ def _has_credentials(*keys) -> bool:
     return all(os.environ.get(key) for key in keys)
 
 
-def _read_server_params(args, host, port):
-    host = args[args.index('--host') + 1] if '--host' in args else host
-    port = int(args[args.index('--port') + 1]) if '--port' in args else port
-    return host, port
-
-
-class BasicServerImpl:
-    """Basic Server Implementation.
-
-    All _BaseService_ images are expected to expose some entrypoints and
-    make them available through a web server.
-
-    This class provides a default implementation of such a server and
-    exposes the defined entrypoints.
-
-    It add one method, `run()` that takes any number of string
-    arguments.  It starts a web server on the host and port provided
-    via `--host` and `--port` arguments, or, if not specified, via the
-    `host` and `port` instance attributes, or `localhost` on port 8080
-    if none of the above are available:
-
-    ```python
-    # Explicit host and port
-    foo.run('--host', '0.0.0.0', '--port', '80')
-
-    # Explicit host, default port (8080)
-    foo.run('--host', '192.168.12.34')
-
-    # Host specified for the object, default port (8080)
-    foo.host = '10.0.0.1'
-    foo.run()
-
-    # Default host and port (localhost:8080)
-    foo.run()
-    ```
-
-    The exposed entrypoints are those defined on all instance members.
-    The entrypoint definitions are inherited (i.e., you don't have to
-    redefine them if they are already defined).
-
-    ```python
-    class Foo(BasicServerImpl):
-        @entrypoint('/foo/bar')
-        def get_bar():
-            ...
-
-    class FooBar(Foo):
-        def get_bar():
-            return 'foobar.get_bar'
-
-    FooBar().run()  # curl localhost:8080/foo/bar -> foobar.get_bar
-    ```
-
-    **Note**: You can redefine the entrypoint attached to a method.
-    Simply add a new `@entrypoint` decorator to the method.  And, if
-    you want to disable the entrypoint, use `[]` as the path.
-
-    **Note**: The web server is implemented using Bottle.  If you prefer
-    or need to use another wsgi server, simple override the `run()`
-    method in your class.  Your class will then have no dependency on
-    Bottle.
-    """
-
-    def run(self, *args):
-        """Start a bottle app for instance.
-
-        # Optional parameters
-
-        - *args: strings.  See class definition for more details.
-
-        # Returned value
-
-        If the server thread dies, returns the exception.  Does not
-        return otherwise.
-        """
-        from bottle import Bottle, request, response
-
-        def wrap(handler, rbac: bool):
-            def inner(*args, **kwargs):
-                for header, value in DEFAULT_HEADERS.items():
-                    response.headers[header] = value
-                if rbac:
-                    try:
-                        user = self._ensure_authn()
-                    except ValueError as err:
-                        resp = err.args[0]
-                        response.status = resp['code']
-                        return resp
-                if request.json:
-                    kwargs['body'] = request.json
-                try:
-                    result = json.dumps(handler(*args, **kwargs))
-                    return result
-                except ValueError as err:
-                    resp = err.args[0]
-                    response.status = resp['code']
-                    return resp
-
-            return inner
-
-        if not hasattr(self, 'port'):
-            self.port = 8080
-        if not hasattr(self, 'localhost'):
-            self.host = 'localhost'
-
-        self.app = Bottle()
-
-        for name in dir(self):
-            method = getattr(self, name, None)
-            if method:
-                # The 'entrypoint routes' attr may be on a super method
-                sms = [getattr(c, name, None) for c in self.__class__.mro()]
-                eps = [getattr(m, 'entrypoint routes', None) for m in sms]
-                for route in next((routes for routes in eps if routes), []):
-                    self.app.route(
-                        path=route['path'].replace('{', '<').replace('}', '>'),
-                        method=route['methods'],
-                        callback=wrap(method, route['rbac']),
-                    )
-
-        host, port = _read_server_params(args, host=self.host, port=self.port)
-        try:
-            self.app.run(host=host, port=port)
-        except Exception as err:
-            return err
-
-
 ########################################################################
 # Wrappers around low-level APIs
 
 
-class Artifactory(clients.Artifactory, ManagedService, BasicServerImpl):
+class Artifactory(clients.Artifactory, ManagedService):
     """Abstract base _Artifactory_ class.
 
     Provides a default implementation for the following three
@@ -273,9 +146,7 @@ class Artifactory(clients.Artifactory, ManagedService, BasicServerImpl):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class CloudBeesJenkins(
-    clients.CloudBeesJenkins, ManagedService, BasicServerImpl
-):
+class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
     """Abstract base _CloudBeesJenkins_ class.
 
     Provides a default implementation for the following three
@@ -342,7 +213,7 @@ class CloudBeesJenkins(
         return self.list_members()[member_id]
 
 
-class Confluence(clients.Confluence, ManagedService, BasicServerImpl):
+class Confluence(clients.Confluence, ManagedService):
     """Abstract base _Confluence_ class.
 
     Provides a default implementation for the following three
@@ -434,7 +305,7 @@ class Confluence(clients.Confluence, ManagedService, BasicServerImpl):
         return self.get_user(member_id)
 
 
-class GitHub(clients.GitHub, ManagedService, BasicServerImpl):
+class GitHub(clients.GitHub, ManagedService):
     """Abstract base _GitHub_ class.
 
     Provides a default implementation for the following three
@@ -503,7 +374,7 @@ class GitHub(clients.GitHub, ManagedService, BasicServerImpl):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class Kubernetes(clients.Kubernetes, Utility, BasicServerImpl):
+class Kubernetes(clients.Kubernetes, Utility):
     """Abstract base _Kubernetes_ class.
 
     Provides a default implementation for the following #::Utility
@@ -586,7 +457,7 @@ class Kubernetes(clients.Kubernetes, Utility, BasicServerImpl):
         super().__init__(config_file, context, config)
 
 
-class Jira(clients.Jira, ManagedService, BasicServerImpl):
+class Jira(clients.Jira, ManagedService):
     """Abstract base _Jira_ class.
 
     Provides a default implementation for the following three
@@ -676,7 +547,7 @@ class Jira(clients.Jira, ManagedService, BasicServerImpl):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SonarQube(clients.SonarQube, ManagedService, BasicServerImpl):
+class SonarQube(clients.SonarQube, ManagedService):
     """Abstract base _SonarQube_ class.
 
     Provides a default implementation for the following three
@@ -736,7 +607,7 @@ class SonarQube(clients.SonarQube, ManagedService, BasicServerImpl):
         return self.get_user(self.get_internal_member_id(member_id))
 
 
-class SquashTM(clients.SquashTM, ManagedService, BasicServerImpl):
+class SquashTM(clients.SquashTM, ManagedService):
     """Abstract base _SquashTM_ class.
 
     Provides a default implementation for the following three
