@@ -127,7 +127,7 @@ class SonarQube:
     ```
     """
 
-    def __init__(self, url: str, token: str, verify: bool = True,) -> None:
+    def __init__(self, url: str, token: str, verify: bool = True) -> None:
         """Create a SonarQube instance object.
 
         If a required operation is not allowed for the specified token,

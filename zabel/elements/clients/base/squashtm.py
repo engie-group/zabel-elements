@@ -1170,9 +1170,9 @@ class SquashTM:
             ) from None
 
         # no '_embedded' part of 'totalElements' is zero.
-        values: List[Any] = req['_embedded'][key] if req['page'][
-            'totalElements'
-        ] else []
+        values: List[Any] = (
+            req['_embedded'][key] if req['page']['totalElements'] else []
+        )
         while 'page' in req and len(values) < req['page']['totalElements']:
             page += 1
             req = self._get(f'{api}?size={page_size}&page={page}').json()

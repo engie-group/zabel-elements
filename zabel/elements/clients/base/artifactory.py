@@ -1556,7 +1556,7 @@ class Artifactory:
         api_url = join_url(self.url, api)
         return requests.get(api_url, auth=auth)
 
-    def _post2(self, api: str, auth: Tuple[str, str],) -> requests.Response:
+    def _post2(self, api: str, auth: Tuple[str, str]) -> requests.Response:
         """Return artifactory api call results w/ auth."""
         api_url = join_url(self.url, api)
         return requests.post(api_url, auth=auth)

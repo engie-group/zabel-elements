@@ -60,7 +60,7 @@ from zabel.elements import clients
 # Helpers
 
 
-def _get_credential(key: str,) -> str:
+def _get_credential(key: str) -> str:
     value = os.environ.get(key)
     if value is None:
         raise ValueError(f'Environment variable {key} not defined.')

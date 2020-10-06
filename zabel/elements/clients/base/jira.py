@@ -3605,7 +3605,7 @@ class Jira:
         )
 
     def _post(
-        self, api: str, json: Optional[Mapping[str, Any]] = None,
+        self, api: str, json: Optional[Mapping[str, Any]] = None
     ) -> requests.Response:
         api_url = self._get_url(api)
         return requests.post(
