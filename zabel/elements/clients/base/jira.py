@@ -3153,11 +3153,11 @@ class Jira:
     ####################################################################
     # JIRA sprints
     #
-    # TEST create_sprint
+    # create_sprint
     # TODO delete_sprint
-    # TODO update_sprint
+    # update_sprint
     # TODO get_sprint
-    # TEST add_sprint_issues
+    # add_sprint_issues
     # TODO get_sprint_issues
 
     @api_call
@@ -3188,6 +3188,60 @@ class Jira:
             self._client()
             .create_sprint(name, board_id, start_date, end_date)
             .raw
+        )
+
+    @api_call
+    def update_sprint(
+        self,
+        sprint_id: int,
+        name: Optional[str] = None,
+        state: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        complete_date: Optional[str] = None,
+        origin_board_id: Optional[int] = None,
+        goal: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Update existing sprint.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Optional parameters
+
+        - name
+        - state
+        - start_date
+        - end_date
+        - complete_date
+        - origin_board_id
+        - goal
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_instance('sprint_id', int)
+        ensure_noneorinstance('name', str)
+        ensure_noneorinstance('state', str)
+        ensure_noneorinstance('start_date', str)
+        ensure_noneorinstance('end_date', str)
+        ensure_noneorinstance('complete_date', str)
+        ensure_noneorinstance('origin_board_id', int)
+        ensure_noneorinstance('goal', str)
+
+        scheme = {'id': sprint_id}
+        add_if_specified(scheme, 'name', name)
+        add_if_specified(scheme, 'state', state)
+        add_if_specified(scheme, 'startDate', start_date)
+        add_if_specified(scheme, 'endDate', end_date)
+        add_if_specified(scheme, 'completeDate', complete_date)
+        add_if_specified(scheme, 'originBoardId', origin_board_id)
+        add_if_specified(scheme, 'goal', goal)
+
+        result = self.session().post(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}'), json=scheme
         )
 
     @api_call
