@@ -39,6 +39,15 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 
+# Helpers
+
+
+def _get_atl_token(html: str) -> str:
+    atl_token = html[html.find('"atl_token"') :]
+    atl_token = atl_token[atl_token.find('value="') + 7 :]
+    return atl_token[: atl_token.find('"')]
+
+
 # Confluence Jenkins low-level api
 
 CONTENT_TYPES = ['page', 'blogpost', 'comment', 'attachment']
@@ -120,6 +129,7 @@ class Confluence:
         ensure_onlyone('basic_auth', 'oauth')
         ensure_noneorinstance('basic_auth', tuple)
         ensure_noneorinstance('oauth', dict)
+        ensure_instance('verify', bool)
 
         self.url = url
         self.basic_auth = basic_auth
@@ -218,6 +228,7 @@ class Confluence:
     # get_user
     # list_user_groups
     # get_user_current
+    # deactivate_user
 
     @api_call
     def list_groups(self) -> List[Dict[str, Any]]:
@@ -313,6 +324,39 @@ class Confluence:
 
         result = self._get('user', params=params)
         return result  # type: ignore
+
+    @api_call
+    def deactivate_user(self, user_name) -> None:
+        """Deactivate confluence user.
+
+        # Required parameters
+
+        - `user_name`: a non-empty string
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('user_name')
+
+        api = f'/admin/users/deactivateuser.action?username={user_name}'
+        form = self.session().get(join_url(self.url, api))
+
+        data = {
+            'atl_token': _get_atl_token(form.text),
+            'username': user_name,
+            'confirm': 'Disable',
+        }
+
+        self.session().post(
+            join_url(self.url, '/admin/users/deactivateuser-confirm.action'),
+            data=data,
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Atlassian-Token': 'no-check',
+            },
+            cookies=form.cookies,
+        )
 
     @api_call
     def list_user_groups(
@@ -854,6 +898,61 @@ class Confluence:
         add_if_specified(params, 'start', start)
 
         return self._collect_data('content', params=params)
+
+    @api_call
+    def list_page_children(
+        self,
+        page_id: Union[str, int],
+        typ: str,
+        expand: Optional[str] = None,
+        start: Optional[int] = None,
+        limit: int = 25,
+        parent_version: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """Return a list of contents.
+
+        Valid values for `typ` are those in `CONTENT_TYPES`.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+        - typ: a string
+
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+        - start: an integer or None (None by default)
+        - limit: an integer (`25` by default)
+        - parent_version: an integer (`0` by default)
+
+        # Returned value
+
+        A possibly empty list of items.  Items are dictionaries.
+
+        Assuming the default `expand` values, an item contains the
+        following entries:
+
+        - title: a string
+        - type: a string
+        - id: an integer or a string
+        - status: a string
+        - extensions: a dictionary
+        """
+        ensure_instance('page_id', (str, int))
+        ensure_in('typ', CONTENT_TYPES)
+        ensure_noneornonemptystring('expand')
+        ensure_noneorinstance('start', int)
+        ensure_instance('limit', int)
+        ensure_instance('parent_version', int)
+
+        api = f'content/{page_id}/child'
+        if typ is not None:
+            api += f'/{typ}'
+        params = {'limit': str(limit), 'parentVersion': str(parent_version)}
+        add_if_specified(params, 'expand', expand)
+        add_if_specified(params, 'start', start)
+
+        return self._collect_data(api, params=params)
 
     @api_call
     def get_page(
