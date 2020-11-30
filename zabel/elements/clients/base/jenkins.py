@@ -398,7 +398,7 @@ class CloudBeesJenkins:
         - healthReport: a list of dictionaries
         - name: a string
         - online: a boolean
-        - state: a boolean
+        - state: a string
         - url: a string (an URL)
         - validActions: a list of strings
         """
@@ -643,9 +643,7 @@ class CloudBeesJenkins:
         )
 
     @api_call
-    def acknowledge_managedmaster_error(
-        self, managedmaster_url: str
-    ) -> None:
+    def acknowledge_managedmaster_error(self, managedmaster_url: str) -> None:
         """Acknowledge error on managed master.
 
         # Required parameters
