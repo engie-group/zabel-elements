@@ -643,6 +643,23 @@ class CloudBeesJenkins:
         )
 
     @api_call
+    def acknowledge_managedmaster_error(
+        self, managedmaster_url: str
+    ) -> None:
+        """Acknowledge error on managed master.
+
+        # Required parameters
+
+        - managedmaster_url: a non-empty string
+        """
+        ensure_nonemptystring('managedmaster_url')
+
+        self._post(
+            join_url(managedmaster_url, 'acknowledgeErrorAction'),
+            data={"Submit": "Yes"},
+        )
+
+    @api_call
     def get_managedmaster_metrics(
         self, managedmaster_url: str
     ) -> Dict[str, Any]:
