@@ -224,11 +224,20 @@ class Confluence:
     # Confluence groups&users
     #
     # list_groups
+    # create_group*
+    # delete_group*
+    # add_group_user*
+    # remove_group_user*
     # list_group_members
     # get_user
+    # create_user*
+    # delete_user*
     # list_user_groups
     # get_user_current
     # deactivate_user
+    #
+    # '*' denotes an API based on json-rpc, deprecated but not (yet?)
+    # available as a REST API.  It is not part of the method name.
 
     @api_call
     def list_groups(self) -> List[Dict[str, Any]]:
@@ -251,6 +260,136 @@ class Confluence:
         first n groups).
         """
         return self._collect_data('group')
+
+    @api_call
+    def create_group(self, group_name: str) -> bool:
+        """Create a new group.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        `group_name` must be in lower case.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/addGroup',
+                ),
+                json=[group_name],
+            )
+            .text
+            == 'true'
+        )
+
+    @api_call
+    def delete_group(self, group_name: str) -> bool:
+        """Delete group.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/removeGroup',
+                ),
+                json=[group_name, None],
+            )
+            .text
+            == 'true'
+        )
+
+    @api_call
+    def add_group_user(self, group_name: str, user_name: str) -> bool:
+        """Add user to group.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        # Required parameters
+
+        - group_name: a non-empty string
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False if the operation failed.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('user_name')
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/addUserToGroup',
+                ),
+                json=[user_name, group_name],
+            )
+            .text
+            == 'true'
+        )
+
+    @api_call
+    def remove_group_user(self, group_name: str, user_name: str) -> bool:
+        """Add user to group.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        # Required parameters
+
+        - group_name: a non-empty string
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False if the operation failed.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('user_name')
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/removeUserFromGroup',
+                ),
+                json=[user_name, group_name],
+            )
+            .text
+            == 'true'
+        )
 
     @api_call
     def list_group_members(self, group_name: str) -> List[Dict[str, Any]]:
@@ -324,6 +463,87 @@ class Confluence:
 
         result = self._get('user', params=params)
         return result  # type: ignore
+
+    @api_call
+    def create_user(
+        self,
+        name: str,
+        password: Optional[str],
+        email_address: str,
+        display_name: str,
+    ) -> bool:
+        """Create a new user.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        `name` must be in lower case.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - password: a non-empty string or None
+        - email_address: a non-empty string
+        - display_name: a string
+
+        # Returned value
+
+        True if the creation was successful, False otherwise.
+        """
+        ensure_nonemptystring('name')
+        ensure_noneornonemptystring('password')
+        ensure_nonemptystring('email_address')
+        ensure_instance('display_name', str)
+
+        user = {'email': email_address, "fullname": display_name, "name": name}
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/addUser',
+                ),
+                json=[user, password],
+            )
+            .text
+            == ''
+        )
+
+    @api_call
+    def delete_user(
+        self,
+        user_name: str,
+    ) -> bool:
+        """Delete user.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        True if the creation was successful, False otherwise.
+        """
+        ensure_nonemptystring('user_name')
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/removeUser',
+                ),
+                json=[user_name],
+            )
+            .text
+            == 'true'
+        )
 
     @api_call
     def deactivate_user(self, user_name) -> None:
@@ -839,6 +1059,7 @@ class Confluence:
     # update_page
     # list_page_labels
     # add_page_labels
+    # list_page_children
 
     @api_call
     def search_pages(
