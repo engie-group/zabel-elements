@@ -334,6 +334,7 @@ class CloudBeesJenkins:
     # list_managedmaster_plugins
     # install_managedmaster_plugins
     # provision_and_start_managedmaster
+    # acknowledge_managedmaster_error
     # get_managedmaster_metrics
     # ping_managedmaster
     # build_managedmaster_job
