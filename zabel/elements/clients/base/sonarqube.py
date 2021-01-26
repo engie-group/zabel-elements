@@ -43,7 +43,14 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 
-PROJECT_PERMISSIONS = ['admin', 'codeviewer', 'issueadmin', 'scan', 'user']
+PROJECT_PERMISSIONS = [
+    'admin',
+    'codeviewer',
+    'issueadmin',
+    'scan',
+    'user',
+    'securityhotspotadmin',
+]
 
 GLOBAL_PERMISSIONS = [
     'admin',
