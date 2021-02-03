@@ -22,7 +22,7 @@ class Vault:
     ):
         """
         # Required parameters
-        - url: url racine du endpoint vault
+        - url: url of the vault (a string)
         - user: a user name (a string)
         - password: a user password (a string)
         - bu : user Business Unit (a string)
@@ -79,64 +79,101 @@ class Vault:
         accessor_id = auth_methods["oidc/"]["accessor"]
         return accessor_id
 
-    def list_object(self, method, path):
-        """Function that will do the request to vault if it is needed.
-        - method : wich method call the function
+    def list_entity(self, path):
+        """Function that will read or list entity in vault.
         - path : the part of the URL that is specific to the action of the method
+        - return : it return a request object that can provide infomations with :
+            - .headers = the header of the http answer.
+            - .status_code = http status code.
+            - .content = what the server send back to the requester.
         """
         header = {"X-Vault-Token": self.token}
-        # Function for request vault in the method create_entity.
-        if method == "create_entity":
-            # List entities by name.
-            if path == "/v1/identity/entity/name?list=true":
-                url_entity_list = self.url + path
-                return requests.get(url_entity_list, headers=header)
-            # Read entity by name.
-            url_entity_name = self.url + path + self.gaia
-            return requests.get(url_entity_name, headers=header)
-        # Function for request vault in the method create_alias.
-        if method == "create_alias":
-            # List entity aliases by ID.
-            url_alias_list = self.url + path
-            return requests.get(url_alias_list, headers=header)
-        # Function for request vault in the method create_alias.
-        if method == "create_group":
-            # List Groups by ID
-            url_group_list = self.url + path
-            return requests.get(url_group_list, headers=header)
-        # Function for request vault in the method delete_entity.
-        if method == "delete_entity":
-            # List Entities by Name.
-            if path == "/v1/identity/entity/name?list=true":
-                url_entity_list = self.url + path
-                return requests.get(url_entity_list, headers=header)
-            # Create/Update Entity by Name.
-            url_entity_name = self.url + path + self.gaia
-            return requests.get(url_entity_name, headers=header)
-        # Function for request vault in the method delete_group.
-        if method == "delete_group":
-            # List Groups by ID.
-            url_group_list = self.url + path
-            return requests.get(url_group_list, headers=header)
-        # Function for request vault in the method add_roleid_secretid.
-        if method == "add_roleid_secretid":
-            # Read AppRole Role ID.
-            url = self.url + path
-            return requests.get(url, headers=header)
+        # List entities by name.
+        if path == "/v1/identity/entity/name?list=true":
+            url_entity_list = self.url + path
+            return requests.get(url_entity_list, headers=header)
+        # Read entity by name.
+        url_entity_name = self.url + path + self.gaia
+        return requests.get(url_entity_name, headers=header)
+
+    def list_alias(self, path):
+        """Function that will read or list alias entity in vault.
+        - path : the part of the URL that is specific to the action of the method
+        - return : it return a request object that can provide infomations with :
+            - .headers = the header of the http answer.
+            - .status_code = http status code.
+            - .content = what the server send back to the requester.
+        """
+        header = {"X-Vault-Token": self.token}
+        # List entity aliases by ID.
+        url_alias_list = self.url + path
+        return requests.get(url_alias_list, headers=header)
+
+    def list_group(self, path, global_admin):
+        """Function that will read or list group in vault.
+        - path : the part of the URL that is specific to the action of the method
+        - return : it return a request object that can provide infomations with :
+            - .headers = the header of the http answer.
+            - .status_code = http status code.
+            - .content = what the server send back to the requester.
+        The first return, send back a URL in order to be use later on the function that call this function.
+        """
+        header = {"X-Vault-Token": self.token}
+        # Read Group by Name.
+        if path == "/v1/identity/group/name/engie-":
+            if global_admin == "yes":
+                url_group_name = (
+                    self.url
+                    + path
+                    + self.bu
+                    + "-"
+                    + self.project
+                    + "-"
+                    + self.team
+                )
+                return (
+                    requests.get(url_group_name, headers=header),
+                    url_group_name,
+                )
+            # If not global admin group.
+            url_group_name = (
+                self.url
+                + path
+                + self.bu
+                + "-"
+                + self.project
+                + "-"
+                + self.team
+                + "-"
+                + self.role
+            )
+            return requests.get(url_group_name, headers=header), url_group_name
+        # List Groups by ID
+        url_group_list = self.url + path
+        return requests.get(url_group_list, headers=header)
+
+    def list_roleid(self, path):
+        """Function that will do the request to vault if it is needed.
+        - path : the part of the URL that is specific to the action of the method
+        - return : it return a request object that can provide infomations with :
+            - .headers = the header of the http answer.
+            - .status_code = http status code.
+            - .content = what the server send back to the requester.
+        """
+        header = {"X-Vault-Token": self.token}
+        # Read AppRole Role ID.
+        url = self.url + path
+        return requests.get(url, headers=header)
 
     def create_entity(self):
         """Function which first of all see if the GAIA put in the arguments exists in the entities
         (1 entity = 1 user) and return its ID. Secondly, if the entity does not exist, it will create it and return its ID."""
-        http_code_1 = self.list_object(
-            "create_entity", "/v1/identity/entity/name?list=true"
-        )
+        http_code_1 = self.list_entity("/v1/identity/entity/name?list=true")
         json_return = http_code_1.json()
         entities_names = json_return["data"]["keys"]
         for names in entities_names:
             if self.gaia in names:
-                http_code_2 = self.list_object(
-                    "create_entity", "/v1/identity/entity/name/"
-                )
+                http_code_2 = self.list_entity("/v1/identity/entity/name/")
                 json_return = http_code_2.json()
                 entity_id = json_return["data"]["id"]
                 return entity_id
@@ -161,9 +198,7 @@ class Vault:
         authentication method and will allow when the user is going to connect with OKTA to be linked
         to his entity and to have the correct policies.
         Returns True if everything was fine, False otherwise."""
-        http_code_1 = self.list_object(
-            "create_alias", "/v1/identity/entity-alias/id?list=true"
-        )
+        http_code_1 = self.list_alias("/v1/identity/entity-alias/id?list=true")
         json_return = http_code_1.json()
         alias_key = json_return["data"]["keys"]
         # We see if the alias exists to avoid creating duplicates.
@@ -189,9 +224,7 @@ class Vault:
 
     def create_group(self):
         """Function that will create the admin, user and reader groups for each team within a project."""
-        http_code = self.list_object(
-            "create_group", "/v1/identity/group/id?list=true"
-        )
+        http_code = self.list_group("/v1/identity/group/id?list=true", "no")
         json_return = http_code.json()
         types_of_groups = ["admin", "user", "reader"]
         # If no group exists, the fact that there is no group is taken into account.
@@ -201,7 +234,9 @@ class Vault:
                 url_group = self.url + "/v1/identity/group"
                 header = {"X-Vault-Token": self.token}
                 data = {
-                    "name": "engie-digital-"
+                    "name": "engie-"
+                    + self.bu
+                    + "-"
                     + self.project
                     + "-"
                     + self.team
@@ -209,7 +244,9 @@ class Vault:
                     + types,
                     "metadata": {"bu": self.bu},
                     "policies": [
-                        "engie-digital-"
+                        "engie-"
+                        + self.bu
+                        + "-"
                         + self.project
                         + "-"
                         + self.team
@@ -229,7 +266,9 @@ class Vault:
                 url_group = self.url + "/v1/identity/group"
                 header = {"X-Vault-Token": self.token}
                 data = {
-                    "name": "engie-digital-"
+                    "name": "engie-"
+                    + self.bu
+                    + "-"
                     + self.project
                     + "-"
                     + self.team
@@ -237,7 +276,9 @@ class Vault:
                     + types,
                     "metadata": {"bu": self.bu},
                     "policies": [
-                        "engie-digital-"
+                        "engie-"
+                        + self.bu
+                        + "-"
                         + self.project
                         + "-"
                         + self.team
@@ -253,46 +294,28 @@ class Vault:
 
     def add_entity_group(self):
         """Function which will add an entity (= a user) in a group without deleting those already present."""
-        url_group_name = (
-            self.url
-            + "/v1/identity/group/name/engie-digital-"
-            + self.project
-            + "-"
-            + self.team
-            + "-"
-            + self.role
+        http_code_1, url_group_name = self.list_group(
+            "/v1/identity/group/name/engie-", "no"
         )
-        header = {"X-Vault-Token": self.token}
-        http_code = requests.get(url_group_name, headers=header)
-        json_return = http_code.json()
+        json_return = http_code_1.json()
         group_member = json_return["data"]["member_entity_ids"]
         entity_id = self.create_entity()
         group_member.append(entity_id)
         header = {"X-Vault-Token": self.token}
         data = {"member_entity_ids": group_member}
-        http_code = requests.post(url_group_name, headers=header, json=data)
-        return http_code.status_code
+        http_code_2 = requests.post(url_group_name, headers=header, json=data)
+        return http_code_2.status_code
 
     def remove_entity_group(self):
         """Function that will remove entities from groups."""
-        url_group_name = (
-            self.url
-            + "/v1/identity/group/name/engie-digital-"
-            + self.project
-            + "-"
-            + self.team
-            + "-"
-            + self.role
+        http_code_1, url_group_name = self.list_group(
+            "/v1/identity/group/name/engie-", "no"
         )
-        header = {"X-Vault-Token": self.token}
-        http_code = requests.get(url_group_name, headers=header)
-        json_return = http_code.json()
+        json_return = http_code_1.json()
         group_member = json_return["data"]["member_entity_ids"]
         # on trouve le nom de l'entité à partir de l'ID.
-        url_entity_list = self.url + "/v1/identity/entity/name/" + self.gaia
-        header = {"X-Vault-Token": self.token}
-        http_code = requests.get(url_entity_list, headers=header)
-        json_return = http_code.json()
+        http_code_2 = self.list_entity("/v1/identity/entity/name/")
+        json_return = http_code_2.json()
         entities_id = json_return["data"]["aliases"]
         return_http_code = []
         for ids in entities_id:
@@ -301,27 +324,23 @@ class Vault:
                 group_member.remove(canonical_id)
                 header = {"X-Vault-Token": self.token}
                 data = {"member_entity_ids": group_member}
-                http_code = requests.post(
+                http_code_3 = requests.post(
                     url_group_name, headers=header, json=data
                 )
-                return_http_code.append(http_code.status_code)
+                return_http_code.append(http_code_3.status_code)
         return return_http_code
 
     def delete_entity(self):
         """Function go to delete the alias of the entity then the entity thanks to the information passed in parameter."""
         # We retrieve the ID of the entity.
-        http_code_1 = self.list_object(
-            "delete_entity", "/v1/identity/entity/name?list=true"
-        )
+        http_code_1 = self.list_entity("/v1/identity/entity/name?list=true")
         json_return = http_code_1.json()
         entities_names = json_return["data"]["keys"]
         # For each ID present in the vault we delete the one that has the name of the entity.
         return_http_code = []
         for names in entities_names:
             if self.gaia in names:
-                http_code_2 = self.list_object(
-                    "delete_entity", "/v1/identity/entity/name/"
-                )
+                http_code_2 = self.list_entity("/v1/identity/entity/name/")
                 get_entity_json = http_code_2.json()
                 entity_id = get_entity_json["data"]["id"]
                 url_entity_delete = (
@@ -334,9 +353,7 @@ class Vault:
 
     def delete_group(self):
         """Function that remove groups from a team."""
-        http_code_1 = self.list_object(
-            "delete_group", "/v1/identity/group/id?list=true"
-        )
+        http_code_1 = self.list_group("/v1/identity/group/id?list=true", "no")
         json_return = http_code_1.json()
         alias_key = json_return["data"]["keys"]
         # The group IDs are placed in a list.
@@ -344,17 +361,35 @@ class Vault:
         for key in alias_key:
             alias_name = json_return["data"]["key_info"][key]
             if (
-                "engie-digital-" + self.project + "-" + self.team + "-admin"
+                "engie-"
+                + self.bu
+                + "-"
+                + self.project
+                + "-"
+                + self.team
+                + "-admin"
                 in alias_name.values()
             ):
                 lists_of_groups.append(key)
             elif (
-                "engie-digital-" + self.project + "-" + self.team + "-user"
+                "engie-"
+                + self.bu
+                + "-"
+                + self.project
+                + "-"
+                + self.team
+                + "-user"
                 in alias_name.values()
             ):
                 lists_of_groups.append(key)
             elif (
-                "engie-digital-" + self.project + "-" + self.team + "-reader"
+                "engie-"
+                + self.bu
+                + "-"
+                + self.project
+                + "-"
+                + self.team
+                + "-reader"
                 in alias_name.values()
             ):
                 lists_of_groups.append(key)
@@ -685,9 +720,8 @@ path "%s/*" {
         """Function that will generate a RoleID and a SecretID and place them in a secret."""
         # Retrieving the roleID.
         path = self.name + self.approle_name
-        http_code_1 = self.list_object(
-            "add_roleid_secretid",
-            "/v1/auth/" + path + "/role/" + self.role_name + "/role-id",
+        http_code_1 = self.list_roleid(
+            "/v1/auth/" + path + "/role/" + self.role_name + "/role-id"
         )
         roleid_dict = json.loads(http_code_1.text)
         for i in roleid_dict:
@@ -750,3 +784,70 @@ path "%s/*" {
         )
         # The return senf back the http code when he disable the authent method.
         return http_code.status_code
+
+    def create_policy_global_admin(self):
+        """Function that will create a global admin policy.
+        return : http code.
+        """
+        client = hvac.Client(url=self.url, token=self.token)
+        http_code = client.sys.create_or_update_policy(
+            name="engie-vault-global-admin",
+            policy="""# Policy create by TPM
+path "*" {
+    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+""",
+        )
+        return http_code.status_code
+
+    def create_group_global_admin(self):
+        """Function that will create a group for the global admin of the vault.
+        return : http code.
+        """
+        url_group = self.url + "/v1/identity/group"
+        header = {"X-Vault-Token": self.token}
+        data = {
+            "name": "engie-vault-global-admin",
+            "metadata": {"bu": self.bu},
+            "policies": ["engie-vault-global-admin"],
+        }
+        http_code = requests.post(url_group, headers=header, json=data)
+        return http_code.status_code
+
+    def add_entity_group_global_admin(self):
+        """Function which will add an entity (= a user) in a group without deleting those already present."""
+        http_code_1, url_group_name = self.list_group(
+            "/v1/identity/group/name/engie-", "yes"
+        )
+        json_return = http_code_1.json()
+        group_member = json_return["data"]["member_entity_ids"]
+        entity_id = self.create_entity()
+        group_member.append(entity_id)
+        header = {"X-Vault-Token": self.token}
+        data = {"member_entity_ids": group_member}
+        http_code_2 = requests.post(url_group_name, headers=header, json=data)
+        return http_code_2.status_code
+
+    def remove_entity_group_global_admin(self):
+        """Function that will remove entities from groups."""
+        http_code_1, url_group_name = self.list_group(
+            "/v1/identity/group/name/engie-", "yes"
+        )
+        json_return = http_code_1.json()
+        group_member = json_return["data"]["member_entity_ids"]
+        # on trouve le nom de l'entité à partir de l'ID.
+        http_code_2 = self.list_entity("/v1/identity/entity/name/")
+        json_return = http_code_2.json()
+        entities_id = json_return["data"]["aliases"]
+        return_http_code = []
+        for ids in entities_id:
+            if "canonical_id" in ids.keys():
+                canonical_id = ids["canonical_id"]
+                group_member.remove(canonical_id)
+                header = {"X-Vault-Token": self.token}
+                data = {"member_entity_ids": group_member}
+                http_code_3 = requests.post(
+                    url_group_name, headers=header, json=data
+                )
+                return_http_code.append(http_code_3.status_code)
+        return return_http_code
