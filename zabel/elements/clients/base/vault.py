@@ -37,11 +37,9 @@ class Vault:
 
         # Sample use
             - Create an entity :
-                ./vault.py dev create entity digital walnut infra rv5791 admin kv jenkins application2 reader
-            - Create a secret engine :
-                ./vault.py dev create group digital walnut infra rv5791 admin kv jenkins application2 reader
-            - Enable AppRole connection method :
-                ./vault.py dev enable_approle group digital walnut infra rv5791 admin kv jenkins application2 reader
+                URL = "https://vault.dev.tools.digital.engie.com"
+                vault = Vault(URL, password, bu, project, team, gaia, role, engine_to_deploy, approle_name, role_name, policy)
+                vault.create_alias()
         """
         self.url = url
         self.password = password
