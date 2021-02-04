@@ -1,11 +1,20 @@
-#!/usr/bin/env python3
-# coding:utf-8
+# Copyright (c) 2021 Théo Peresse (theo.peresse@engie.com)
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
 
-from urllib.parse import urlencode
-import requests, json, hvac, sys, os
+import json
+import os
+
+import requests
 
 
 class Vault:
+    """Vault."""
+
     def __init__(
         self,
         url,
@@ -38,7 +47,10 @@ class Vault:
         # Sample use
             - Create an entity :
                 URL = "https://vault.dev.tools.digital.engie.com"
-                vault = Vault(URL, password, bu, project, team, gaia, role, engine_to_deploy, approle_name, role_name, policy)
+                vault = Vault(
+                    URL, password, bu, project, team, gaia, role,
+                    engine_to_deploy, approle_name, role_name, policy
+                )
                 vault.create_alias()
         """
         self.url = url
@@ -54,9 +66,8 @@ class Vault:
         self.role_name = role_name
         self.policy = policy
         self.engines_available = ["kv", "transit", "ssh"]
-        self.name = (
-            "engie-" + self.bu + "-" + self.project + "-" + self.team + "-"
-        )
+        self.name = f'engie-{self.bu}-{self.project}-{self.team}-'
+        self.client = None
 
     def get_token(self):
         """Function that will retrieve the tokens so that TPM can take actions."""
@@ -69,11 +80,19 @@ class Vault:
         for i in res["auth"].items():
             if "client_token" in i:
                 return str(list(i)[1])
+        return None
+
+    def _client(self):
+        """singleton instance, only if needed."""
+        if self.client is None:
+            import hvac
+
+            self.client = hvac.Client(url=self.url, token=self.token)
+        return self.client
 
     def get_accessor_id(self):
         """Function that will return the accessor ID of the OIDC authentication method activated in the vault."""
-        client = hvac.Client(url=self.url, token=self.token)
-        auth_methods = client.sys.list_auth_methods()
+        auth_methods = self._client().sys.list_auth_methods()
         accessor_id = auth_methods["oidc/"]["accessor"]
         return accessor_id
 
@@ -257,38 +276,36 @@ class Vault:
                 )
                 return_http_code_1.append(http_code_1.status_code)
             return return_http_code_1
+
         # If groups already exist, we create those requested.
-        else:
-            return_http_code_2 = []
-            for types in types_of_groups:
-                url_group = self.url + "/v1/identity/group"
-                header = {"X-Vault-Token": self.token}
-                data = {
-                    "name": "engie-"
+        return_http_code_2 = []
+        for types in types_of_groups:
+            url_group = self.url + "/v1/identity/group"
+            header = {"X-Vault-Token": self.token}
+            data = {
+                "name": "engie-"
+                + self.bu
+                + "-"
+                + self.project
+                + "-"
+                + self.team
+                + "-"
+                + types,
+                "metadata": {"bu": self.bu},
+                "policies": [
+                    "engie-"
                     + self.bu
                     + "-"
                     + self.project
                     + "-"
                     + self.team
                     + "-"
-                    + types,
-                    "metadata": {"bu": self.bu},
-                    "policies": [
-                        "engie-"
-                        + self.bu
-                        + "-"
-                        + self.project
-                        + "-"
-                        + self.team
-                        + "-"
-                        + types
-                    ],
-                }
-                http_code_2 = requests.post(
-                    url_group, headers=header, json=data
-                )
-                return_http_code_2.append(http_code_2.status_code)
-            return return_http_code_2
+                    + types
+                ],
+            }
+            http_code_2 = requests.post(url_group, headers=header, json=data)
+            return_http_code_2.append(http_code_2.status_code)
+        return return_http_code_2
 
     def add_entity_group(self):
         """Function which will add an entity (= a user) in a group without deleting those already present."""
@@ -402,7 +419,6 @@ class Vault:
 
     def creation_policy(self):
         """Function to create the admin, user and reader policies for each team."""
-        client = hvac.Client(url=self.url, token=self.token)
         policies_to_create = [
             "engie-"
             + self.bu
@@ -426,13 +442,13 @@ class Vault:
             + self.team
             + "-reader",
         ]
-        list_policies = client.sys.list_policies()["data"]["policies"]
+        list_policies = self._client().sys.list_policies()["data"]["policies"]
         return_http_code = []
         for policies in policies_to_create:
             if policies in list_policies:
                 return_http_code.append("policy already exist " + policies)
             else:
-                http_code = client.sys.create_or_update_policy(
+                http_code = self._client().sys.create_or_update_policy(
                     name=policies, policy="""# Policy create by TPM"""
                 )
                 return_http_code.append(http_code.status_code)
@@ -451,15 +467,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name="tpm-policy")["data"][
-            "rules"
-        ]
+        hvac_policy_rules = self._client().sys.read_policy(name="tpm-policy")[
+            "data"
+        ]["rules"]
         if 'path "' + name + '/*"' in hvac_policy_rules:
             print("secret " + name + " already in TPM policy.")
         else:
             send_new_policy = hvac_policy_rules + policy
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name="tpm-policy", policy=send_new_policy
             )
             print("secret " + name + " add in TPM policy")
@@ -476,16 +491,15 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "admin")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "admin"
+        )["data"]["rules"]
         condition = 'path "' + name + '/*"'
         if condition in hvac_policy_rules:
             print("secret " + name + " already in admin policy.")
         else:
             send_new_policy = hvac_policy_rules + policy
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "admin", policy=send_new_policy
             )
             print("secret " + name + " add in admin policy")
@@ -502,15 +516,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "user")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "user"
+        )["data"]["rules"]
         if 'path "' + name + '/*"' in hvac_policy_rules:
             print("secret " + name + " already in user policy.")
         else:
             send_new_policy = hvac_policy_rules + policy_user
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "user", policy=send_new_policy
             )
             print("secret " + name + " add in user policy")
@@ -527,15 +540,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "reader")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "reader"
+        )["data"]["rules"]
         if 'path "' + name + '/*"' in hvac_policy_rules:
             print("secret " + name + " already in reader policy.")
         else:
             send_new_policy = hvac_policy_rules + policy_reader
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "reader", policy=send_new_policy
             )
             print("secret " + name + " add in reader policy")
@@ -575,15 +587,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name="tpm-policy")["data"][
-            "rules"
-        ]
+        hvac_policy_rules = self._client().sys.read_policy(name="tpm-policy")[
+            "data"
+        ]["rules"]
         if 'path "' + name + '/*"' not in hvac_policy_rules:
             print("secret " + name + " not in TPM policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name="tpm-policy", policy=policy_update
             )
             print("secret " + name + " remove in TPM policy")
@@ -600,15 +611,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "admin")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "admin"
+        )["data"]["rules"]
         if 'path "' + name + '/*"' not in hvac_policy_rules:
             print("secret " + name + " not in admin policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "admin", policy=policy_update
             )
             print("secret " + name + " remove in admin policy")
@@ -625,15 +635,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "user")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "user"
+        )["data"]["rules"]
         if 'path "' + name + '/*"' not in hvac_policy_rules:
             print("secret " + name + " not in user policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "user", policy=policy_update
             )
             print("secret " + name + " remove in user policy")
@@ -650,15 +659,14 @@ path "%s/*" {
     """
             % name
         )
-        client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=self.name + "reader")[
-            "data"
-        ]["rules"]
+        hvac_policy_rules = self._client().sys.read_policy(
+            name=self.name + "reader"
+        )["data"]["rules"]
         if 'path "' + name + '/*"' not in hvac_policy_rules:
             print("secret " + name + " not in reader policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
-            client.sys.create_or_update_policy(
+            self._client().sys.create_or_update_policy(
                 name=self.name + "reader", policy=policy_update
             )
             print("secret " + name + " remove in reader policy")
@@ -666,14 +674,13 @@ path "%s/*" {
     def delete_secret_engines(self):
         """Function which will delete the secret engine and call the functions to delete it from the policies."""
         return_http_code = []
-        client = hvac.Client(url=self.url, token=self.token)
         name = self.name + self.engine
-        secrets_engines_list = client.sys.list_mounted_secrets_engines()[
-            "data"
-        ]
+        secrets_engines_list = (
+            self._client().sys.list_mounted_secrets_engines()["data"]
+        )
         for secrets in secrets_engines_list:
             if name in secrets:
-                http_code = client.sys.disable_secrets_engine(name)
+                http_code = self._client().sys.disable_secrets_engine(name)
                 return_http_code.append(http_code.status_code)
                 self.delete_tpm_policy(name)
                 self.delete_admin_policy(name)
@@ -745,7 +752,7 @@ path "%s/*" {
         return http_code_1.status_code, http_code_2.status_code
 
     def update_secret(self, path, key1, value1, key2, value2):
-        """Update of RoleID and SecretID secrets. 
+        """Update of RoleID and SecretID secrets.
         - path : it is where the secret engine is in vault in order to store the roleID and secretID for a team.
         - key1 : it is 'roleid'
         - value1 : ID generate by vault
@@ -787,8 +794,7 @@ path "%s/*" {
         """Function that will create a global admin policy.
         return : http code.
         """
-        client = hvac.Client(url=self.url, token=self.token)
-        http_code = client.sys.create_or_update_policy(
+        http_code = self._client().sys.create_or_update_policy(
             name="engie-vault-global-admin",
             policy="""# Policy create by TPM
 path "*" {
