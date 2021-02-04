@@ -1060,6 +1060,8 @@ class Confluence:
     # list_page_labels
     # add_page_labels
     # list_page_children
+    # list_page_attachments
+    # add_page_attachment
 
     @api_call
     def search_pages(
@@ -1420,6 +1422,121 @@ class Confluence:
         ensure_instance('page_id', (str, int))
 
         return self._collect_data(f'content/{page_id}/label')
+
+    @api_call
+    def list_page_attachments(
+        self, page_id: Union[str, int]
+    ) -> List[Dict[str, Any]]:
+        """Get attachments attached to page.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+
+        # Returned value
+
+        A list of _labels_.  Each label is a  dictionary with the
+        following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - prefix: a string
+        """
+        ensure_instance('page_id', (str, int))
+
+        return self._collect_data(f'content/{page_id}/child/attachment')
+
+    @api_call
+    def add_page_attachment(
+        self,
+        page_id: Union[str, int],
+        filename: str,
+        comment: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Add attachment to page.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+        - filename: a string
+
+        # Optional parameters
+
+        - comment: a non-empty string or None (None by default)
+
+        # Returned value
+
+        A dictionary.  Refer to #create_page() for more information.
+        """
+        ensure_instance('page_id', (str, int))
+        ensure_nonemptystring('filename')
+        ensure_noneornonemptystring('comment')
+
+        with open(filename, 'rb') as f:
+            files = {'file': (filename, f.read())}
+        if comment:
+            data = {'comment': comment}
+        else:
+            data = None
+        api_url = join_url(
+            self.url, f'rest/api/content/{page_id}/child/attachment'
+        )
+        response = self.session().post(
+            api_url,
+            files=files,
+            data=data,
+            headers={'X-Atlassian-Token': 'nocheck'},
+        )
+        return response  # type: ignore
+
+    @api_call
+    def update_page_attachment_data(
+        self,
+        page_id: Union[str, int],
+        attachment_id: Union[str, int],
+        filename: str,
+        comment: Optional[str] = None,
+        minor_edit: bool = True,
+    ) -> Dict[str, Any]:
+        """Update attachment content.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+        - attachment_id: an integer or a string
+        - filename: a string
+
+        # Optional parameters
+
+        - comment: a non-empty string or None (None by default)
+        - minor_edit: a boolean (True by default)
+
+        # Returned value
+
+        A dictionary.  Refer to #create_page() for more information.
+        """
+        ensure_instance('page_id', (str, int))
+        ensure_instance('attachment_id', (str, int))
+        ensure_nonemptystring('filename')
+        ensure_noneornonemptystring('comment')
+        ensure_instance('minor_edit', bool)
+
+        with open(filename, 'rb') as f:
+            files = {'file': (filename, f.read())}
+        data = {'minorEdit': minor_edit}
+        if comment:
+            data['comment'] = comment
+        api_url = join_url(
+            self.url,
+            f'rest/api/content/{page_id}/child/attachment/{attachment_id}/data',
+        )
+        response = self.session().post(
+            api_url,
+            files=files,
+            data=data,
+            headers={'X-Atlassian-Token': 'nocheck'},
+        )
+        return response  # type: ignore
 
     ####################################################################
     # confluence helpers
