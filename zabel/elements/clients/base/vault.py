@@ -18,16 +18,8 @@ class Vault:
     def __init__(
         self,
         url,
+        login,
         password,
-        bu,
-        project,
-        team,
-        gaia,
-        role,
-        engine,
-        approle_name,
-        role_name,
-        policy,
     ):
         """
         # Required parameters
@@ -55,23 +47,13 @@ class Vault:
         """
         self.url = url
         self.password = password
-        self.bu = bu
-        self.project = project
-        self.team = team
-        self.gaia = gaia
-        self.role = role
+        self.login = login
         self.token = self.get_token()
-        self.engine = engine
-        self.approle_name = approle_name
-        self.role_name = role_name
-        self.policy = policy
-        self.engines_available = ["kv", "transit", "ssh"]
-        self.name = f'engie-{self.bu}-{self.project}-{self.team}-'
         self.client = None
 
     def get_token(self):
         """Function that will retrieve the tokens so that TPM can take actions."""
-        url_tpm = self.url + "/v1/auth/userpass/login/tpm"
+        url_tpm = self.url + "/v1/auth/userpass/login/" + self.login
         data = {"password": self.password}
         response = requests.post(url_tpm, json=data)
         data = response.text
@@ -96,25 +78,30 @@ class Vault:
         accessor_id = auth_methods["oidc/"]["accessor"]
         return accessor_id
 
-    def list_entity(self, path):
-        """Function that will read or list entity in vault.
-        - path : the part of the URL that is specific to the action of the method
+    def list_entities(self):
+        """Function that will list existing entities in vault.
         - return : it return a request object that can provide infomations with :
             - .headers = the header of the http answer.
             - .status_code = http status code.
             - .content = what the server send back to the requester.
         """
         header = {"X-Vault-Token": self.token}
-        # List entities by name.
-        if path == "/v1/identity/entity/name?list=true":
-            url_entity_list = self.url + path
-            return requests.get(url_entity_list, headers=header)
-        # Read entity by name.
-        url_entity_name = self.url + path + self.gaia
+        url_entity_list = self.url + "/v1/identity/entity/name?list=true"
+        return requests.get(url_entity_list, headers=header)
+
+    def get_entity(self, entity):
+        """Function that will read entity information in vault.
+        - return : it return a request object that can provide infomations with :
+            - .headers = the header of the http answer.
+            - .status_code = http status code.
+            - .content = what the server send back to the requester.
+        """
+        header = {"X-Vault-Token": self.token}
+        url_entity_name = self.url + "/v1/identity/entity/name/" + entity
         return requests.get(url_entity_name, headers=header)
 
-    def list_alias(self, path):
-        """Function that will read or list alias entity in vault.
+    def list_aliases(self):
+        """Function that will list aliases of entities in vault.
         - path : the part of the URL that is specific to the action of the method
         - return : it return a request object that can provide infomations with :
             - .headers = the header of the http answer.
@@ -123,7 +110,7 @@ class Vault:
         """
         header = {"X-Vault-Token": self.token}
         # List entity aliases by ID.
-        url_alias_list = self.url + path
+        url_alias_list = self.url + "/v1/identity/entity-alias/id?list=true"
         return requests.get(url_alias_list, headers=header)
 
     def list_group(self, path, global_admin):
@@ -182,15 +169,15 @@ class Vault:
         url = self.url + path
         return requests.get(url, headers=header)
 
-    def create_entity(self):
+    def create_entity(self, entity):
         """Function which first of all see if the GAIA put in the arguments exists in the entities
         (1 entity = 1 user) and return its ID. Secondly, if the entity does not exist, it will create it and return its ID."""
-        http_code_1 = self.list_entity("/v1/identity/entity/name?list=true")
+        http_code_1 = self.list_entities()
         json_return = http_code_1.json()
         entities_names = json_return["data"]["keys"]
         for names in entities_names:
             if self.gaia in names:
-                http_code_2 = self.list_entity("/v1/identity/entity/name/")
+                http_code_2 = self.get_entity(entity)
                 json_return = http_code_2.json()
                 entity_id = json_return["data"]["id"]
                 return entity_id
@@ -215,7 +202,7 @@ class Vault:
         authentication method and will allow when the user is going to connect with OKTA to be linked
         to his entity and to have the correct policies.
         Returns True if everything was fine, False otherwise."""
-        http_code_1 = self.list_alias("/v1/identity/entity-alias/id?list=true")
+        http_code_1 = self.list_aliases()
         json_return = http_code_1.json()
         alias_key = json_return["data"]["keys"]
         # We see if the alias exists to avoid creating duplicates.
@@ -321,7 +308,7 @@ class Vault:
         http_code_2 = requests.post(url_group_name, headers=header, json=data)
         return http_code_2.status_code
 
-    def remove_entity_group(self):
+    def remove_entity_group(self, entity):
         """Function that will remove entities from groups."""
         http_code_1, url_group_name = self.list_group(
             "/v1/identity/group/name/engie-", "no"
@@ -329,7 +316,7 @@ class Vault:
         json_return = http_code_1.json()
         group_member = json_return["data"]["member_entity_ids"]
         # on trouve le nom de l'entité à partir de l'ID.
-        http_code_2 = self.list_entity("/v1/identity/entity/name/")
+        http_code_2 = self.get_entity(entity)
         json_return = http_code_2.json()
         entities_id = json_return["data"]["aliases"]
         return_http_code = []
@@ -348,14 +335,14 @@ class Vault:
     def delete_entity(self):
         """Function go to delete the alias of the entity then the entity thanks to the information passed in parameter."""
         # We retrieve the ID of the entity.
-        http_code_1 = self.list_entity("/v1/identity/entity/name?list=true")
+        http_code_1 = self.get_entity("/v1/identity/entity/name?list=true")
         json_return = http_code_1.json()
         entities_names = json_return["data"]["keys"]
         # For each ID present in the vault we delete the one that has the name of the entity.
         return_http_code = []
         for names in entities_names:
             if self.gaia in names:
-                http_code_2 = self.list_entity("/v1/identity/entity/name/")
+                http_code_2 = self.get_entity("/v1/identity/entity/name/")
                 get_entity_json = http_code_2.json()
                 entity_id = get_entity_json["data"]["id"]
                 url_entity_delete = (
@@ -840,7 +827,7 @@ path "*" {
         json_return = http_code_1.json()
         group_member = json_return["data"]["member_entity_ids"]
         # on trouve le nom de l'entité à partir de l'ID.
-        http_code_2 = self.list_entity("/v1/identity/entity/name/")
+        http_code_2 = self.get_entity("/v1/identity/entity/name/")
         json_return = http_code_2.json()
         entities_id = json_return["data"]["aliases"]
         return_http_code = []
