@@ -436,7 +436,7 @@ path "%s/*" {
         self.update_user_policy(policy_name, secret_engine_name)
         self.update_reader_policy(policy_name, secret_engine_name)
 
-    def remove_tpm_policy(self, name):
+    def remove_tpm_policy(self, secret_engine_name):
         """Function that will remove the secret engine from the TPM policy.
         - name : the name of the secret engine.
         """
@@ -446,22 +446,22 @@ path "%s/*" {
     capabilities = ["create", "update", "delete"]
 }
     """
-            % name
+            % secret_engine_name
         )
         client = hvac.Client(url=self.url, token=self.token)
         hvac_policy_rules = client.sys.read_policy(name="tpm-policy")["data"][
             "rules"
         ]
-        if 'path "' + name + '/*"' not in hvac_policy_rules:
-            print("secret " + name + " not in TPM policy.")
+        if 'path "' + secret_engine_name + '/*"' not in hvac_policy_rules:
+            print("secret " + secret_engine_name + " not in TPM policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
             client.sys.create_or_update_policy(
                 name="tpm-policy", policy=policy_update
             )
-            print("secret " + name + " remove in TPM policy")
+            print("secret " + secret_engine_name + " remove in TPM policy")
 
-    def remove_admin_policy(self, name):
+    def remove_admin_policy(self, policy_name, secret_engine_name):
         """Function that will remove the secret engine from the policy admin.
         - name : the name of the secret engine.
         """
@@ -471,22 +471,22 @@ path "%s/*" {
     capabilities = ["create", "update", "delete", "list", "read"]
 }
     """
-            % name
+            % secret_engine_name
         )
         client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=name + "-" + "admin")[
-            "data"
-        ]["rules"]
-        if 'path "' + name + '/*"' not in hvac_policy_rules:
-            print("secret " + name + " not in admin policy.")
+        hvac_policy_rules = client.sys.read_policy(
+            name=policy_name + "-" + "admin"
+        )["data"]["rules"]
+        if 'path "' + secret_engine_name + '/*"' not in hvac_policy_rules:
+            print("secret " + secret_engine_name + " not in admin policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
             client.sys.create_or_update_policy(
-                name=name + "-" + "admin", policy=policy_update
+                name=policy_name + "-" + "admin", policy=policy_update
             )
-            print("secret " + name + " remove in admin policy")
+            print("secret " + secret_engine_name + " remove in admin policy")
 
-    def remove_user_policy(self, name):
+    def remove_user_policy(self, policy_name, secret_engine_name):
         """Function that will remove the secret engine from the policy user.
         - name : the name of the secret engine.
         """
@@ -496,22 +496,22 @@ path "%s/*" {
     capabilities = ["create", "update", "list", "read"]
 }
     """
-            % name
+            % secret_engine_name
         )
         client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=name + "-" + "user")[
-            "data"
-        ]["rules"]
-        if 'path "' + name + '/*"' not in hvac_policy_rules:
-            print("secret " + name + " not in user policy.")
+        hvac_policy_rules = client.sys.read_policy(
+            name=policy_name + "-" + "user"
+        )["data"]["rules"]
+        if 'path "' + secret_engine_name + '/*"' not in hvac_policy_rules:
+            print("secret " + secret_engine_name + " not in user policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
             client.sys.create_or_update_policy(
-                name=name + "-" + "user", policy=policy_update
+                name=policy_name + "-" + "user", policy=policy_update
             )
-            print("secret " + name + " remove in user policy")
+            print("secret " + secret_engine_name + " remove in user policy")
 
-    def remove_reader_policy(self, name):
+    def remove_reader_policy(self, policy_name, secret_engine_name):
         """Function that will remove the secret engine from the policy reader.
         - name : the name of the secret engine.
         """
@@ -521,34 +521,31 @@ path "%s/*" {
     capabilities = ["list", "read"]
 }
     """
-            % name
+            % secret_engine_name
         )
         client = hvac.Client(url=self.url, token=self.token)
-        hvac_policy_rules = client.sys.read_policy(name=name + "-" + "reader")[
-            "data"
-        ]["rules"]
-        if 'path "' + name + '/*"' not in hvac_policy_rules:
-            print("secret " + name + " not in reader policy.")
+        hvac_policy_rules = client.sys.read_policy(
+            name=policy_name + "-" + "reader"
+        )["data"]["rules"]
+        if 'path "' + secret_engine_name + '/*"' not in hvac_policy_rules:
+            print("secret " + secret_engine_name + " not in reader policy.")
         else:
             policy_update = hvac_policy_rules.replace(policy, "")
             client.sys.create_or_update_policy(
-                name=name + "-" + "reader", policy=policy_update
+                name=policy_name + "-" + "reader", policy=policy_update
             )
-            print("secret " + name + " remove in reader policy")
+            print("secret " + secret_engine_name + " remove in reader policy")
 
-    def delete_secret_engines(self):
+    def delete_secret_engines(self, project, team, engine):
         """Function which will delete the secret engine and call the functions to delete it from the policies."""
-        return_http_code = []
+        policy_name = project + "-" + team
+        secret_engine_name = project + "-" + team + "-" + engine
         client = hvac.Client(url=self.url, token=self.token)
-        names = [self.name + "kv", self.name + "transit", self.name + "ssh"]
-        for name in names:
-            http_code = client.sys.disable_secrets_engine(name)
-            return_http_code.append(http_code.status_code)
-            self.remove_tpm_policy(name)
-            self.remove_admin_policy(name)
-            self.remove_user_policy(name)
-            self.remove_reader_policy(name)
-        return return_http_code, "secret engines disable"
+        client.sys.disable_secrets_engine(secret_engine_name)
+        self.remove_tpm_policy(policy_name)
+        self.remove_admin_policy(policy_name, secret_engine_name)
+        self.remove_user_policy(policy_name, secret_engine_name)
+        self.remove_reader_policy(policy_name, secret_engine_name)
 
     def enable_approle(self, project, team, approle_name):
         """Function that will enable an approle authentification of a team of a project."""
@@ -557,16 +554,6 @@ path "%s/*" {
         url = self.url + "/v1/sys/auth/" + approle_name
         header = {"X-Vault-Token": self.token}
         data = {"type": "approle"}
-        http_code = requests.post(url, headers=header, json=data)
-        return http_code.status_code
-
-    def create_secret_approle(self, project, team, approle_name):
-        """Function that will create a secret engine in order to store the RoleID and SecretID."""
-        # On créé également un secret engine avec le même nom que l'approle authent.
-        secret_engine_name = project + "-" + team + "-" + approle_name
-        url = self.url + "/v1/sys/mounts/" + secret_engine_name
-        header = {"X-Vault-Token": self.token}
-        data = {"type": "kv", "options": {"version": "2"}}
         http_code = requests.post(url, headers=header, json=data)
         return http_code.status_code
 
@@ -586,7 +573,7 @@ path "%s/*" {
     def create_or_replace_approle_secret(
         self, project, team, approle_name, role_name
     ):
-        """Function that will read the RoleID and generate a SecretID and place them in a secret."""
+        """Function that will read the RoleID and generate a SecretID."""
         # Retrieving the roleID.
         http_code_1 = self.list_roleid(project, team, approle_name, role_name)
         roleid_dict = json.loads(http_code_1.text)
@@ -609,63 +596,32 @@ path "%s/*" {
         for i in secretid_dict:
             if i == "data":
                 secretid = list(secretid_dict[i].values())[0]
-        # The RoleID and SecretID are entered in the secret of the team.
-        self.update_secret(approle, "roleid", roleid, "secretid", secretid)
-        return http_code_2.status_code
+        return roleid, secretid
 
-    def update_secret(self, path, key1, value1, key2, value2):
-        """Update of RoleID and SecretID secrets. 
-        - path : it is where the secret engine is in vault in order to store the roleID and secretID for a team.
-        - key1 : it is 'roleid'
-        - value1 : ID generate by vault
-        - key2 : it is 'secretid'
-        - value2 : ID generate by vault
-        """
-        url = self.url + "/v1/" + path + "/data/approle"
-        header = {"X-Vault-Token": self.token}
-        data = {"data": {key1: value1, key2: value2}}
-        http_code = requests.post(url, headers=header, json=data)
-        return http_code.status_code
-
-    def remove_approle_role(self):
+    def remove_approle_role(self, project, team, approle_name, role_name):
         """Function that will delete a role in the previously created AppRole."""
-        name = self.name + self.approle_name
-        url = self.url + "/v1/auth/" + name + "/role/" + self.role_name
+        approle = project + "-" + team + "-" + approle_name
+        url = self.url + "/v1/auth/" + approle + "/role/" + role_name
         header = {"X-Vault-Token": self.token}
         http_code = requests.delete(url, headers=header)
         return http_code.status_code
 
-    def disable_approle(self):
+    def disable_approle(self, project, team, approle_name):
         """Function that disable AppRole authentication for a project."""
-        name = self.name + self.approle_name
+        name = project + team + approle_name
         url = self.url + "/v1/sys/auth/" + name
         header = {"X-Vault-Token": self.token}
         http_code = requests.delete(url, headers=header)
-        # We update the TPM policy to delete the access to the secret.
-        self.remove_tpm_policy(name)
-        self.remove_admin_policy(name)
-        self.remove_user_policy(name)
-        self.remove_reader_policy(name)
-        os.system(
-            "vault secrets disable -address=" + self.url + " " + name + "/"
-        )
-        # The return senf back the http code when he disable the authent method.
         return http_code.status_code
 
-    def delete_policy(self):
+    def delete_policy(self, project, team):
         """Function that will delete all the policies of a team."""
         client = hvac.Client(url=self.url, token=self.token)
         list_policies = client.sys.list_policies()['data']['policies']
         for policy in list_policies:
-            if self.project + "-" + self.team in policy:
+            if project + "-" + team in policy:
                 client.sys.delete_policy(name=policy)
-        print(
-            "All policies of '"
-            + self.project
-            + "-"
-            + self.team
-            + "' were deleted"
-        )
+        print("All policies of '" + project + "-" + team + "' were deleted")
 
     def create_policy_global_admin(self):
         """Function that will create a global admin policy.
@@ -675,8 +631,24 @@ path "%s/*" {
         http_code = client.sys.create_or_update_policy(
             name="vault-global-admin",
             policy="""# Policy create by TPM
-path "*" {
+path "sys" {
+    capabilities = ["read", "sudo"]
+}
+
+path "sys/*" {
     capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+
+path "auth/*" {
+    capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "identity" {
+    capabilities = ["read"]
+}
+
+path "identity/*" {
+    capabilities = [ "create", "read", "update", "delete", "list" ]
 }
 """,
         )
@@ -694,41 +666,3 @@ path "*" {
         }
         http_code = requests.post(url_group, headers=header, json=data)
         return http_code.status_code
-
-    def add_entity_group_global_admin(self):
-        """Function which will add an entity (= a user) in a group without deleting those already present."""
-        http_code_1, url_group_name = self.list_group(
-            "/v1/identity/group/name/", "yes"
-        )
-        json_return = http_code_1.json()
-        group_member = json_return["data"]["member_entity_ids"]
-        entity_id = self.create_entity()
-        group_member.append(entity_id)
-        header = {"X-Vault-Token": self.token}
-        data = {"member_entity_ids": group_member}
-        http_code_2 = requests.post(url_group_name, headers=header, json=data)
-        return http_code_2.status_code
-
-    def remove_entity_group_global_admin(self):
-        """Function that will remove entities from groups."""
-        http_code_1, url_group_name = self.list_group(
-            "/v1/identity/group/name/", "yes"
-        )
-        json_return = http_code_1.json()
-        group_member = json_return["data"]["member_entity_ids"]
-        # on trouve le nom de l'entité à partir de l'ID.
-        http_code_2 = self.list_entity("/v1/identity/entity/name/")
-        json_return = http_code_2.json()
-        entities_id = json_return["data"]["aliases"]
-        return_http_code = []
-        for ids in entities_id:
-            if "canonical_id" in ids.keys():
-                canonical_id = ids["canonical_id"]
-                group_member.remove(canonical_id)
-                header = {"X-Vault-Token": self.token}
-                data = {"member_entity_ids": group_member}
-                http_code_3 = requests.post(
-                    url_group_name, headers=header, json=data
-                )
-                return_http_code.append(http_code_3.status_code)
-        return return_http_code
