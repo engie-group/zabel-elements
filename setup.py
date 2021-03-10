@@ -36,7 +36,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['requests>=2.23', 'zabel-commons>=1.4'],
+    install_requires=['requests>=2.23', 'zabel-commons>=1.5'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 3',
