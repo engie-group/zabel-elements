@@ -913,7 +913,10 @@ class CloudBeesJenkins:
     # list_project_jobs
     # create_project_job
     # list_project_roles
+    # add_project_role_filter
     # list_project_groups
+    # create_project_group
+    # grant_project_group_role
     # get_project_domains
     # create_project_domain
     # list_domain_credentials
@@ -1025,6 +1028,86 @@ class CloudBeesJenkins:
             join_url(project_url, 'roles'), params={'depth': '1'}
         )
         return result['roles']  # type: ignore
+
+    def create_project_group(self, project_url: str, group: str) -> None:
+        """Create a group in project.
+
+        The project must already exist.
+
+        # Required parameters
+
+        - project_url: a non-empty string
+        - group: a non-empty string
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('project_url')
+        ensure_nonemptystring('group')
+
+        result = self._post(
+            join_url(project_url, f'groups/createGroup?name={group}')
+        )
+        return result  # type: ignore
+
+    @api_call
+    def grant_project_group_role(
+        self,
+        project_url: str,
+        group: str,
+        role: str,
+        offset: int = 0,
+        inherited: Optional[bool] = False,
+    ) -> None:
+        """Grant a role to group in project.
+
+        The project and group must already exist.
+
+        # Required parameters
+
+        - project_url: a non-empty string
+        - group: a non-empty string
+        - role: a non-empty string
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('project_url')
+        ensure_nonemptystring('group')
+        ensure_nonemptystring('role')
+        ensure_instance('offset', int)
+        ensure_noneorinstance('inherited', bool)
+
+        result = self._post(
+            join_url(
+                project_url,
+                f'groups/{group}/grantRole?role={role}&offset={offset}&inherited={inherited is True}',
+            )
+        )
+        return result  # type: ignore
+
+    @api_call
+    def add_project_role_filter(self, project_url: str, role: str) -> None:
+        """Add role filter to project.
+
+        # Required parameters
+
+        - project_url: a non-empty string
+        - role: a non-empty string
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('project_url')
+        ensure_nonemptystring('role')
+
+        result = self._post(
+            join_url(project_url, f'groups/addRoleFilter?name={role}')
+        )
+        return result  # type: ignore
 
     @api_call
     def list_project_groups(self, project_url: str) -> List[Dict[str, Any]]:

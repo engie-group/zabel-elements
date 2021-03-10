@@ -30,10 +30,6 @@ from zabel.commons.utils import (
 from .base.jenkins import CloudBeesJenkins as Base
 
 
-PGC = 'com.cloudbees.opscenter.server.rbac.ConnectedMasterProxyGroupContainer'
-CMM = 'com.cloudbees.opscenter.server.model.ManagedMaster'
-GRP = 'nectar.plugins.rbac.groups.Group'
-
 CREDENTIAL_UP_CONFIG_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 <com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl
   plugin="credentials">
@@ -370,13 +366,6 @@ class CloudBeesJenkins(Base):
             Not using the managed master endpoint here, as it's not
             what is used, at least with CloudBees Jenkins.
 
-        !!! note
-            There is a bug in the CloudBees version we are using
-            (2.107.2.1-rolling) that prevent the direct JSON conversion
-            (com.cloudbees.opscenter.server.rbac.ConnectedMasterProxyGroupContainer
-            doesn't have @ExportedBean), so we parse the master
-            `config.xml` file instead.
-
         # Required parameters
 
         - managedmaster_url: a non-empty string
@@ -397,40 +386,9 @@ class CloudBeesJenkins(Base):
         """
         ensure_nonemptystring('managedmaster_url')
 
-        def _as_dict(element: List[Dict[str, Any]]) -> Dict[str, Any]:
-            members = []
-            roles = []
-            name = [
-                item['element text'] for item in element if 'name' in item
-            ][0]
-            for item in element:
-                if 'role' in item:
-                    roles.append(item['element text'])
-                if 'member' in item:
-                    members.append(item['element text'])
-            return {
-                'name': name,
-                'members': members,
-                'roles': roles,
-                'description': None,
-            }
-
-        ensure_nonemptystring('managedmaster_url')
-
-        conf = self.get_item_configuration(managedmaster_url)
-        cmmc = conf[CMM]
-        what = [element for element in cmmc if 'properties' in element][0]
-        prop = what['properties']
-        what = [element for element in prop if PGC in element]
-        if not what:
-            return []
-        what = what[0][PGC]
-        what = [element for element in what if 'groups' in element][0]
-        what = what['groups']
-        return [_as_dict(element[GRP]) for element in what]
-
-        # WOULD BE self._get_json(join_url(managedmaster_url, 'groups'),
-        #                         params={'depth': 1})['groups']
+        return self._get_json(
+            join_url(managedmaster_url, 'groups'), params={'depth': 1}
+        )['groups']
 
     ####################################################################
     # credentials templates

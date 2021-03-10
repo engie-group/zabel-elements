@@ -54,6 +54,23 @@ CONTENT_TYPES = ['page', 'blogpost', 'comment', 'attachment']
 CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
 
 
+class BearerAuth(requests.auth.AuthBase):
+    """A Bearer handler class for requests."""
+
+    def __init__(self, pat: str):
+        self.pat = pat
+
+    def __eq__(self, other):
+        return self.pat == getattr(other, 'pat', None)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __call__(self, r):
+        r.headers['Authorization'] = f'Bearer {self.pat}'
+        return r
+
+
 class Confluence:
     """Confluence Low-Level Wrapper.
 
@@ -98,11 +115,13 @@ class Confluence:
         url: str,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
+        bearer_auth: Optional[str] = None,
         verify: bool = True,
     ) -> None:
         """Create a Confluence instance object.
 
-        You can only specify either `basic_auth` or `oauth`.
+        You can only specify either `basic_auth`, `bearer_auth', or
+        `oauth`.
 
         The `oauth` dictionary is expected to have the following entries:
 
@@ -115,6 +134,7 @@ class Confluence:
 
         - url: a non-empty string
         - basic_auth: a string tuple (user, token)
+        - bearer_auth: a string
         - oauth: a dictionary
 
         # Optional parameters
@@ -126,9 +146,10 @@ class Confluence:
         occur if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_onlyone('basic_auth', 'oauth')
+        ensure_onlyone('basic_auth', 'oauth', 'bearer_auth')
         ensure_noneorinstance('basic_auth', tuple)
         ensure_noneorinstance('oauth', dict)
+        ensure_noneorinstance('bearer_auth', str)
         ensure_instance('verify', bool)
 
         self.url = url
@@ -151,6 +172,8 @@ class Confluence:
                 rsa_key=oauth['key_cert'],
                 signature_type='auth_header',
             )
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
         self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
