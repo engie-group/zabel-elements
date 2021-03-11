@@ -155,6 +155,7 @@ class Confluence:
         self.url = url
         self.basic_auth = basic_auth
         self.oauth = oauth
+        self.bearer_auth = bearer_auth
         self.verify = verify
 
         if basic_auth is not None:
@@ -182,6 +183,8 @@ class Confluence:
     def __repr__(self) -> str:
         if self.basic_auth:
             rep = self.basic_auth[0]
+        elif self.bearer_auth:
+            rep = f'***{self.bearer_auth[-6:]}'
         else:
             rep = self.oauth['consumer_key']  # type: ignore
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
@@ -308,8 +311,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/addGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addGroup',
                 ),
                 json=[group_name],
             )
@@ -339,8 +341,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/removeGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeGroup',
                 ),
                 json=[group_name, None],
             )
@@ -525,8 +526,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/addUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addUser',
                 ),
                 json=[user, password],
             )
@@ -535,10 +535,7 @@ class Confluence:
         )
 
     @api_call
-    def delete_user(
-        self,
-        user_name: str,
-    ) -> bool:
+    def delete_user(self, user_name: str,) -> bool:
         """Delete user.
 
         !!! warning
@@ -559,8 +556,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/removeUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeUser',
                 ),
                 json=[user_name],
             )
