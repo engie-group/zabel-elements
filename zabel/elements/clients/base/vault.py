@@ -188,6 +188,48 @@ class Vault:
         )
         return requests.get(url, headers=header)
 
+    def list_sub_secret_for_team(self, project, team):
+        """Function that will request the existence of a secret for a team by looking to see if
+        there is any metadata and return an http code.
+        - project : name of the project.
+        - team : name of a team in the project.
+        """
+        header = {"X-Vault-Token": self.token}
+        url = self.url + "/v1/" + project + "/metadata/" + team + "/jenkins"
+        return requests.get(url, headers=header).status_code
+
+    def list_sub_secret_for_project(self, project, team):
+        """Function that will request the existence of a secret for a project by looking for
+        metadata and return an http code.
+        - project : name of the project.
+        - team : name of a team in the project.
+        """
+        header = {"X-Vault-Token": self.token}
+        url = self.url + "/v1/" + project + "/data/" + "jenkins"
+        return requests.get(url, headers=header).status_code
+
+    def create_sub_secret_for_project(self, project, name):
+        """Function that will create the secret of a project in a secret engine.
+        - project : name of the project.
+        - team : name of a team in the project.
+        """
+        url = self.url + "/v1/" + project + "/data/" + "jenkins"
+        header = {"X-Vault-Token": self.token}
+        data = {"data": {}}
+        http_code = requests.post(url, headers=header, json=data)
+        return http_code.status_code
+
+    def create_sub_secret_for_team(self, project, team):
+        """Function that will create the secret of a team in a secret engine.
+        - project : name of the project.
+        - team : name of a team in the project.
+        """
+        url = self.url + "/v1/" + project + "/data/" + team + "/" + "jenkins"
+        header = {"X-Vault-Token": self.token}
+        data = {"data": {}}
+        http_code = requests.post(url, headers=header, json=data)
+        return http_code.status_code
+
     def create_entity(self, entity):
         """Function which first of all see if the GAIA put in the arguments exists in the entities
         (1 entity = 1 user) and return its ID. Secondly, if the entity does not exist, it will create it and return its ID."""
@@ -309,19 +351,33 @@ class Vault:
         )
         return http_code.status_code
 
-    def update_tpm_policy(self, secret_engine_name):
+    def update_tpm_policy(self, secret_engine_name, project, team, mode):
         """Function that allows you to update the TPM policy when creating a new secret to be
         able to interact with it.
-        - name : the name of the secret engine.
+        - secret_engine_name : name of the secret engine in Vault.
+        - project : name of the project.
+        - team : name of a team in the project.
+        - mode : if it's 'jenkins' it means that the secret engine has the name of the project.
+          If not 'jenkins' it's another secret engine with the name of the project and a suffix at the end.
         """
-        policy = (
-            """
+        if mode == "jenkins":
+            policy = (
+                """
 path "%s/*" {
-    capabilities = ["create", "update", "delete"]
+    capabilities = ["list", "read", "create", "update", "delete"]
 }
 """
-            % secret_engine_name
-        )
+                % project
+            )
+        else:
+            policy = (
+                """
+path "%s/*" {
+    capabilities = ["list", "read", "create", "update", "delete"]
+}
+"""
+                % secret_engine_name
+            )
         client = hvac.Client(url=self.url, token=self.token)
         hvac_policy_rules = client.sys.read_policy(name="tpm-policy")["data"][
             "rules"
@@ -333,20 +389,48 @@ path "%s/*" {
             client.sys.create_or_update_policy(
                 name="tpm-policy", policy=send_new_policy
             )
-            print("secret " + secret_engine_name + " add in TPM policy")
+            print("secret add in TPM policy")
 
-    def update_admin_policy(self, policy_name, secret_engine_name):
+    def update_admin_policy(
+        self, policy_name, secret_engine_name, project, team, mode
+    ):
         """Function that will update the admins policy by adding the path and capabilities of the new secret engine.
-        - name : the name of the secret engine.
+        - policy_name : it's the name of the policy to modify inside vault.
+        - secret_engine_name : name of the secret engine in Vault.
+        - project : name of the project.
+        - team : name of a team in the project.
+        - mode : if it's 'jenkins' it means that the secret engine has the name of the project.
+          If not 'jenkins' it's another secret engine with the name of the project and a suffix at the end.
         """
-        policy = (
-            """
+        if mode == "jenkins":
+            capabilities1 = """{
+    capabilities = ["list"]
+}"""
+            capabilities2 = """{
+    capabilities = ["create", "update", "delete", "list", "read"]
+}"""
+
+            path1 = f'{project}/*'
+            path2 = f'{project}/data/jenkins'
+            path3 = f'{project}/metadata/jenkins'
+            path4 = f'{project}/data/{team}/*'
+            path5 = f'{project}/metadata/{team}/*'
+            policy_admin = f"""
+path "{path1}" {capabilities1}
+path "{path2}" {capabilities2}
+path "{path3}" {capabilities2}
+path "{path4}" {capabilities2}
+path "{path5}" {capabilities2}
+"""
+        else:
+            policy_admin = (
+                """
 path "%s/*" {
     capabilities = ["create", "update", "delete", "list", "read"]
 }
 """
-            % secret_engine_name
-        )
+                % secret_engine_name
+            )
         client = hvac.Client(url=self.url, token=self.token)
         hvac_policy_rules = client.sys.read_policy(
             name=policy_name + "-" + "admins"
@@ -357,24 +441,52 @@ path "%s/*" {
                 "secret " + secret_engine_name + " already in admins policy."
             )
         else:
-            send_new_policy = hvac_policy_rules + policy
+            send_new_policy = hvac_policy_rules + policy_admin
             client.sys.create_or_update_policy(
                 name=policy_name + "-" + "admins", policy=send_new_policy
             )
-            print("secret " + secret_engine_name + " add in admins policy")
+            print("secret add in admins policy")
 
-    def update_user_policy(self, policy_name, secret_engine_name):
+    def update_user_policy(
+        self, policy_name, secret_engine_name, project, team, mode
+    ):
         """Function that will update the policy user by adding the path and capabilities of the new secret engine.
-        - name : the name of the secret engine.
+        - policy_name : it's the name of the policy to modify inside vault.
+        - secret_engine_name : name of the secret engine in Vault.
+        - project : name of the project.
+        - team : name of a team in the project.
+        - mode : if it's 'jenkins' it means that the secret engine has the name of the project.
+          If not 'jenkins' it's another secret engine with the name of the project and a suffix at the end.
         """
-        policy_user = (
-            """
+        if mode == "jenkins":
+            capabilities1 = """{
+    capabilities = ["list"]
+}"""
+            capabilities2 = """{
+    capabilities = ["create", "update", "list", "read"]
+}"""
+
+            path1 = f'{project}/*'
+            path2 = f'{project}/data/jenkins'
+            path3 = f'{project}/metadata/jenkins'
+            path4 = f'{project}/data/{team}/*'
+            path5 = f'{project}/metadata/{team}/*'
+            policy_user = f"""
+path "{path1}" {capabilities1}
+path "{path2}" {capabilities2}
+path "{path3}" {capabilities2}
+path "{path4}" {capabilities2}
+path "{path5}" {capabilities2}
+"""
+        else:
+            policy_user = (
+                """
 path "%s/*" {
     capabilities = ["create", "update", "list", "read"]
 }
 """
-            % secret_engine_name
-        )
+                % secret_engine_name
+            )
         client = hvac.Client(url=self.url, token=self.token)
         hvac_policy_rules = client.sys.read_policy(
             name=policy_name + "-" + "users"
@@ -386,20 +498,49 @@ path "%s/*" {
             client.sys.create_or_update_policy(
                 name=policy_name + "-" + "users", policy=send_new_policy
             )
-            print("secret " + secret_engine_name + " add in users policy")
+            print("secret add in users policy")
 
-    def update_reader_policy(self, policy_name, secret_engine_name):
+    def update_reader_policy(
+        self, policy_name, secret_engine_name, project, team, mode
+    ):
         """Function that will update the policy readers by adding the path and capabilities of the new secret engine.
-        - name : the name of the secret engine.
+        - policy_name : it's the name of the policy to modify inside vault.
+        - secret_engine_name : name of the secret engine in Vault.
+        - project : name of the project.
+        - team : name of a team in the project.
+        - mode : if it's 'jenkins' it means that the secret engine has the name of the project.
+          If not 'jenkins' it's another secret engine with the name of the project and a suffix at the end.
         """
-        policy_reader = (
-            """
+        if mode == "jenkins":
+            capabilities1 = """{
+    capabilities = ["list"]
+}"""
+            capabilities2 = """{
+    capabilities = ["list", "read"]
+}"""
+
+            path1 = f'{project}/*'
+            path2 = f'{project}/data/jenkins'
+            path3 = f'{project}/metadata/jenkins'
+            path4 = f'{project}/data/{team}/*'
+            path5 = f'{project}/metadata/{team}/*'
+            policy_reader = f"""
+path "{path1}" {capabilities1}
+path "{path2}" {capabilities2}
+path "{path3}" {capabilities2}
+path "{path4}" {capabilities2}
+path "{path5}" {capabilities2}
+"""
+
+        else:
+            policy_reader = (
+                """
 path "%s/*" {
     capabilities = ["list", "read"]
 }
 """
-            % secret_engine_name
-        )
+                % secret_engine_name
+            )
         client = hvac.Client(url=self.url, token=self.token)
         hvac_policy_rules = client.sys.read_policy(
             name=policy_name + "-" + "readers"
@@ -413,11 +554,21 @@ path "%s/*" {
             client.sys.create_or_update_policy(
                 name=policy_name + "-" + "readers", policy=send_new_policy
             )
-            print("secret " + secret_engine_name + " add in readers policy")
+            print("secret add in readers policy")
 
-    def enable_secret_engines(self, project, team, engine):
+    def enable_kv_secret_engines_(self, project, engine):
+        """."""
+        secret_engine_name = project
+        url = self.url + "/v1/sys/mounts/" + secret_engine_name
+        header = {"X-Vault-Token": self.token}
+        if engine == "kv":
+            data = {"type": "kv", "options": {"version": "2"}}
+        http_code = requests.post(url, headers=header, json=data)
+        return http_code.status_code
+
+    def enable_secret_engines(self, project, engine):
         """Function that creates the secret engine and calls the functions to add it to the policies."""
-        secret_engine_name = project + "-" + team + "-" + engine
+        secret_engine_name = project + "-" + engine
         url = self.url + "/v1/sys/mounts/" + secret_engine_name
         header = {"X-Vault-Token": self.token}
         if engine == "kv":
@@ -426,17 +577,23 @@ path "%s/*" {
             data = {"type": "transit"}
         if engine == "ssh":
             data = {"type": "ssh"}
-        # We verify if the secret already exist and we continue or not.
         http_code = requests.post(url, headers=header, json=data)
         return http_code.status_code
 
-    def update_policies(self, project, team, engine):
+    def update_policies(self, project, team, engine, mode):
+        """Function which will update the policies with a new secret engine."""
         policy_name = project + "-" + team
-        secret_engine_name = project + "-" + team + "-" + engine
-        self.update_tpm_policy(secret_engine_name)
-        self.update_admin_policy(policy_name, secret_engine_name)
-        self.update_user_policy(policy_name, secret_engine_name)
-        self.update_reader_policy(policy_name, secret_engine_name)
+        secret_engine_name = project + "-" + engine
+        self.update_tpm_policy(secret_engine_name, project, team, mode)
+        self.update_admin_policy(
+            policy_name, secret_engine_name, project, team, mode
+        )
+        self.update_user_policy(
+            policy_name, secret_engine_name, project, team, mode
+        )
+        self.update_reader_policy(
+            policy_name, secret_engine_name, project, team, mode
+        )
 
     def remove_tpm_policy(self, secret_engine_name):
         """Function that will remove the secret engine from the TPM policy.
