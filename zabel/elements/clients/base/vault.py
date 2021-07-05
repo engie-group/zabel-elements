@@ -9,7 +9,10 @@ class Vault:
     """Vault."""
 
     def __init__(
-        self, url, login, password,
+        self,
+        url,
+        login,
+        password,
     ):
         """
         # Required parameters

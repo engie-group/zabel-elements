@@ -34,6 +34,7 @@ from zabel.commons.utils import (
     ensure_onlyone,
     join_url,
 )
+import json
 
 
 ########################################################################
@@ -311,7 +312,8 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/addGroup',
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/addGroup',
                 ),
                 json=[group_name],
             )
@@ -341,7 +343,8 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeGroup',
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/removeGroup',
                 ),
                 json=[group_name, None],
             )
@@ -526,7 +529,8 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/addUser',
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/addUser',
                 ),
                 json=[user, password],
             )
@@ -535,7 +539,10 @@ class Confluence:
         )
 
     @api_call
-    def delete_user(self, user_name: str,) -> bool:
+    def delete_user(
+        self,
+        user_name: str,
+    ) -> bool:
         """Delete user.
 
         !!! warning
@@ -556,7 +563,8 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeUser',
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/removeUser',
                 ),
                 json=[user_name],
             )
@@ -1557,6 +1565,91 @@ class Confluence:
         )
         return response  # type: ignore
 
+    @api_call
+    def list_page_restrictions(self, page_id: Union[str, int]):
+        ensure_instance('page_id', (str, int))
+
+        str_response = (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/getContentPermissionSets',
+                ),
+                json=[page_id],
+            )
+            .text
+        )
+
+        return json.loads(str_response)
+
+    @api_call
+    def set_page_restrictions(
+        self,
+        page_id: Union[str, int],
+        permission_type: str,
+        restrictions: list,
+    ):
+        """
+        Will set the restrictions on a page given its id. The permission_type is either 'View' or 'Edit'.
+
+
+        Restrictions
+        -------------
+        The restrictions is a non-None list of the following dict :
+        ```json
+        {
+            'type': '"Edit" | "View" | None',
+            'userName': '<username> | None',
+            'groupName': '<group name> | None'
+        }
+        ```
+
+        About these entries :
+        - either 'userName' or 'groupName' should be None, and one of them must be set.
+        - the 'type' must be consistent with that of permission_type. If it is not supplied, it will be
+        populated accordingly, courtesy of me.
+
+        These rules means that these arguments are perfectly fine :
+        ```python
+
+            self.set_page_restrictions('some_id', 'Edit', [{'userName': 'bob'}, {'userName': 'mike'}])
+        ```
+        But you can also provide the full form if you wish to comply to the formal API.
+
+        Important ! When designing restrictions schemes, please mind the default behavior when no permissions are set are the following :
+        - when no restrictions is set for type 'View' -> anyone can view the page.
+        - when no restrictions is set for type 'Edit' -> anyone can edit the page.
+
+        So if you want to absolutely restrict access to a particular user or group, be user to specify both 'View' and 'Edit'
+        restrictions (setting restrictions on 'Edit' only won't necessarily imply that 'View' restrictions will be set as well)
+
+        :param page_id:
+        :param permission_type:
+        :param restrictions:
+        :return:
+        """
+        ensure_instance('page_id', (str, int))
+        ensure_in('permission_type', ('Edit', 'View'))
+        ensure_instance('restrictions', list)
+
+        sane_restrictions = self._sanitize_restrictions(
+            permission_type=permission_type, restrictions=restrictions
+        )
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/setContentPermissions',
+                ),
+                json=[page_id, permission_type, sane_restrictions],
+            )
+            .text
+            == 'true'
+        )
+
     ####################################################################
     # confluence helpers
 
@@ -1607,3 +1700,20 @@ class Confluence:
         """Return confluence POST api call results."""
         api_url = join_url(join_url(self.url, 'rest/api'), api)
         return self.session().post(api_url, json=json)
+
+    def _sanitize_restrictions(
+        self, permission_type: str, restrictions: list
+    ) -> list:
+        for restriction in restrictions:
+            restriction.setdefault('type', permission_type)
+            if restriction['type'] not in ('Edit', 'View'):
+                raise ValueError("'type' must be one of 'View', 'Edit'")
+
+            has_user = restriction.setdefault('userName', None)
+            has_group = restriction.setdefault('groupName', None)
+            if has_group == has_user:
+                raise ValueError(
+                    "Confluence page restriction must have exactly one of : 'userName', 'groupName'"
+                )
+
+        return restrictions
