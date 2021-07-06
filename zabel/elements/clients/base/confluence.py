@@ -20,6 +20,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
+import json
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.sessions import prepare_session
@@ -34,7 +35,6 @@ from zabel.commons.utils import (
     ensure_onlyone,
     join_url,
 )
-import json
 
 
 ########################################################################
@@ -1089,6 +1089,8 @@ class Confluence:
     # list_page_children
     # list_page_attachments
     # add_page_attachment
+    # list_page_restrictions
+    # set_page_restrictions
 
     @api_call
     def search_pages(
@@ -1566,7 +1568,29 @@ class Confluence:
         return response  # type: ignore
 
     @api_call
-    def list_page_restrictions(self, page_id: Union[str, int]):
+    def list_page_restrictions(
+        self, page_id: Union[str, int]
+    ) -> List[Dict[str, Any]]:
+        """Returns the list of access restrictions on a given page.
+
+        # Required parameters
+
+        - `page_id` : integer or string
+
+        # Returned value
+
+        A list of _restrictions_ . Restrictions are structured as follow :
+
+        - `type`: str, either "Edit" or "View"
+        - `contentPermissions`: a dictionary structured as follow
+            * `type`: str, either "Edit" or "View"
+            * `userName`: str, or None if groupName is set,
+            * `groupName`: str, or None if userName is set
+        ```
+
+        # See
+        <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
+        """
         ensure_instance('page_id', (str, int))
 
         str_response = (
@@ -1588,41 +1612,51 @@ class Confluence:
         self,
         page_id: Union[str, int],
         permission_type: str,
-        restrictions: list,
-    ):
+        restrictions: List[Dict[str, Any]],
+    ) -> bool:
         """
         Will set the restrictions on a page given its id. The permission_type is either 'View' or 'Edit'.
 
+        # Required parameters
 
-        Restrictions
-        -------------
-        The restrictions is a non-None list of the following dict :
-        ```json
-        {
-            'type': '"Edit" | "View" | None',
-            'userName': '<username> | None',
-            'groupName': '<group name> | None'
-        }
-        ```
+        - `page_id`: integer or string
+        - `permission_type`: str, either "View" or "Edit"
+        - `restrictions`: a list of dictionaries structured as follow :
+           * `type`: string, either "Edit", "View" or None.
+                     If set, must be consistent with `permission_type`.
+                     If None, will inherit `permission_type`.
+           * `userName`: str, or None if `groupName` is set
+           * `groupName`: str, or None if `userName` is set
 
-        About these entries :
-        - either 'userName' or 'groupName' should be None, and one of them must be set.
-        - the 'type' must be consistent with that of permission_type. If it is not supplied, it will be
-        populated accordingly, courtesy of me.
+        # Example
 
-        These rules means that these arguments are perfectly fine :
+        These rules means that this invocation :
         ```python
-
-            self.set_page_restrictions('some_id', 'Edit', [{'userName': 'bob'}, {'userName': 'mike'}])
+            self.set_page_restrictions('page_id', 'Edit', [{'userName': 'bob'}, {'groupName': 'ATeam'}])
         ```
-        But you can also provide the full form if you wish to comply to the formal API.
+        Is equivalent to the fully formed data as expected by the json-rpc API :
+        ```python
+            self.set_page_restrictions(
+                'page_id',
+                'Edit',
+                [{'type': 'Edit', 'userName': 'bob', 'groupName': None},
+                {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
+            )
+        ```
 
-        Important ! When designing restrictions schemes, please mind the default behavior when no permissions are set are the following :
+        # Behavior rules
+
+        You may have noticed that permissions 'View' and 'Edit' are managed separately, but they need to be thought of together
+        when designing restrictions schemes. The default behavior when no permissions are set are the following:
         - when no restrictions is set for type 'View' -> anyone can view the page.
         - when no restrictions is set for type 'Edit' -> anyone can edit the page.
 
         So if you want to absolutely restrict access to a particular user or group, be user to specify both 'View' and 'Edit'
-        restrictions (setting restrictions on 'Edit' only won't necessarily imply that 'View' restrictions will be set as well)
+        restrictions (setting restrictions on 'Edit' only won't necessarily imply that 'View' restrictions will be set as well).
+        As a result you will often have to call this method twice in a row.
+
+        # See
+        <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
 
         :param page_id:
         :param permission_type:
@@ -1702,18 +1736,23 @@ class Confluence:
         return self.session().post(api_url, json=json)
 
     def _sanitize_restrictions(
-        self, permission_type: str, restrictions: list
-    ) -> list:
+        self, permission_type: str, restrictions: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Ensure that the _restrictions_ arguments for page restrictions are sanefor usage, see self#set_page_restrictions()
+        """
         for restriction in restrictions:
             restriction.setdefault('type', permission_type)
-            if restriction['type'] not in ('Edit', 'View'):
-                raise ValueError("'type' must be one of 'View', 'Edit'")
+            if restriction['type'] != permission_type:
+                raise ValueError(
+                    f"field 'type' is inconsistent with 'permission_type'. Got : 'permission_type'={permission_type}, restriction={restriction} "
+                )
 
             has_user = restriction.setdefault('userName', None)
             has_group = restriction.setdefault('groupName', None)
             if has_group == has_user:
                 raise ValueError(
-                    "Confluence page restriction must have exactly one of : 'userName', 'groupName'"
+                    f"Confluence page restriction must have exactly one of : 'userName', 'groupName'. Got : {restriction} "
                 )
 
         return restrictions
