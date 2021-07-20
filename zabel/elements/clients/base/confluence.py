@@ -20,7 +20,6 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
-import json
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.sessions import prepare_session
@@ -121,15 +120,19 @@ class Confluence:
     ) -> None:
         """Create a Confluence instance object.
 
-        You can only specify either `basic_auth`, `bearer_auth', or
+        You can only specify either `basic_auth`, `bearer_auth`, or
         `oauth`.
 
-        The `oauth` dictionary is expected to have the following entries:
+        The `oauth` dictionary is expected to have the following
+        entries:
 
         - access_token: a string
         - access_token_secret: a string
         - consumer_key: a string
         - key_cert: a string
+
+        Please note that the `bearer_auth` support does not give access
+        to JSON-RPC methods.
 
         # Required parameters
 
@@ -259,6 +262,7 @@ class Confluence:
     # get_user
     # create_user*
     # delete_user*
+    # update_user*
     # list_user_groups
     # get_user_current
     # deactivate_user
@@ -312,8 +316,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/addGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addGroup',
                 ),
                 json=[group_name],
             )
@@ -343,8 +346,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/removeGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeGroup',
                 ),
                 json=[group_name, None],
             )
@@ -529,8 +531,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/addUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addUser',
                 ),
                 json=[user, password],
             )
@@ -539,10 +540,7 @@ class Confluence:
         )
 
     @api_call
-    def delete_user(
-        self,
-        user_name: str,
-    ) -> bool:
+    def delete_user(self, user_name: str,) -> bool:
         """Delete user.
 
         !!! warning
@@ -563,8 +561,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/removeUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeUser',
                 ),
                 json=[user_name],
             )
@@ -573,8 +570,56 @@ class Confluence:
         )
 
     @api_call
-    def deactivate_user(self, user_name) -> None:
+    def update_user(
+        self, user_name: str, user: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update user.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
+
+        `user` is a dictionary with possible replacement values for
+        those two entries: `fullname` and `email`.  Other entries are
+        ignored.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+        - user: a dictionary
+
+        # Returned value
+
+        True if the update was successful, False otherwise.
+        """
+        ensure_nonemptystring('user_name')
+        ensure_instance('user', dict)
+
+        request = {'name': user_name}
+        if 'fullname' in user:
+            request['fullname'] = user['fullname']
+        if 'email' in user:
+            request['email'] = user['email']
+
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/editUser'
+                ),
+                json=[request],
+            )
+            .text
+            == 'true'
+        )
+
+    @api_call
+    def deactivate_user(self, user_name) -> bool:
         """Deactivate confluence user.
+
+        !!! warning
+            This uses the json-rpc interface that is deprecated (but
+            there is no substitute as of this writing).
 
         # Required parameters
 
@@ -582,27 +627,21 @@ class Confluence:
 
         # Returned value
 
-        None.
+        True if the deactivation was successful, False otherwise.
         """
         ensure_nonemptystring('user_name')
 
-        api = f'/admin/users/deactivateuser.action?username={user_name}'
-        form = self.session().get(join_url(self.url, api))
-
-        data = {
-            'atl_token': _get_atl_token(form.text),
-            'username': user_name,
-            'confirm': 'Disable',
-        }
-
-        self.session().post(
-            join_url(self.url, '/admin/users/deactivateuser-confirm.action'),
-            data=data,
-            headers={
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Atlassian-Token': 'no-check',
-            },
-            cookies=form.cookies,
+        return (
+            self.session()
+            .post(
+                join_url(
+                    self.url,
+                    '/rpc/json-rpc/confluenceservice-v2/deactivateUser',
+                ),
+                json=[user_name],
+            )
+            .text
+            == 'true'
         )
 
     @api_call
@@ -1084,6 +1123,7 @@ class Confluence:
     # get_page
     # create_page
     # update_page
+    # delete_page_version
     # list_page_labels
     # add_page_labels
     # list_page_children
@@ -1354,6 +1394,28 @@ class Confluence:
         return result  # type: ignore
 
     @api_call
+    def delete_page_version(
+        self, page_id: Union[str, int], version: int
+    ) -> None:
+        """Delete a page version.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+        - version: an integer
+        """
+        ensure_instance('page_id', (str, int))
+        ensure_instance('version', int)
+
+        result = self.session().delete(
+            join_url(
+                self.url,
+                f'rest/experimental/content/{page_id}/version/{version}',
+            )
+        )
+        return result  # type: ignore
+
+    @api_call
     def update_page(
         self, page_id: Union[str, int], page: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -1593,19 +1655,15 @@ class Confluence:
         """
         ensure_instance('page_id', (str, int))
 
-        str_response = (
-            self.session()
-            .post(
-                join_url(
-                    self.url,
-                    '/rpc/json-rpc/confluenceservice-v2/getContentPermissionSets',
-                ),
-                json=[page_id],
-            )
-            .text
+        response = self.session().post(
+            join_url(
+                self.url,
+                '/rpc/json-rpc/confluenceservice-v2/getContentPermissionSets',
+            ),
+            json=[page_id],
         )
 
-        return json.loads(str_response)
+        return response  # type: ignore
 
     @api_call
     def set_page_restrictions(
