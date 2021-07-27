@@ -114,7 +114,8 @@ class Jira:
     - boards
     - sprints
     - issues
-    - misc. features (reindexing, plugins & server info)
+    - servicedesk
+    - misc. features (reindexing, plugins, xray, & server info)
 
     Works with basic authentication as well as OAuth authentication.
 
@@ -173,6 +174,7 @@ class Jira:
         ensure_onlyone('basic_auth', 'oauth')
         ensure_noneorinstance('basic_auth', tuple)
         ensure_noneorinstance('oauth', dict)
+        ensure_instance('verify', bool)
 
         self.url = url
         self.basic_auth = basic_auth
@@ -200,6 +202,8 @@ class Jira:
         self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
         self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
         self.SERVICEDESK_BASE_URL = join_url(url, 'rest/servicedeskapi/')
+        self.SDBUNDLE_BASE_URL = join_url(url, 'rest/jsdbundled/1.0')
+        self.XRAY_BASE_URL = join_url(url, 'rest/raven/1.0')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
@@ -948,6 +952,20 @@ class Jira:
         - default: a boolean
         """
         return self._get_json('workflow')  # type: ignore
+
+    @api_call
+    def list_inactiveworkflows(self) -> List[str]:
+        """Return the list of inactive workflows.
+
+        # Returned value
+
+        A list of _workflow names_.
+        """
+        page = self._get('secure/admin/workflows/ListWorkflows.jspa')
+        inactives = page.text.split('<table id="inactive-workflows-table"')
+        if len(inactives) == 1:
+            return []
+        return re.findall(r'<tr data-workflow-name="([^"]+)">', inactives[1])
 
     @api_call
     def delete_workflow(self, workflow_name: str) -> None:
@@ -3220,7 +3238,7 @@ class Jira:
 
         # Returned value
 
-        A dictionary.
+        None.
         """
         ensure_instance('sprint_id', int)
         ensure_noneorinstance('name', str)
@@ -3240,7 +3258,7 @@ class Jira:
         add_if_specified(scheme, 'originBoardId', origin_board_id)
         add_if_specified(scheme, 'goal', goal)
 
-        result = self.session().post(
+        self.session().post(
             join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}'), json=scheme
         )
 
@@ -3260,14 +3278,50 @@ class Jira:
         return self._client().add_issues_to_sprint(sprint_id, issue_keys)
 
     ####################################################################
+    # Xray for JIRA
+    #
+    # list_xray_projects
+
+    @api_call
+    def list_xray_projects(self) -> List[Dict[str, Any]]:
+        """Return the requirement projects.
+
+        A _requirement_ project is a project on which Xray is enabled.
+
+        # Returned value
+
+        A list of dictionary with the following entries:
+
+        - icon: a string
+        - name: a string (the project name)
+        - alias: a string (the project key)
+        - pid: an integer
+        - avatarId: an integer
+        - type: a string (the project type)
+
+        TODO: support more than 100 projects.
+        """
+        params = {'iDisplayStart': 0, 'iDisplayLength': 100}
+
+        result = requests.get(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            params=params,
+            auth=self.auth,
+        ).json()
+
+        return result['entries']
+
+    ####################################################################
     # JIRA Service Desk
     #
     # create_request
     # get_request
     # add_request_comment
+    # get_bundledfield_definition
     # list_queues
     # list_queue_issues
     # list_requesttypes
+    # list_picker_users
 
     @api_call
     def create_request(
@@ -3420,6 +3474,31 @@ class Jira:
         return result  # type: ignore
 
     @api_call
+    def get_bundledfield_definition(
+        self, context_id: str, customfield_id: str
+    ) -> Dict[str, Any]:
+        """Return a bundled field definition.
+
+        # Required parameters
+
+        - context_id: a string
+        - customfield_id: a string
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('context_id')
+        ensure_nonemptystring('customfield_id')
+
+        result = requests.get(
+            join_url(self.SDBUNDLE_BASE_URL, 'jsdbundled/getBundledFields'),
+            params={'contextId': context_id, 'customFieldId': customfield_id},
+            auth=self.auth,
+        )
+        return result  # type: ignore
+
+    @api_call
     def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
         """Return a list of queues for a given service desk.
 
@@ -3478,6 +3557,75 @@ class Jira:
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/requesttype'
         )
+
+    @api_call
+    def list_picker_users(
+        self,
+        servicedesk_id: str,
+        query: str,
+        field_name: str,
+        project_id: str,
+        fieldconfig_id: int,
+        _: int,
+    ) -> List[Dict[str, Any]]:
+        """Return list of users matching query hint.
+
+        Simulates /rest/servicedesk/{n}/customer/user-search.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - query: a string
+        - field_name: a string
+        - project_id: a string
+        - fieldconfig_id: an integer
+        - _: an integer
+
+        # Returned value
+
+        A list of user infos.  Each user info is a dictionary with the
+        following fields:
+
+        - id: a string
+        - emailAddress: a string
+        - displayName: a string
+        - avatar: a string (an URL)
+
+        An empty list if no existing active user matches.
+        """
+
+        def _email(html: str) -> str:
+            text = html.replace('<strong>', '').replace('</strong>', '')
+            return text.split(' - ')[1].split(' ')[0]
+
+        def _avatar(url: str) -> str:
+            if 'avatarId=' in url:
+                return (
+                    f'/rest/servicedesk/{servicedesk_id}/servicedesk/customer/avatar/'
+                    + url.split('avatarId=')[1]
+                    + '?size=xsmall'
+                )
+            return url
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_instance('query', str)
+        ensure_instance('field_name', str)
+        ensure_instance('project_id', str)
+
+        picked = self._get(
+            f'/rest/api/2/user/picker?query={query}',
+            params={'maxResults': 10, 'showAvatar': True},
+        ).json()['users']
+
+        return [
+            {
+                'id': user['name'],
+                'displayName': user['displayName'],
+                'emailAddress': _email(user['html']),
+                'avatar': _avatar(user['avatarUrl']),
+            }
+            for user in picked
+        ]
 
     ####################################################################
     # JIRA misc. operation
