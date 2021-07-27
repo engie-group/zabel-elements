@@ -70,7 +70,6 @@ __all__ = [
     'Kubernetes',
     'SonarQube',
     'SquashTM',
-    'Vault',
 ]
 
 
@@ -82,4 +81,3 @@ from .jira import Jira
 from .kubernetes import Kubernetes
 from .sonarqube import SonarQube
 from .squashtm import SquashTM
-from .vault import Vault
