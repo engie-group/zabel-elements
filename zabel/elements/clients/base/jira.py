@@ -933,6 +933,31 @@ class Jira:
             'notificationscheme', params={'expand': expand}
         )
 
+
+    @api_call
+    def _list_notificationschemes_activity(self):
+        """Returns the id of each notification scheme along with whether
+        it is currently used by a project or not (ie, active or not).
+        However, you would rather use `list_notificationschemes` as
+        will now embed that information.
+
+        # Returned value
+
+        A list of the following dict entries:
+
+        - name: a string
+        - id: an integer or a string
+        - active: a boolean
+        """
+        uri = 'secure/admin/ViewNotificationSchemes.jspa'
+        pat_name = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=\d+">([^<]+)<'
+        pat_id = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=(\d+)">'
+        pat_inactive = (
+            r'&nbsp;\s+</td>\s+<td>\s+'
+            r'<ul class="operations-list">\s+<li><a id="%s_'
+        )
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
     # workflows
 
     @api_call
