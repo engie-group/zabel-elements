@@ -903,6 +903,7 @@ class Jira:
         - id: an integer
         - expand: a string
         - name: a string
+        - active: a boolean
         - self: a string
         - description: a string
         - notificationSchemeEvents: a list of dictionaries
@@ -929,9 +930,13 @@ class Jira:
         """
         ensure_instance('expand', str)
 
-        return self._collect_data(
+        notif_list = self._collect_data(
             'notificationscheme', params={'expand': expand}
         )
+
+        mapped_notif_activity = {l['id']: l for l in self._list_notificationschemes_activity()}
+
+        return [{**notif, **mapped_notif_activity[notif['id']]} for notif in notif_list]
 
 
     @api_call
