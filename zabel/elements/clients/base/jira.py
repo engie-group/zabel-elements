@@ -963,6 +963,50 @@ class Jira:
         )
         return self._parse_data(uri, pat_name, pat_id, pat_inactive)
 
+    @api_call
+    def delete_notificationscheme(self, scheme_id: Union[int,str]) -> None:
+        """Delete notification scheme.
+
+        # Required parameters
+
+        - scheme_id: either an in or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewNotificationSchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'<a href="EditNotifications!default.jspa\?atl_token=([^&]+)&amp;schemeId=%s">' % scheme_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Notification Scheme %s could not be found.'
+                % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteNotificationScheme.jspa',
+            data={
+                'schemeId': scheme_id,
+                'Delete': 'Delete',
+                'confirmed': 'true',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+
     # workflows
 
     @api_call
