@@ -638,6 +638,8 @@ class Jira:
     # delete_priorityscheme
     # list_fieldconfigurationschemes+
     # delete_fieldconfigurationscheme
+    # list_fieldconfigurations
+    # delete_fieldconfiguration
     # list_workflows
     # delete_workflow
     # list_workflowschemes+
@@ -1009,7 +1011,7 @@ class Jira:
     # priority schemes
 
     @api_call
-    def list_priorityschemes(self) -> List[int]:
+    def list_priorityschemes(self) -> List[dict]:
         """Return the list of priorityschemes.
 
         # Returned value
@@ -1079,7 +1081,7 @@ class Jira:
     # field configuration fields
 
     @api_call
-    def list_fieldconfigurationschemes(self) -> List[int]:
+    def list_fieldconfigurationschemes(self) -> List[dict]:
         """Return the list of field configuration schemes.
 
         # Returned value
@@ -1141,6 +1143,75 @@ class Jira:
             'secure/admin/DeleteFieldLayoutScheme.jspa',
             data={
                 'id': scheme_id,
+                'confirm': 'true',
+                'Delete': 'Delete',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+    # field configurations
+
+    @api_call
+    def list_fieldconfigurations(self) -> List[int]:
+        """Return the list of field configurations.
+
+        # Returned value
+
+        A list of _fieldconfigurations_.  Each fieldconfigurations is a dictionary
+        with the following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the field configuration scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewFieldLayouts.jspa'
+        pat_name = r'<span data-scheme-field="name" class="field-name">\s+.*?title="Edit field properties">([^<]+)'
+        pat_id = r';id=(\d+)" title="Create a copy of '
+        pat_inactive = (
+            r'<td>\s+</td>\s+<td>\s+<ul class="operations-list">'
+            r'\s+<li><a[^>]+?;id=%s"'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_fieldconfiguration(self, conf_id: Union[int, str]) -> None:
+        """Delete field configuration.
+
+        # Required parameters
+
+        - conf_id: either an in or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist
+        """
+        conf_id = str(conf_id)
+        ensure_nonemptystring('conf_id')
+
+        uri = 'secure/admin/ViewFieldLayouts.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'atl_token=([^&]+)&amp;id=%s" title="Create a copy ' % conf_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Field Configuration %s could not be found.' % conf_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteFieldLayout.jspa',
+            data={
+                'id': conf_id,
                 'confirm': 'true',
                 'Delete': 'Delete',
                 'atl_token': atl_token.group(1),
