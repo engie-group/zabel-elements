@@ -629,7 +629,7 @@ class Jira:
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
-    # list_inactive_notificationschemes
+    # list_inactivenotificationschemes
     # delete_notificationscheme
     # DONT delete_notificationscheme (not an issue, shared by default)
     # DONT get_priorityschemes
@@ -638,7 +638,7 @@ class Jira:
     # delete_priorityscheme
     # list_fieldconfigurationschemes+
     # delete_fieldconfigurationscheme
-    # list_fieldconfigurations
+    # list_fieldconfigurations+
     # delete_fieldconfiguration
     # list_workflows
     # delete_workflow
@@ -942,13 +942,20 @@ class Jira:
         )
 
     @api_call
-    def list_inactive_notificationschemes(self) -> List[int]:
+    def list_inactivenotificationschemes(self) -> List[Dict[str, Any]]:
         """Returns the id of inactive notification schemes.
-        A notification scheme is said to be inactive if it is not used by any project.
+
+        A notification scheme is said to be inactive if it is not used
+        by any project.
 
         # Returned value
 
-        A list of notification scheme ids (int)
+        A list of inactive _notificationschemes_.  Each notificationschemes
+        is a dictionary with the following entries:
+
+        - id: an integer
+        - name: a string
+
         """
         uri = 'secure/admin/ViewNotificationSchemes.jspa'
         pat_name = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=\d+">([^<]+)<'
@@ -960,7 +967,7 @@ class Jira:
             r'<ul class="operations-list">\s+<li><a id="%s_'
         )
         return [
-            scheme['id']
+            {'id': scheme['id'], 'name': scheme['name']}
             for scheme in self._parse_data(uri, pat_name, pat_id, pat_inactive)
             if not scheme['active']
         ]
@@ -971,7 +978,7 @@ class Jira:
 
         # Required parameters
 
-        - scheme_id: either an in or a string
+        - scheme_id: either an integer or a string
 
         # Returned value
 
@@ -979,7 +986,7 @@ class Jira:
 
         # Raised exceptions
 
-        _ApiError_ if the scheme does not exist
+        _ApiError_ if the scheme does not exist.
         """
         scheme_id = str(scheme_id)
         ensure_nonemptystring('scheme_id')
@@ -1011,7 +1018,7 @@ class Jira:
     # priority schemes
 
     @api_call
-    def list_priorityschemes(self) -> List[dict]:
+    def list_priorityschemes(self) -> List[Dict[str, Any]]:
         """Return the list of priorityschemes.
 
         # Returned value
@@ -1019,7 +1026,7 @@ class Jira:
         A list of _priorityschemes_.  Each priorityscheme is a dictionary
         with the following entries:
 
-        - id: an integer or a string
+        - id: an integer
         - name: a string
         - active: a boolean
 
@@ -1042,7 +1049,7 @@ class Jira:
 
         # Required parameters
 
-        - scheme_id: either an in or a string
+        - scheme_id: either an integer or a string
 
         # Returned value
 
@@ -1050,7 +1057,7 @@ class Jira:
 
         # Raised exceptions
 
-        _ApiError_ if the scheme does not exist
+        _ApiError_ if the scheme does not exist.
         """
         scheme_id = str(scheme_id)
         ensure_nonemptystring('scheme_id')
@@ -1081,15 +1088,15 @@ class Jira:
     # field configuration fields
 
     @api_call
-    def list_fieldconfigurationschemes(self) -> List[dict]:
+    def list_fieldconfigurationschemes(self) -> List[Dict[str, Any]]:
         """Return the list of field configuration schemes.
 
         # Returned value
 
-        A list of _fieldconfigurationschemes_.  Each fieldconfigurationschemes is a dictionary
-        with the following entries:
+        A list of _fieldconfigurationschemes_.  Each fieldconfigurationschemes
+        is a dictionary with the following entries:
 
-        - id: an integer or a string
+        - id: an integer
         - name: a string
         - active: a boolean
 
@@ -1113,7 +1120,7 @@ class Jira:
 
         # Required parameters
 
-        - scheme_id: either an in or a string
+        - scheme_id: either an integer or a string
 
         # Returned value
 
@@ -1121,7 +1128,7 @@ class Jira:
 
         # Raised exceptions
 
-        _ApiError_ if the scheme does not exist
+        _ApiError_ if the scheme does not exist.
         """
         scheme_id = str(scheme_id)
         ensure_nonemptystring('scheme_id')
@@ -1153,7 +1160,7 @@ class Jira:
     # field configurations
 
     @api_call
-    def list_fieldconfigurations(self) -> List[int]:
+    def list_fieldconfigurations(self) -> List[Dict[str, Any]]:
         """Return the list of field configurations.
 
         # Returned value
@@ -1161,7 +1168,7 @@ class Jira:
         A list of _fieldconfigurations_.  Each fieldconfigurations is a dictionary
         with the following entries:
 
-        - id: an integer or a string
+        - id: an integer
         - name: a string
         - active: a boolean
 
@@ -1183,7 +1190,7 @@ class Jira:
 
         # Required parameters
 
-        - conf_id: either an in or a string
+        - conf_id: either an integer or a string
 
         # Returned value
 
@@ -1191,7 +1198,7 @@ class Jira:
 
         # Raised exceptions
 
-        _ApiError_ if the scheme does not exist
+        _ApiError_ if the field configuration does not exist.
         """
         conf_id = str(conf_id)
         ensure_nonemptystring('conf_id')
