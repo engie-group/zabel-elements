@@ -1000,6 +1000,76 @@ class Jira:
             cookies=page.cookies,
         )
 
+    # priority schemes
+
+    @api_call
+    def list_priorityschemes(self) -> List[int]:
+        """Return the list of priorityschemes.
+
+        # Returned value
+
+        A list of _priorityschemes_.  Each priorityscheme is a dictionary
+        with the following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the priority scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewPrioritySchemes.jspa'
+        pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
+        pat_id = r'<tr data-id="(\d+)"'
+        pat_inactive = (
+            r'<span class="errorText">No projects</span>'
+            r'</td><td class="cell-type-collapsed">'
+            r'<ul class="operations-list"><li><a id="\w+_%s'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_priorityscheme(self, scheme_id: Union[int, str]) -> None:
+        """Delete priority scheme.
+
+        # Required parameters
+
+        - scheme_id: either an in or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewPrioritySchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'/logout\?atl_token=([^"]+)"',
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Priority Scheme %s could not be found.' % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeletePriorityScheme.jspa',
+            data={
+                'schemeId': scheme_id,
+                'decorator': 'dialog',
+                'inline': 'true',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
     # workflows
 
     @api_call
