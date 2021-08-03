@@ -631,9 +631,7 @@ class Jira:
     # list_notificationschemes
     # list_inactivenotificationschemes
     # delete_notificationscheme
-    # DONT delete_notificationscheme (not an issue, shared by default)
     # DONT get_priorityschemes
-    # DONT delete_priorityscheme (not an issue, shared by default)
     # list_priorityschemes+
     # delete_priorityscheme
     # list_fieldconfigurationschemes+
@@ -950,12 +948,11 @@ class Jira:
 
         # Returned value
 
-        A list of inactive _notificationschemes_.  Each notificationschemes
-        is a dictionary with the following entries:
+        A list of inactive _notificationschemes_.  Each
+        notificationschemes is a dictionary with the following entries:
 
         - id: an integer
         - name: a string
-
         """
         uri = 'secure/admin/ViewNotificationSchemes.jspa'
         pat_name = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=\d+">([^<]+)<'
@@ -1023,8 +1020,8 @@ class Jira:
 
         # Returned value
 
-        A list of _priorityschemes_.  Each priorityscheme is a dictionary
-        with the following entries:
+        A list of _priorityschemes_.  Each priorityscheme is a
+        dictionary with the following entries:
 
         - id: an integer
         - name: a string
@@ -1064,10 +1061,7 @@ class Jira:
 
         uri = 'secure/admin/ViewPrioritySchemes.jspa'
         page = self._get(uri)
-        atl_token = re.search(
-            r'/logout\?atl_token=([^"]+)"',
-            page.text,
-        )
+        atl_token = re.search(r'/logout\?atl_token=([^"]+)"', page.text)
 
         if not atl_token:
             raise ApiError(
@@ -1093,14 +1087,16 @@ class Jira:
 
         # Returned value
 
-        A list of _fieldconfigurationschemes_.  Each fieldconfigurationschemes
-        is a dictionary with the following entries:
+        A list of _fieldconfigurationschemes_.  Each
+        fieldconfigurationschemes is a dictionary with the following
+        entries:
 
         - id: an integer
         - name: a string
         - active: a boolean
 
-        `active` is true if the field configuration scheme is used in any project.
+        `active` is true if the field configuration scheme is used in
+        any project.
         """
         uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
         pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
@@ -1165,14 +1161,15 @@ class Jira:
 
         # Returned value
 
-        A list of _fieldconfigurations_.  Each fieldconfigurations is a dictionary
-        with the following entries:
+        A list of _fieldconfigurations_.  Each fieldconfigurations is a
+        dictionary with the following entries:
 
         - id: an integer
         - name: a string
         - active: a boolean
 
-        `active` is true if the field configuration scheme is used in any project.
+        `active` is true if the field configuration scheme is used in
+        any project.
         """
         uri = 'secure/admin/ViewFieldLayouts.jspa'
         pat_name = r'<span data-scheme-field="name" class="field-name">\s+.*?title="Edit field properties">([^<]+)'
@@ -2357,7 +2354,7 @@ class Jira:
             params = {'group': group}
         else:
             params = {'user': user}  # type: ignore
-        return self.session().delete(
+        self.session().delete(
             self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
             params=params,
         )
@@ -3512,7 +3509,7 @@ class Jira:
         complete_date: Optional[str] = None,
         origin_board_id: Optional[int] = None,
         goal: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> None:
         """Update existing sprint.
 
         # Required parameters

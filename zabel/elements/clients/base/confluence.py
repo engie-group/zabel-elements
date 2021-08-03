@@ -316,7 +316,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/addGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addGroup'
                 ),
                 json=[group_name],
             )
@@ -346,7 +346,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeGroup',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeGroup'
                 ),
                 json=[group_name, None],
             )
@@ -531,7 +531,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/addUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/addUser'
                 ),
                 json=[user, password],
             )
@@ -540,7 +540,7 @@ class Confluence:
         )
 
     @api_call
-    def delete_user(self, user_name: str,) -> bool:
+    def delete_user(self, user_name: str) -> bool:
         """Delete user.
 
         !!! warning
@@ -561,7 +561,7 @@ class Confluence:
             self.session()
             .post(
                 join_url(
-                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeUser',
+                    self.url, '/rpc/json-rpc/confluenceservice-v2/removeUser'
                 ),
                 json=[user_name],
             )
