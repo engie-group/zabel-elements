@@ -629,9 +629,15 @@ class Jira:
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
+    # list_inactive_notificationschemes
+    # delete_notificationscheme
     # DONT delete_notificationscheme (not an issue, shared by default)
     # DONT get_priorityschemes
     # DONT delete_priorityscheme (not an issue, shared by default)
+    # list_priorityschemes+
+    # delete_priorityscheme
+    # list_fieldconfigurationschemes+
+    # delete_fieldconfigurationscheme
     # list_workflows
     # delete_workflow
     # list_workflowschemes+
@@ -1023,7 +1029,7 @@ class Jira:
         pat_inactive = (
             r'<span class="errorText">No projects</span>'
             r'</td><td class="cell-type-collapsed">'
-            r'<ul class="operations-list"><li><a id="\w+_%s'
+            r'<ul class="operations-list"><li><a id="\w+_%s"'
         )
 
         return self._parse_data(uri, pat_name, pat_id, pat_inactive)
@@ -1065,6 +1071,78 @@ class Jira:
                 'schemeId': scheme_id,
                 'decorator': 'dialog',
                 'inline': 'true',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+    # field configuration fields
+
+    @api_call
+    def list_fieldconfigurationschemes(self) -> List[int]:
+        """Return the list of field configuration schemes.
+
+        # Returned value
+
+        A list of _fieldconfigurationschemes_.  Each fieldconfigurationschemes is a dictionary
+        with the following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the field configuration scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
+        pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
+        pat_id = r'<a id="configure_(\d+)" data-operation="configure"'
+        pat_inactive = (
+            r'&nbsp;\s+</td>\s+<td>\s+'
+            r'<ul class="operations-list">\s+<li><a id="\w+_%s"'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_fieldconfigurationscheme(
+        self, scheme_id: Union[int, str]
+    ) -> None:
+        """Delete field configuration scheme.
+
+        # Required parameters
+
+        - scheme_id: either an in or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'atl_token=([^&]+)&amp;id=%s" title="Delete this scheme">'
+            % scheme_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Field Configuration Scheme %s could not be found.' % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteFieldLayoutScheme.jspa',
+            data={
+                'id': scheme_id,
+                'confirm': 'true',
+                'Delete': 'Delete',
                 'atl_token': atl_token.group(1),
             },
             cookies=page.cookies,
