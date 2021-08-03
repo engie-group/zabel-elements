@@ -903,7 +903,6 @@ class Jira:
         - id: an integer
         - expand: a string
         - name: a string
-        - active: a boolean
         - self: a string
         - description: a string
         - notificationSchemeEvents: a list of dictionaries
@@ -930,41 +929,36 @@ class Jira:
         """
         ensure_instance('expand', str)
 
-        notif_list = self._collect_data(
+        return self._collect_data(
             'notificationscheme', params={'expand': expand}
         )
 
-        mapped_notif_activity = {l['id']: l for l in self._list_notificationschemes_activity()}
-
-        return [{**notif, **mapped_notif_activity[notif['id']]} for notif in notif_list]
-
-
     @api_call
-    def _list_notificationschemes_activity(self):
-        """Returns the id of each notification scheme along with whether
-        it is currently used by a project or not (ie, active or not).
-        However, you would rather use `list_notificationschemes` as
-        will now embed that information.
+    def list_inactive_notificationschemes(self) -> List[int]:
+        """Returns the id of inactive notification schemes.
+        A notification scheme is said to be inactive if it is not used by any project.
 
         # Returned value
 
-        A list of the following dict entries:
-
-        - name: a string
-        - id: an integer or a string
-        - active: a boolean
+        A list of notification scheme ids (int)
         """
         uri = 'secure/admin/ViewNotificationSchemes.jspa'
         pat_name = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=\d+">([^<]+)<'
-        pat_id = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=(\d+)">'
+        pat_id = (
+            r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=(\d+)">'
+        )
         pat_inactive = (
             r'&nbsp;\s+</td>\s+<td>\s+'
             r'<ul class="operations-list">\s+<li><a id="%s_'
         )
-        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+        return [
+            scheme['id']
+            for scheme in self._parse_data(uri, pat_name, pat_id, pat_inactive)
+            if not scheme['active']
+        ]
 
     @api_call
-    def delete_notificationscheme(self, scheme_id: Union[int,str]) -> None:
+    def delete_notificationscheme(self, scheme_id: Union[int, str]) -> None:
         """Delete notification scheme.
 
         # Required parameters
@@ -985,14 +979,14 @@ class Jira:
         uri = 'secure/admin/ViewNotificationSchemes.jspa'
         page = self._get(uri)
         atl_token = re.search(
-            r'<a href="EditNotifications!default.jspa\?atl_token=([^&]+)&amp;schemeId=%s">' % scheme_id,
+            r'<a href="EditNotifications!default.jspa\?atl_token=([^&]+)&amp;schemeId=%s">'
+            % scheme_id,
             page.text,
         )
 
         if not atl_token:
             raise ApiError(
-                'Notification Scheme %s could not be found.'
-                % scheme_id
+                'Notification Scheme %s could not be found.' % scheme_id
             )
 
         self._do_form_step(
@@ -1005,7 +999,6 @@ class Jira:
             },
             cookies=page.cookies,
         )
-
 
     # workflows
 
