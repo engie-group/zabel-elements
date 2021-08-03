@@ -629,9 +629,17 @@ class Jira:
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
+    # list_inactivenotificationschemes
+    # delete_notificationscheme
     # DONT delete_notificationscheme (not an issue, shared by default)
     # DONT get_priorityschemes
     # DONT delete_priorityscheme (not an issue, shared by default)
+    # list_priorityschemes+
+    # delete_priorityscheme
+    # list_fieldconfigurationschemes+
+    # delete_fieldconfigurationscheme
+    # list_fieldconfigurations+
+    # delete_fieldconfiguration
     # list_workflows
     # delete_workflow
     # list_workflowschemes+
@@ -931,6 +939,291 @@ class Jira:
 
         return self._collect_data(
             'notificationscheme', params={'expand': expand}
+        )
+
+    @api_call
+    def list_inactivenotificationschemes(self) -> List[Dict[str, Any]]:
+        """Returns the id of inactive notification schemes.
+
+        A notification scheme is said to be inactive if it is not used
+        by any project.
+
+        # Returned value
+
+        A list of inactive _notificationschemes_.  Each notificationschemes
+        is a dictionary with the following entries:
+
+        - id: an integer
+        - name: a string
+
+        """
+        uri = 'secure/admin/ViewNotificationSchemes.jspa'
+        pat_name = r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=\d+">([^<]+)<'
+        pat_id = (
+            r'<a href="EditNotifications!default.jspa.*?&amp;schemeId=(\d+)">'
+        )
+        pat_inactive = (
+            r'&nbsp;\s+</td>\s+<td>\s+'
+            r'<ul class="operations-list">\s+<li><a id="%s_'
+        )
+        return [
+            {'id': scheme['id'], 'name': scheme['name']}
+            for scheme in self._parse_data(uri, pat_name, pat_id, pat_inactive)
+            if not scheme['active']
+        ]
+
+    @api_call
+    def delete_notificationscheme(self, scheme_id: Union[int, str]) -> None:
+        """Delete notification scheme.
+
+        # Required parameters
+
+        - scheme_id: either an integer or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist.
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewNotificationSchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'<a href="EditNotifications!default.jspa\?atl_token=([^&]+)&amp;schemeId=%s">'
+            % scheme_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Notification Scheme %s could not be found.' % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteNotificationScheme.jspa',
+            data={
+                'schemeId': scheme_id,
+                'Delete': 'Delete',
+                'confirmed': 'true',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+    # priority schemes
+
+    @api_call
+    def list_priorityschemes(self) -> List[Dict[str, Any]]:
+        """Return the list of priorityschemes.
+
+        # Returned value
+
+        A list of _priorityschemes_.  Each priorityscheme is a dictionary
+        with the following entries:
+
+        - id: an integer
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the priority scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewPrioritySchemes.jspa'
+        pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
+        pat_id = r'<tr data-id="(\d+)"'
+        pat_inactive = (
+            r'<span class="errorText">No projects</span>'
+            r'</td><td class="cell-type-collapsed">'
+            r'<ul class="operations-list"><li><a id="\w+_%s"'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_priorityscheme(self, scheme_id: Union[int, str]) -> None:
+        """Delete priority scheme.
+
+        # Required parameters
+
+        - scheme_id: either an integer or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist.
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewPrioritySchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'/logout\?atl_token=([^"]+)"',
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Priority Scheme %s could not be found.' % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeletePriorityScheme.jspa',
+            data={
+                'schemeId': scheme_id,
+                'decorator': 'dialog',
+                'inline': 'true',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+    # field configuration fields
+
+    @api_call
+    def list_fieldconfigurationschemes(self) -> List[Dict[str, Any]]:
+        """Return the list of field configuration schemes.
+
+        # Returned value
+
+        A list of _fieldconfigurationschemes_.  Each fieldconfigurationschemes
+        is a dictionary with the following entries:
+
+        - id: an integer
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the field configuration scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
+        pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
+        pat_id = r'<a id="configure_(\d+)" data-operation="configure"'
+        pat_inactive = (
+            r'&nbsp;\s+</td>\s+<td>\s+'
+            r'<ul class="operations-list">\s+<li><a id="\w+_%s"'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_fieldconfigurationscheme(
+        self, scheme_id: Union[int, str]
+    ) -> None:
+        """Delete field configuration scheme.
+
+        # Required parameters
+
+        - scheme_id: either an integer or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the scheme does not exist.
+        """
+        scheme_id = str(scheme_id)
+        ensure_nonemptystring('scheme_id')
+
+        uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'atl_token=([^&]+)&amp;id=%s" title="Delete this scheme">'
+            % scheme_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Field Configuration Scheme %s could not be found.' % scheme_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteFieldLayoutScheme.jspa',
+            data={
+                'id': scheme_id,
+                'confirm': 'true',
+                'Delete': 'Delete',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
+        )
+
+    # field configurations
+
+    @api_call
+    def list_fieldconfigurations(self) -> List[Dict[str, Any]]:
+        """Return the list of field configurations.
+
+        # Returned value
+
+        A list of _fieldconfigurations_.  Each fieldconfigurations is a dictionary
+        with the following entries:
+
+        - id: an integer
+        - name: a string
+        - active: a boolean
+
+        `active` is true if the field configuration scheme is used in any project.
+        """
+        uri = 'secure/admin/ViewFieldLayouts.jspa'
+        pat_name = r'<span data-scheme-field="name" class="field-name">\s+.*?title="Edit field properties">([^<]+)'
+        pat_id = r';id=(\d+)" title="Create a copy of '
+        pat_inactive = (
+            r'<td>\s+</td>\s+<td>\s+<ul class="operations-list">'
+            r'\s+<li><a[^>]+?;id=%s"'
+        )
+
+        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+    @api_call
+    def delete_fieldconfiguration(self, conf_id: Union[int, str]) -> None:
+        """Delete field configuration.
+
+        # Required parameters
+
+        - conf_id: either an integer or a string
+
+        # Returned value
+
+        None.
+
+        # Raised exceptions
+
+        _ApiError_ if the field configuration does not exist.
+        """
+        conf_id = str(conf_id)
+        ensure_nonemptystring('conf_id')
+
+        uri = 'secure/admin/ViewFieldLayouts.jspa'
+        page = self._get(uri)
+        atl_token = re.search(
+            r'atl_token=([^&]+)&amp;id=%s" title="Create a copy ' % conf_id,
+            page.text,
+        )
+
+        if not atl_token:
+            raise ApiError(
+                'Field Configuration %s could not be found.' % conf_id
+            )
+
+        self._do_form_step(
+            'secure/admin/DeleteFieldLayout.jspa',
+            data={
+                'id': conf_id,
+                'confirm': 'true',
+                'Delete': 'Delete',
+                'atl_token': atl_token.group(1),
+            },
+            cookies=page.cookies,
         )
 
     # workflows
