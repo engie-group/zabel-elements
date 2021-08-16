@@ -88,9 +88,10 @@ INCOMPATIBLE_PARAM = '%s cannot be specified when json is provided'
 class Artifactory:
     """Artifactory Base-Level Wrapper.
 
-    # Reference URL
+    # Reference URLs
 
     <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
+    <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
     # Implemented features
 
@@ -101,6 +102,7 @@ class Artifactory:
     - storageinfo
     - token
     - ping
+    - xray indexing
 
     # Sample use
 
@@ -114,7 +116,12 @@ class Artifactory:
     """
 
     def __init__(
-        self, url: str, user: str, token: str, verify: bool = True
+        self,
+        url: str,
+        user: str,
+        token: str,
+        xray_url: Optional[str] = None,
+        verify: bool = True,
     ) -> None:
         """Create an Artifactory instance object.
 
@@ -129,7 +136,12 @@ class Artifactory:
 
         # Optional parameters
 
+        - xray_url: a string or None (None by default)
         - verify: a boolean (True by default)
+
+        `xray_url`, if specified, is the top-level jfrog-xray API
+        endpoint.  If not specified, will be as `url` with the
+        'artifactory/api' ending replaced by `xray/api`
 
         `verify` can be set to False if disabling certificate checks for
         Artifactory communication is required.  Tons of warnings will
@@ -140,6 +152,11 @@ class Artifactory:
         ensure_instance('token', str)
 
         self.url = url
+        if xray_url is None:
+            xray_url = url.strip('/').split('/')
+            xray_url[-2] = 'xray'
+            xray_url = '/'.join(xray_url)
+        self.url_xray = xray_url
         self.auth = (user, token)
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
@@ -1519,11 +1536,86 @@ class Artifactory:
         return response.status_code == 200 and response.text == 'OK'
 
     ####################################################################
+    # jfrog xray indexing
+    #
+    # get_reposindexing_configuration
+    # update_reposindexing_configuration
+
+    @api_call
+    def get_reposindexing_configuration(
+        self, bin_mgr_id: str = 'default'
+    ) -> Dict[str, Any]:
+        """Get indexed and not indexed repositories for binmgr.
+
+        # Optional parameters
+
+        - bin_mgr_id: a string ('default' by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - bin_mgr_id: a string
+        - indexed_repos: a list of dictionaries
+        - non_indexed_repos: a list of dictionaries
+
+        Entries in the `indexed_repos` and `non_indexed_repositories`
+        have the following entries:
+
+        - name: a string
+        - type: a string ('local' or 'remote')
+        - pkg_type: a string
+        """
+        ensure_nonemptystring('bin_mgr_id')
+
+        return self._get_xray('/v1/binMgr/{id}/repos'.format(id=bin_mgr_id))
+
+    @api_call
+    def update_reposindexing_configuration(
+        self,
+        indexed_repos: List[Dict[str, Any]],
+        non_indexed_repos: List[Dict[str, Any]],
+        bin_mgr_id: str = 'default',
+    ) -> Dict[str, Any]:
+        """Update indexed and not indexed repositories for binmgr.
+
+        # Required parameters
+
+        - indexed_repos: a list of dictionaries
+        - non_indexed_repos: a list of dictionaries
+
+        # Optional parameters
+
+        - bin_mgr_id: a string ('default' by default)
+
+        # Returned value
+
+        A status dictionary, with an `info` entry (a string) describing
+        the operation result.
+        """
+        ensure_instance('indexed_repos', list)
+        ensure_instance('non_indexed_repos', list)
+        ensure_nonemptystring('bin_mgr_id')
+
+        what = {
+            'indexed_repos': indexed_repos,
+            'non_indexed_repos': non_indexed_repos,
+        }
+        return self._put_xray(
+            '/v1/binMgr/{id}/repos'.format(id=bin_mgr_id), json=what
+        )
+
+    ####################################################################
     # artifactory private helpers
 
     def _get(self, api: str) -> requests.Response:
         """Return artifactory api call results, as Response."""
         api_url = join_url(self.url, api)
+        return self.session().get(api_url)
+
+    def _get_xray(self, api: str) -> requests.Response:
+        """Return xray api call results, as Response."""
+        api_url = join_url(self.url_xray, api)
         return self.session().get(api_url)
 
     def _get_batch(self, apis: Iterable[str]) -> List[Dict[str, Any]]:
@@ -1543,6 +1635,10 @@ class Artifactory:
 
     def _put(self, api: str, json: Dict[str, Any]) -> requests.Response:
         api_url = join_url(self.url, api)
+        return self.session().put(api_url, json=json)
+
+    def _put_xray(self, api: str, json: Dict[str, Any]) -> requests.Response:
+        api_url = join_url(self.url_xray, api)
         return self.session().put(api_url, json=json)
 
     def _delete(self, api: str) -> requests.Response:

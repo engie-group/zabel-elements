@@ -510,6 +510,7 @@ class SonarQube:
     # list_permissionstemplates
     # update_permissionstemplate
     # add_permissionstemplate_group
+    # apply_permissionstemplate
 
     @api_call
     def create_permissionstemplate(
@@ -677,6 +678,31 @@ class SonarQube:
         }
 
         result = self._post('permissions/add_group_to_template', data)
+        return result  # type: ignore
+
+    @api_call
+    def apply_permissionstemplate(
+        self,
+        template_name: str,
+        project_id: Optional[int] = None,
+        project_key: Optional[str] = None,
+    ) -> None:
+        """Apply a permission template to one project.
+
+        # Required parameters
+
+        - `template_name`: a string
+        - `project_id` OR `project_key`: an integer or a string (None by
+          default)
+        """
+        ensure_nonemptystring('template_name')
+        ensure_onlyone('project_id', 'project_key')
+
+        data = {'templateName': template_name}
+        add_if_specified(data, 'projectKey', project_key)
+        add_if_specified(data, 'projectId', project_id)
+
+        result = self._post('permissions/apply_template', data)
         return result  # type: ignore
 
     ####################################################################

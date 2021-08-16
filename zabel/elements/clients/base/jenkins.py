@@ -224,7 +224,7 @@ class CloudBeesJenkins:
         ensure_instance('depth', int)
 
         result = self._get_json(
-            join_url(self.url, 'cjoc/view/Masters'),
+            join_url(self.url, 'cjoc/view/Controllers'),
             params={'depth': str(depth)},
         )
         return result['jobs']  # type: ignore
@@ -1029,6 +1029,7 @@ class CloudBeesJenkins:
         )
         return result['roles']  # type: ignore
 
+    @api_call
     def create_project_group(self, project_url: str, group: str) -> None:
         """Create a group in project.
 

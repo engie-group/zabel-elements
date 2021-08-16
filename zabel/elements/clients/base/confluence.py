@@ -76,6 +76,7 @@ class Confluence:
 
     # Reference URL
 
+    <https://docs.atlassian.com/ConfluenceServer/rest/latest>
     <https://developer.atlassian.com/confdev/confluence-server-rest-api>
     <https://docs.atlassian.com/atlassian-confluence/REST/latest-server/>
     <https://developer.atlassian.com/server/confluence/remote-confluence
