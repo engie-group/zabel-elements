@@ -265,6 +265,7 @@ class GitHub:
     # list_organization_outsidecollaborators
     # get_organization_membership
     # add_organization_membership
+    # list_organization_teams
     #
     # Part of enterprise administration
     # create_organization
@@ -295,6 +296,38 @@ class GitHub:
         The organization name is the `login` key.
         """
         return self._collect_data('organizations')
+
+    @api_call
+    def list_organization_teams(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return list of teams.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _teams_.  Each team is a dictionary with the following
+        keys:
+
+        - name: a string
+        - id: an integer
+        - node_id: a string
+        - slug: a string
+        - description: a string
+        - privacy: a string
+        - url: a string
+        - html_url: a string
+        - members_url: a string
+        - repositories_url: a string
+        - permission: a string
+        - parent: ?
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(f'orgs/{organization_name}/teams')  # type: ignore
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -527,6 +560,51 @@ class GitHub:
         return result  # type: ignore
 
     ####################################################################
+    # GitHub teams
+    #
+    # list_team_members
+
+    @api_call
+    def list_team_members(
+        self, organization_name: str, team_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return a list of members.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - team_name: a non-empty string
+
+        # Returned value
+
+        A list of _members_.  Each member is a dictionary with the
+        following entries:
+
+        - avatar_url: a string
+        - events_url: a string
+        - followers_url: a string
+        - following_url: a string
+        - gists_url: a string
+        - gravatar_id: a string
+        - html_url: a string
+        - id: an integer
+        - login: a string
+        - node_id: a string
+        - organizations_url: a string
+        - received_events_url: a string
+        - repos_url: a string
+        - site_admin: a boolean
+        - starred_url: a string
+        - subscriptions_url: a string
+        - type: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('team_name')
+
+        return self._get(f'orgs/{organization_name}/teams/{team_name}/members')
+
+    ####################################################################
     # GitHub repositories
     #
     # repository name = name key
@@ -539,6 +617,7 @@ class GitHub:
     # TODO delete_repository
     # list_repository_commits
     # get_repository_commit
+    # list_reporitory_teams
 
     @api_call
     def list_repositories(self) -> List[Dict[str, Any]]:
@@ -920,6 +999,40 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/commits/{ref}'
         )
         return result  # type: ignore
+
+    @api_call
+    def list_repository_teams(
+        self, organization_name: str, repository_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return list of teams.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Returned value
+
+        A list of _teams_.  Each team is a dictionary with the following
+        keys:
+
+        - name: a string
+        - id: an integer
+        - node_id: a string
+        - slug: a string
+        - description: a string
+        - privacy: a string
+        - url: a string
+        - html_url: a string
+        - members_url: a string
+        - repositories_url: a string
+        - permission: a string
+        - parent: ?
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        return self._get(f'repos/{organization_name}/{repository_name}/teams')  # type: ignore
 
     ####################################################################
     # GitHub repository contents
