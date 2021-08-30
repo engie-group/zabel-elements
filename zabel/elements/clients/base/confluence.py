@@ -1124,6 +1124,7 @@ class Confluence:
     # get_page
     # create_page
     # update_page
+    # delete_page
     # delete_page_version
     # list_page_labels
     # add_page_labels
@@ -1393,6 +1394,25 @@ class Confluence:
 
         result = self._post('content', json=definition)
         return result  # type: ignore
+
+    @api_call
+    def delete_page(self, page_id: Union[str, int]) -> bool:
+        """Delete a page.
+
+        # Required parameters
+
+        - page_id: an integer or a string
+
+        # Returned value
+
+        A boolean.  True if deletion was successful.
+        """
+        ensure_instance('page_id', (str, int))
+
+        result = self.session().delete(
+            join_url(self.url, f'rest/api/content/{page_id}')
+        )
+        return result.status_code // 100 == 2
 
     @api_call
     def delete_page_version(
