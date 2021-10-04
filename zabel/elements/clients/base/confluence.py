@@ -633,7 +633,7 @@ class Confluence:
 
         user = self.get_user(user_name)
         form = self.session().get(
-            join_url(self.url, f'/admin/users/edituser.action'),
+            join_url(self.url, '/admin/users/edituser.action'),
             params={'username': user_name},
         )
         atl_token = form.text.split('atl_token=')[1].split('&')[0]
