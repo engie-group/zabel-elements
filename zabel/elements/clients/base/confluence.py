@@ -264,6 +264,7 @@ class Confluence:
     # create_user*
     # delete_user*
     # update_user*
+    # update_user2*
     # list_user_groups
     # get_user_current
     # deactivate_user
@@ -613,6 +614,50 @@ class Confluence:
             .text
             == 'true'
         )
+
+    @api_call
+    def update_user2(self, user_name: str, new: str) -> bool:
+        """Update username.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+        - new: a non-empty string
+
+        # Returned value
+
+        True if the update was successful, False otherwise.
+        """
+        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('new')
+
+        user = self.get_user(user_name)
+        form = self.session().get(
+            join_url(self.url, f'/admin/users/edituser.action'),
+            params={'username': user_name},
+        )
+        atl_token = form.text.split('atl_token=')[1].split('&')[0]
+        user_key = form.text.split(';userKey=')[1].split('"')[0]
+        email = (
+            form.text.split('id="email"')[1].split('value="')[1].split('"')[0]
+        )
+
+        result = self.session().post(
+            self.url + '/admin/users/doedituser.action',
+            params={'atl_token': atl_token, 'userKey': user_key},
+            data={
+                'username': new,
+                'email': email,
+                'fullName': user['displayName'],
+                'confirm': 'Submit',
+            },
+            cookies=form.cookies,
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Atlassian-Token': 'no-check',
+            },
+        )
+        return result.status_code == 200
 
     @api_call
     def deactivate_user(self, user_name) -> bool:
