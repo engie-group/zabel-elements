@@ -79,6 +79,23 @@ def _get_scheme_id(
     return str(name_or_id)
 
 
+class BearerAuth(requests.auth.AuthBase):
+    """A Bearer handler class for requests."""
+
+    def __init__(self, pat: str):
+        self.pat = pat
+
+    def __eq__(self, other):
+        return self.pat == getattr(other, 'pat', None)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __call__(self, r):
+        r.headers['Authorization'] = f'Bearer {self.pat}'
+        return r
+
+
 # JIRA low-level api
 
 
@@ -142,17 +159,19 @@ class Jira:
         url: str,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
+        bearer_auth: Optional[str] = None,
         verify: bool = True,
     ) -> None:
         """Create a Jira instance object.
 
-        You can only specify either `basic_auth` or `oauth`.
+        You can only specify either `basic_auth`, `oauth`, or 'bearer_auth`.
 
         # Required parameters
 
         - url: a string
         - basic_auth: a strings tuple (user, token)
         - oauth: a dictionary
+        - bearer_auth: a string
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -171,14 +190,16 @@ class Jira:
         this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_onlyone('basic_auth', 'oauth')
+        ensure_onlyone('basic_auth', 'oauth', 'bearer_auth')
         ensure_noneorinstance('basic_auth', tuple)
         ensure_noneorinstance('oauth', dict)
+        ensure_noneorinstance('bearer_auth', str)
         ensure_instance('verify', bool)
 
         self.url = url
         self.basic_auth = basic_auth
         self.oauth = oauth
+        self.bearer_auth = bearer_auth
 
         if basic_auth is not None:
             self.auth = basic_auth
@@ -195,6 +216,8 @@ class Jira:
                 rsa_key=oauth['key_cert'],
                 signature_type='auth_header',
             )
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
 
         self.client = None
         self.verify = verify
@@ -211,8 +234,10 @@ class Jira:
     def __repr__(self) -> str:
         if self.basic_auth:
             rep = self.basic_auth[0]
-        else:
+        elif self.oauth:
             rep = self.oauth['consumer_key']  # type: ignore
+        else:
+            rep = f'Bearer {self.bearer_auth[:5]}...{self.bearer_auth[-2:]}'
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
 
     def _client(self) -> 'jira.JIRA':
@@ -220,12 +245,17 @@ class Jira:
         if self.client is None:
             from jira import JIRA
 
+            options = {
+                'server': self.url,
+                'agile_rest_path': 'agile',
+                'verify': self.verify,
+            }
+            if self.bearer_auth:
+                options['headers'] = {
+                    'Authorization': f'Bearer {self.bearer_auth}'
+                }
             self.client = JIRA(
-                options={
-                    'server': self.url,
-                    'agile_rest_path': 'agile',
-                    'verify': self.verify,
-                },
+                options=options,
                 basic_auth=self.basic_auth,
                 oauth=self.oauth,
             )
