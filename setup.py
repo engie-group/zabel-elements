@@ -37,6 +37,12 @@ setup(
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
     install_requires=['requests>=2.23', 'zabel-commons>=1.5'],
+    extra_requires={
+        'jira': ['Jira>=3.0'],
+        'kubernetes': ['kubernetes>=10.1.0'],
+        'okta': ['okta>=2.3.1'],
+        'all': ['Jira>=3.0', 'kubernetes>=10.1.0', 'okta>=2.3.1'],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 3',
