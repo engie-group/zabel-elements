@@ -17,6 +17,11 @@ src/src.pyproj
 # VisualStudio Code noise
 .vscode/
 
+# PyCharm noise
+.idea
+venv
+
+
 # pytype
 **/pytype_output/
 **/.mypy_cache/

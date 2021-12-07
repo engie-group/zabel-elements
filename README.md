@@ -17,6 +17,7 @@ found in many workplaces, namely:
 - GitHub
 - Jira
 - Kubernetes (in alpha)
+- Okta
 - SonarQube
 - SquashTM
 
@@ -137,7 +138,7 @@ must implement the _ManagedService_ interface.
 ## License
 
 ```text
-Copyright (c) 2019-2020 Martin Lafaix (martin.lafaix@external.engie.com) and others
+Copyright (c) 2019-2022 Martin Lafaix (martin.lafaix@external.engie.com) and others
 
 This program and the accompanying materials are made
 available under the terms of the Eclipse Public License 2.0
