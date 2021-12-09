@@ -15,6 +15,8 @@ generate:
     - zabel.elements.clients.Jira@
   - clients/kubernetes.md:
     - zabel.elements.clients.Kubernetes@
+  - clients/okta.md:
+    - zabel.elements.clients.Okta@
   - clients/sonarqube.md:
     - zabel.elements.clients.SonarQube@
   - clients/squashtm.md:
@@ -34,6 +36,7 @@ pages:
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
         - Kubernetes: clients/kubernetes.md
+        - Okta: clients/okta.md
         - Jira: clients/jira.md
         - SonarQube: clients/sonarqube.md
         - SquashTM: clients/squashtm.md
