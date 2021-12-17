@@ -56,7 +56,7 @@ NOTIFICATIONSCHEME_EXPAND = (
 PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
 
-
+MAX_RESULTS = 100
 # Helpers
 
 
@@ -2448,13 +2448,13 @@ class Jira:
                 results = self._client().search_users(
                     letter,
                     includeInactive=True,
-                    maxResults=100,
+                    maxResults=MAX_RESULTS,
                     startAt=start,
                 )
                 for user in results:
                     users[user.name] = True
-                if len(results) == 100:
-                    start += 100
+                if len(results) == MAX_RESULTS:
+                    start += MAX_RESULTS
                 else:
                     exhausted = True
 
