@@ -27,7 +27,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='zabel-elements',
-    version='1.11.2',
+    version='1.11.3',
     description='The Zabel default clients and images',
     long_description=long_description,
     long_description_content_type='text/markdown',
