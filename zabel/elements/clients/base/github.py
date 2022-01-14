@@ -559,6 +559,27 @@ class GitHub:
         )
         return result  # type: ignore
 
+    @api_call
+    def rm_organization_membership(
+        self, login: str, user: str
+    ) -> Dict[str, Any]:
+        """Removes a user membership from an Organization.
+
+        # Required parameters
+
+        - login: a non-empty string, the name of the Organization
+        - user: a non-empty string, the login of the user
+
+        # Returned Value
+
+        None
+        """
+
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('user')
+
+        self._delete(f'orgs/{login}/members/{user}')
+
     ####################################################################
     # GitHub teams
     #
