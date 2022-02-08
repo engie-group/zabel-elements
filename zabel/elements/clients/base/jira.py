@@ -817,6 +817,10 @@ class Jira:
     def list_screens(self, expand: str = 'deletable') -> List[Dict[str, Any]]:
         """Return the list of screens.
 
+        # Optional parameters
+
+        - expand: a string (`deletable` by default)
+
         # Returned value
 
         A list of _screens_.  Each screen is a dictionary with the
