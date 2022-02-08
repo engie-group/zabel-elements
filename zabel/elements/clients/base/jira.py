@@ -814,7 +814,7 @@ class Jira:
     # screens
 
     @api_call
-    def list_screens(self) -> List[Dict[str, Any]]:
+    def list_screens(self, expand: str = 'deletable') -> List[Dict[str, Any]]:
         """Return the list of screens.
 
         # Returned value
@@ -824,16 +824,15 @@ class Jira:
 
         - id: an integer or a string
         - name: a string
-        - active: a boolean
+        - description: a string
+        - deletable: a boolean
+        - expand: a string
 
-        `active` is true if the screen is not part of a Screen Scheme
-        and is not used in any workflow.
         """
-        uri = 'secure/admin/ViewFieldScreens.jspa'
-        pat_name = r'<td>\s*<strong\s+class="field-screen-name">([^<]+)<'
-        pat_id = r'data-field-screen-id="(\d+)">\s*<td>\s*<strong'
-        pat_inactive = r'ViewDeleteFieldScreen.jspa\?id=%s"'
-        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+
+        ensure_instance('expand', str)
+
+        return self._get_json('screens', {'expand': expand})
 
     @api_call
     def delete_screen(self, screen_id_or_name: Union[int, str]) -> None:
@@ -850,7 +849,6 @@ class Jira:
         ensure_instance('screen_id_or_name', (int, str))
 
         scheme_id = _get_scheme_id(screen_id_or_name, self.list_screens())
-
         uri = 'secure/admin/ViewDeleteFieldScreen.jspa?id=%s'
         form = self._get(uri % scheme_id)
         self._do_form_step(
