@@ -1170,6 +1170,7 @@ class Confluence:
     # create_page
     # update_page
     # delete_page
+    # list_page_versions
     # delete_page_version
     # list_page_labels
     # add_page_labels
@@ -1458,6 +1459,53 @@ class Confluence:
             join_url(self.url, f'rest/api/content/{page_id}')
         )
         return result.status_code // 100 == 2
+
+    @api_call
+    def list_page_versions(self, page_id: Union[str, int]) -> List[Dict[str, Any]]:
+        """Return all versions of a page
+        
+        # Required parameters
+
+        - page_id: an integer or a string
+
+        # Returned value
+
+        A possibly empty list of versions. Versions are dictionaries.
+
+        An version contains the following entries:
+
+        - by: a dictionary
+        - when: a datetime as a string
+        - message: a string
+        - number: an integer
+        - minorEdit: a boolean
+        - hidden: a boolean
+        - links: a dictionary
+        - expandable: a dictionary
+
+        """
+
+        ensure_instance('page_id', (str, int))
+
+        api_url = join_url(self.url, f'rest/experimental/content/{page_id}/version')
+        collected: List[Any] = []
+        more = True
+        while more:
+            response = self.session().get(api_url)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                workload = response.json()
+                collected += workload['results']
+            except Exception as exception:
+                raise ApiError(exception)
+            more = 'next' in workload['_links']
+            if more:
+                api_url = join_url(
+                    workload['_links']['base'], workload['_links']['next']
+                )
+        return collected
+
 
     @api_call
     def delete_page_version(
