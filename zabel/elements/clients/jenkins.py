@@ -409,7 +409,6 @@ class CloudBeesJenkins(Base):
         ensure_nonemptystring('user_id')
 
         response = self._get(join_url(self.url, f'cjoc/user/{user_id}/delete'))
-        
         re_match = re.search(
             r'data-crumb-value="(\w+)"',
             response.text,
@@ -422,10 +421,7 @@ class CloudBeesJenkins(Base):
 
         jenkins_crumb = re_match.group(1)
         print(jenkins_crumb)
-        """self.delete_item(
-            url=join_url(self.url, f'cjoc/user/{user_id}'),
-            params={'Jenkins-Crumb': jenkins_crumb},
-        )"""
+        #self.delete_item(join_url(self.url, f'cjoc/user/{user_id}'), params={'Jenkins-Crumb': jenkins_crumb})
 
     ####################################################################
     # credentials templates

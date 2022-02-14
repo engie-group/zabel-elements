@@ -1460,10 +1460,7 @@ class CloudBeesJenkins:
 
         - params: a dictionary
         """
-        result = self.session().get(
-            join_url(api_url, 'api/json'), params=params
-        )
-        return result
+        return self.session().get(api_url, params=params)
 
     def _get_json(
         self,
