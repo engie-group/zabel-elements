@@ -19,6 +19,8 @@ from typing import Any, Dict, Iterable, List
 
 from time import sleep, time
 
+import re
+
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
     api_call,
@@ -389,6 +391,41 @@ class CloudBeesJenkins(Base):
         return self._get_json(
             join_url(managedmaster_url, 'groups'), params={'depth': 1}
         )['groups']
+
+    ####################################################################
+    # users
+    #
+    # delete_user
+
+    @api_call
+    def delete_user(self, user_id: str) -> None:
+        """Delete an user in the cjoc
+
+        # Required parameters
+
+        - user_id: a non-empty string
+        """
+
+        ensure_nonemptystring('user_id')
+
+        response = self._get(join_url(self.url, f'cjoc/user/{user_id}/delete'))
+        
+        re_match = re.search(
+            r'data-crumb-value="(\w+)"',
+            response.text,
+        )
+
+        if not re_match:
+            raise ValueError(
+                f"Couldn't get required Jenkins-Crumb for user {user_id}"
+            )
+
+        jenkins_crumb = re_match.group(1)
+        print(jenkins_crumb)
+        """self.delete_item(
+            url=join_url(self.url, f'cjoc/user/{user_id}'),
+            params={'Jenkins-Crumb': jenkins_crumb},
+        )"""
 
     ####################################################################
     # credentials templates
