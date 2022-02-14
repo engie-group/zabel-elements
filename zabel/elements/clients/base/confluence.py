@@ -884,7 +884,7 @@ class Confluence:
 
     @api_call
     def list_space_pages(
-        self, space_key: str, expand: Optional[str] = None
+        self, space_key: str, expand: Optional[str] = None, limit: int = 200
     ) -> List[Dict[str, Any]]:
         """Return a list of all space pages.
 
@@ -904,9 +904,12 @@ class Confluence:
         ensure_nonemptystring('space_key')
         ensure_noneornonemptystring('expand')
 
+        params = {'limit': limit}
+
+        add_if_specified(params, 'expand', expand)
         return self._collect_data(
             f'space/{space_key}/content/page',
-            {'expand': expand} if expand else None,
+            params,
         )
 
     @api_call
@@ -1461,9 +1464,11 @@ class Confluence:
         return result.status_code // 100 == 2
 
     @api_call
-    def list_page_versions(self, page_id: Union[str, int]) -> List[Dict[str, Any]]:
+    def list_page_versions(
+        self, page_id: Union[str, int]
+    ) -> List[Dict[str, Any]]:
         """Return all versions of a page
-        
+
         # Required parameters
 
         - page_id: an integer or a string
@@ -1487,7 +1492,9 @@ class Confluence:
 
         ensure_instance('page_id', (str, int))
 
-        api_url = join_url(self.url, f'rest/experimental/content/{page_id}/version')
+        api_url = join_url(
+            self.url, f'rest/experimental/content/{page_id}/version'
+        )
         collected: List[Any] = []
         more = True
         while more:
@@ -1505,7 +1512,6 @@ class Confluence:
                     workload['_links']['base'], workload['_links']['next']
                 )
         return collected
-
 
     @api_call
     def delete_page_version(
