@@ -420,7 +420,10 @@ class CloudBeesJenkins(Base):
             )
 
         jenkins_crumb = re_match.group(1)
-        #self.delete_item(join_url(self.url, f'cjoc/user/{user_id}'), params={'Jenkins-Crumb': jenkins_crumb})
+        self.delete_item(
+            join_url(self.url, f'cjoc/user/{user_id}'),
+            params={'Jenkins-Crumb': jenkins_crumb},
+        )
 
     ####################################################################
     # credentials templates
