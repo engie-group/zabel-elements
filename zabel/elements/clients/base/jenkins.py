@@ -1418,7 +1418,11 @@ class CloudBeesJenkins:
         return result  # type: ignore
 
     @api_call
-    def delete_item(self, url: str) -> bool:
+    def delete_item(
+        self,
+        url: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+    ) -> bool:
         """Delete item.
 
         # Required parameters
@@ -1435,11 +1439,28 @@ class CloudBeesJenkins:
         """
         ensure_nonemptystring('url')
 
-        result = self._post(join_url(url, 'doDelete'))
+        result = self._post(join_url(url, 'doDelete'), params=params)
         return result.status_code == 200
 
     ####################################################################
     # cbj helpers
+
+    def _get(
+        self,
+        api_url: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+    ) -> Dict[str, Any]:
+        """Returns cloudbeesjenkins api call results.
+
+        # Required parameters
+
+        - api_url: a non-empty string (an URL)
+
+        # Optional parameters
+
+        - params: a dictionary
+        """
+        return self.session().get(api_url, params=params)
 
     def _get_json(
         self,
