@@ -398,7 +398,7 @@ class CloudBeesJenkins(Base):
     # delete_user
 
     @api_call
-    def delete_user(self, user_id: str) -> None:
+    def delete_oc_user(self, user_id: str) -> None:
         """Delete an user in the cjoc
 
         # Required parameters
@@ -420,7 +420,6 @@ class CloudBeesJenkins(Base):
             )
 
         jenkins_crumb = re_match.group(1)
-        print(jenkins_crumb)
         #self.delete_item(join_url(self.url, f'cjoc/user/{user_id}'), params={'Jenkins-Crumb': jenkins_crumb})
 
     ####################################################################
