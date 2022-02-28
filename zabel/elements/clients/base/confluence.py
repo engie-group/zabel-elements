@@ -895,6 +895,7 @@ class Confluence:
         # Optional parameters
 
         - expand: a string or None (None by default)
+        - limit: an integer
 
         # Returned value
 
