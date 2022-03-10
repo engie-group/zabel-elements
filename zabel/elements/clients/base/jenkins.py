@@ -923,6 +923,7 @@ class CloudBeesJenkins:
     # create_domain_credential
     # delete_domain_credential
     # add_group_user
+    # delete_group_user
 
     @api_call
     def list_project_jobs(self, project_url: str) -> List[Dict[str, Any]]:
@@ -1367,6 +1368,25 @@ class CloudBeesJenkins:
 
         self._post(
             join_url(group_url, 'submitNewMember'), data={'member': user}
+        )
+
+    @api_call
+    def delete_group_user(self, group_url: str, user: str) -> None:
+        """Delete user from group.
+
+        # Requirement parameters
+
+        - group_url: a non-empty string
+        - user: a non-empty string
+
+        May not be the cleanest way to do it (using a form action).
+        """
+
+        ensure_nonemptystring('group_url')
+        ensure_nonemptystring('user')
+
+        self._post(
+            join_url(group_url, 'submitRemoveMember'), params={'member': user}
         )
 
     ####################################################################
