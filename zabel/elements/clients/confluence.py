@@ -95,7 +95,7 @@ class Confluence(Base):
 
     @api_call
     def update_page_content(
-        self, page_id: Union[str, int], content: str
+        self, page_id: Union[str, int], content: str, title: str = None
     ) -> Dict[str, Any]:
         """Change page content, creating a new version.
 
@@ -114,6 +114,8 @@ class Confluence(Base):
         ensure_instance('content', str)
 
         page = self.get_page(page_id)
+        if title:
+            page['title'] = title
         page['body']['storage']['value'] = content
         page['version'] = {'number': page['version']['number'] + 1}
 
