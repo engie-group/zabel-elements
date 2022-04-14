@@ -15,9 +15,13 @@ There can be as many Confluence instances as needed.
 This module depends on the #::.base.confluence module.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
-from zabel.commons.utils import api_call, ensure_instance
+from zabel.commons.utils import (
+    api_call,
+    ensure_instance,
+    ensure_noneornonemptystring,
+)
 
 from .base.confluence import Confluence as Base
 
@@ -95,7 +99,10 @@ class Confluence(Base):
 
     @api_call
     def update_page_content(
-        self, page_id: Union[str, int], content: str, title: str = None
+        self,
+        page_id: Union[str, int],
+        content: str,
+        title: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Change page content, creating a new version.
 
@@ -106,12 +113,17 @@ class Confluence(Base):
 
         The new version number is 1 plus the current version number.
 
+        # Optional parameters
+
+        - title: a non-empty string or None (None by default)
+
         # Returned value
 
         A dictionary.  Refer to #create_page() for more information.
         """
         ensure_instance('page_id', (str, int))
         ensure_instance('content', str)
+        ensure_noneornonemptystring('title')
 
         page = self.get_page(page_id)
         if title:
