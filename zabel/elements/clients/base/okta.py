@@ -14,7 +14,7 @@ This module depends on the public **asyncio** and **okta.client** libraries.  It
 on one **commons** module, #::commons.utils.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import asyncio
 
@@ -89,6 +89,37 @@ class Okta:
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(get_user_info_async(self, user))
+
+    @api_call
+    def list_groups_by_user_id(self, userId: str) -> List[Dict[str, Any]]:
+        """Return the groups for an user.
+
+        # Required parameters
+
+        - userId: a non-empty string
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if error is throw by Okta.
+
+        # Returned value
+
+        Return a list of groups. Refer to #get_group_by_name() for more information.
+        """
+
+        ensure_nonemptystring('userId')
+
+        async def list_groups_by_user_id_async(self, userId: str):
+            groups, resp, err = await self._client().list_user_groups(userId)
+            return groups
+
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(
+            list_groups_by_user_id_async(self, userId)
+        )
+
+    ####################################################################
+    # groups
 
     @api_call
     def get_group_by_name(self, group_name: str) -> Dict[str, Any]:
@@ -191,4 +222,40 @@ class Okta:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
             remove_user_from_group_async(self, group_id, user_id)
+        )
+
+    @api_call
+    def list_users_by_group_id(self, group_id: str) -> List[Dict[str, Any]]:
+        """List users in Okta group.
+
+        # Required parameters
+
+        - group_id: a non-empty string
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if error is throw by Okta.
+
+        # Returned value
+
+        Return a list of users. Refer to #get_user_info() for more information.
+        """
+        ensure_nonemptystring('group_id')
+
+        async def list_users_by_group_id_async(self, group_id):
+            result, response, error = await self._client().list_group_users(
+                group_id
+            )
+
+            collected = result
+            while response.has_next():
+                result, error = await response.next()
+                collected += result
+            if error:
+                raise ApiError(error)
+            return collected
+
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(
+            list_users_by_group_id_async(self, group_id)
         )
