@@ -112,7 +112,7 @@ class Okta(Base):
         # Raised exceptions
 
         Raises an _ApiError_ exception if error is throw by Okta.
-        
+
         # Returned value
 
         Return a list of users. Refer to #get_user_info() for more information.
@@ -139,5 +139,4 @@ class Okta(Base):
         """
 
         user = self.get_user_info(user_login)
-        return self.get_user_groups(user.id)
-
+        return self.list_users_by_group_id(user.id)

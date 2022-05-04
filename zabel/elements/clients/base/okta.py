@@ -91,7 +91,7 @@ class Okta:
         return loop.run_until_complete(get_user_info_async(self, user))
 
     @api_call
-    def get_user_groups(self, userId: str) -> List[Dict[str, Any]]:
+    def list_groups_by_user_id(self, userId: str) -> List[Dict[str, Any]]:
         """Return the groups for an user.
 
         # Required parameters
@@ -109,12 +109,14 @@ class Okta:
 
         ensure_nonemptystring('userId')
 
-        async def get_user_info_async(self, userId: str):
+        async def list_groups_by_user_id_async(self, userId: str):
             groups, resp, err = await self._client().list_user_groups(userId)
             return groups
 
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(get_user_info_async(self, userId))
+        return loop.run_until_complete(
+            list_groups_by_user_id_async(self, userId)
+        )
 
     ####################################################################
     # groups
@@ -240,18 +242,20 @@ class Okta:
         """
         ensure_nonemptystring('group_id')
 
-        async def find_users_by_group_id_async(self, group_id):
-            result, response, error = await self._client().list_group_users(group_id)
+        async def list_users_by_group_id_async(self, group_id):
+            result, response, error = await self._client().list_group_users(
+                group_id
+            )
 
             collected = result
             while response.has_next():
-                result, error= await response.next()
+                result, error = await response.next()
                 collected += result
             if error:
                 raise ApiError(error)
             return collected
-        
+
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
-            find_users_by_group_id_async(self, group_id)
+            list_users_by_group_id_async(self, group_id)
         )
