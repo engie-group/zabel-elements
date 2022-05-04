@@ -15,7 +15,7 @@ There can be as many Okta instances as needed.
 This module depends on the #:tooling.base.okta module.
 """
 
-from typing import Iterable
+from typing import Iterable, List, Dict, Any
 
 from zabel.commons.exceptions import ApiError
 
@@ -100,7 +100,7 @@ class Okta(Base):
             except ApiError:
                 print(f'Could not remove user {user} from group {group}')
 
-    def list_group_users(self, group_name):
+    def list_group_users(self, group_name) -> List[Dict[str, Any]]:
         """List users in Okta group.
 
         Retrieve the Okta groupId and collecting users in group.
@@ -112,9 +112,32 @@ class Okta(Base):
         # Raised exceptions
 
         Raises an _ApiError_ exception if error is throw by Okta.
+        
+        # Returned value
+
+        Return a list of users. Refer to #get_user_info() for more information.
         """
 
         okta_group = self.get_group_by_name(group_name)
 
         return self.list_users_by_group_id(okta_group.id)
+
+    def list_user_groups(self, user_login: str):
+        """List user groups by login
+
+        # Required parameters
+
+        - user_login: a non-empty string
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if error is throw by Okta.
+
+        # Returned value
+
+        Return a list of groups. Refer to #get_group_by_name() for more information.
+        """
+
+        user = self.get_user_info(user_login)
+        return self.get_user_groups(user.id)
 
