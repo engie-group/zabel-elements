@@ -46,7 +46,7 @@ class Okta(Base):
 
     ```
     >>> from zabel.elements.clients import Okta
-    >>> url = 'https://okta.example.com/api/requests/v1/'
+    >>> url = 'https://okta.example.com'
     >>> okta = Okta(
     >>>     url,
     >>>     token
@@ -99,3 +99,22 @@ class Okta(Base):
                 self.remove_user_from_group(okta_group_id, okta_user_id)
             except ApiError:
                 print(f'Could not remove user {user} from group {group}')
+
+    def list_group_users(self, group_name):
+        """List users in Okta group.
+
+        Retrieve the Okta groupId and collecting users in group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if error is throw by Okta.
+        """
+
+        okta_group = self.get_group_by_name(group_name)
+
+        return self.list_users_by_group_id(okta_group.id)
+
