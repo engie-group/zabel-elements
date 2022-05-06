@@ -530,6 +530,7 @@ class SquashTM:
         last_name: Optional[str] = None,
         email: Optional[str] = None,
         active: Optional[bool] = None,
+        login: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Update user.
 
@@ -554,12 +555,14 @@ class SquashTM:
         ensure_noneornonemptystring('last_name')
         ensure_noneornonemptystring('email')
         ensure_noneorinstance('active', bool)
+        ensure_noneornonemptystring('login')
 
         data = {'_type': 'user'}
         add_if_specified(data, 'first_name', first_name)
         add_if_specified(data, 'last_name', last_name)
         add_if_specified(data, 'email', email)
         add_if_specified(data, 'active', active)
+        add_if_specified(data, 'login', login)
 
         result = self._patch(f'users/{user_id}', json=data)
         return result  # type: ignore
