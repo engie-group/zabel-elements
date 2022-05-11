@@ -1367,7 +1367,7 @@ class CloudBeesJenkins:
         ensure_nonemptystring('user')
 
         self._post(
-            join_url(group_url, 'submitNewMember'), data={'member': user}
+            join_url(group_url, 'submitNewUser'), data={'user': user}
         )
 
     @api_call
@@ -1386,7 +1386,24 @@ class CloudBeesJenkins:
         ensure_nonemptystring('user')
 
         self._post(
-            join_url(group_url, 'submitRemoveMember'), params={'member': user}
+            join_url(group_url, 'submitRemoveMember'), params={'member': user, 'type':'USER'}
+        )
+    
+    @api_call
+    def migrate_group_member_as_user(self, group_url: str, user: str) -> None:
+        """Migrate member of group as user
+        
+        # Requirement parameters
+
+        - group_url: a non-empty string
+        - user: a non-empty string 
+        """
+
+        ensure_nonemptystring('group_url')
+        ensure_nonemptystring('user')
+
+        self._post(
+            join_url(group_url, 'submitMigrateMember'), params={'member': user, 'as': 'user'}
         )
 
     ####################################################################
