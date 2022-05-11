@@ -56,6 +56,32 @@ class Okta:
     # users
 
     @api_call
+    def list_users(self) -> List[Dict[str, Any]]:
+        """Return users list.
+
+        # Returned value
+
+        A list of _users_.  Each user is a dictionary. See
+        #get_user_info() for its format.
+        """
+        async def list_users_async(self):
+            users, response, error = await self._client().list_users()
+            if error:
+                raise ApiError(error)
+            collected = users
+            while response.has_next():
+                users, error = await response.next()
+                if error:
+                    raise ApiError(error)
+                collected+=users
+            users_dict = [user.as_dict() for user in collected]
+            return users_dict
+
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(list_users_async(self))
+
+
+    @api_call
     def get_user_info(self, user: str) -> Dict[str, Any]:
         """Request the Okta user info.
 
