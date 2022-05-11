@@ -54,6 +54,11 @@ class Okta:
 
     ####################################################################
     # users
+    #
+    # list_users
+    # get_user_info
+    # list_groups_by_user_id
+
 
     @api_call
     def list_users(self) -> List[Dict[str, Any]]:
@@ -94,7 +99,7 @@ class Okta:
         A dictionary with following entries:
 
         - id: a string
-        - status: a string
+        - status: an enum
         - created: a timestamp
         - activated: a timestamp
         - statusChanged: a timestamp
@@ -104,14 +109,13 @@ class Okta:
         - type: a dictionary
         - profile: a dictionary
         - credentials: a dictionary
-        - _links: a dictionary
 
         """
         ensure_nonemptystring('user')
 
         async def get_user_info_async(self, user: str):
             okta_user, resp, err = await self._client().get_user(user)
-            return okta_user
+            return okta_user.as_dict()
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(get_user_info_async(self, user))
@@ -137,7 +141,8 @@ class Okta:
 
         async def list_groups_by_user_id_async(self, userId: str):
             groups, resp, err = await self._client().list_user_groups(userId)
-            return groups
+            groups_dict = [group.as_dict() for group in groups]
+            return groups_dict
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
@@ -146,6 +151,11 @@ class Okta:
 
     ####################################################################
     # groups
+    # 
+    # get_group_by_name
+    # add_user_to_group
+    # remove_user_from_group
+    # list_users_by_group_id
 
     @api_call
     def get_group_by_name(self, group_name: str) -> Dict[str, Any]:
@@ -186,7 +196,7 @@ class Okta:
                 raise ApiError(
                     f'More than one group with the name: {group_name}'
                 )
-            return groups[0]
+            return groups[0].as_dict()
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(find_group_async(self, group_name))
@@ -269,17 +279,18 @@ class Okta:
         ensure_nonemptystring('group_id')
 
         async def list_users_by_group_id_async(self, group_id):
-            result, response, error = await self._client().list_group_users(
+            users, response, error = await self._client().list_group_users(
                 group_id
             )
 
-            collected = result
+            collected = users
             while response.has_next():
-                result, error = await response.next()
-                collected += result
+                users, error = await response.next()
+                collected += users
             if error:
                 raise ApiError(error)
-            return collected
+            users_dict = [user.as_dict() for user in users]
+            return users_dict
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
