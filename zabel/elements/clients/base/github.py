@@ -835,6 +835,40 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
+    def update_repository(self, 
+        organization_name: str, 
+        repository_name: str, 
+        patched_attributes: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Updates the attributes of a repository using a patch 
+        (a subset of attributes).
+
+        The endpoint on GitHub is :
+        https://docs.github.com/en/enterprise-server@3.3/rest/repos/repos#update-a-repository
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - patched_attributes: a dict of attributes/values, see 
+          create_repository(...) for the details of patchable
+          attributes.
+
+        # Returned value
+
+        A dictionary.  See #list_repositories() for its content.
+        """
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('organization_name')
+        ensure_instance('patched_attributes', dict)
+
+        response = self._patch(
+            f"repos/{organization_name}/{repository_name}", 
+            patched_attributes
+        )
+        return response
+
+    @api_call
     def list_repository_topics(
         self, organization_name: str, repository_name: str
     ) -> List[str]:
@@ -1641,3 +1675,12 @@ class GitHub:
     def _delete(self, api: str) -> requests.Response:
         api_url = join_url(self.url, api)
         return self.session().delete(api_url)
+
+    def _patch(        
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().patch(api_url, json=json, headers=headers)
