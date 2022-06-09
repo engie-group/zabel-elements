@@ -153,6 +153,8 @@ class CloudBeesJenkins:
         - members: a list of strings
         - roles: a list of strings
         - roleAssignments: a list of dictionaries
+        - users: a list of strings
+        - groups: a list of strings
         """
         result = self._get_json(
             join_url(self.url, 'cjoc/groups'), params={'depth': '1'}
@@ -1130,6 +1132,8 @@ class CloudBeesJenkins:
         - members: a list of strings
         - roles: a list of strings
         - roleAssignments: a list of dictionaries
+        - users: a list of strings
+        - groups: a list of strings
 
         The returned groups are expanded.
         """
@@ -1366,9 +1370,7 @@ class CloudBeesJenkins:
         ensure_nonemptystring('group_url')
         ensure_nonemptystring('user')
 
-        self._post(
-            join_url(group_url, 'submitNewMember'), data={'member': user}
-        )
+        self._post(join_url(group_url, 'submitNewUser'), data={'user': user})
 
     @api_call
     def delete_group_user(self, group_url: str, user: str) -> None:
@@ -1386,7 +1388,26 @@ class CloudBeesJenkins:
         ensure_nonemptystring('user')
 
         self._post(
-            join_url(group_url, 'submitRemoveMember'), params={'member': user}
+            join_url(group_url, 'submitRemoveMember'),
+            params={'member': user, 'type': 'USER'},
+        )
+
+    @api_call
+    def migrate_group_member_as_user(self, group_url: str, user: str) -> None:
+        """Migrate member of group as user
+
+        # Requirement parameters
+
+        - group_url: a non-empty string
+        - user: a non-empty string
+        """
+
+        ensure_nonemptystring('group_url')
+        ensure_nonemptystring('user')
+
+        self._post(
+            join_url(group_url, 'submitMigrateMember'),
+            params={'member': user, 'as': 'user'},
         )
 
     ####################################################################
