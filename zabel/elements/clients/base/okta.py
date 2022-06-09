@@ -59,7 +59,6 @@ class Okta:
     # get_user_info
     # list_groups_by_user_id
 
-
     @api_call
     def list_users(self) -> List[Dict[str, Any]]:
         """Return users list.
@@ -69,6 +68,7 @@ class Okta:
         A list of _users_.  Each user is a dictionary. See
         #get_user_info() for its format.
         """
+
         async def list_users_async(self):
             users, response, error = await self._client().list_users()
             if error:
@@ -78,13 +78,12 @@ class Okta:
                 users, error = await response.next()
                 if error:
                     raise ApiError(error)
-                collected+=users
+                collected += users
             users_dict = [user.as_dict() for user in collected]
             return users_dict
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(list_users_async(self))
-
 
     @api_call
     def get_user_info(self, user: str) -> Dict[str, Any]:
@@ -153,7 +152,7 @@ class Okta:
 
     ####################################################################
     # groups
-    # 
+    #
     # get_group_by_name
     # add_user_to_group
     # remove_user_from_group

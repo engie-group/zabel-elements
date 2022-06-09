@@ -835,12 +835,14 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def update_repository(self, 
-        organization_name: str, 
-        repository_name: str, 
-        patched_attributes: Dict[str, Any]) -> Dict[str, Any]:
+    def update_repository(
+        self,
+        organization_name: str,
+        repository_name: str,
+        patched_attributes: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
-        Updates the attributes of a repository using a patch 
+        Updates the attributes of a repository using a patch
         (a subset of attributes).
 
         The endpoint on GitHub is :
@@ -850,7 +852,7 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - patched_attributes: a dict of attributes/values, see 
+        - patched_attributes: a dict of attributes/values, see
           create_repository(...) for the details of patchable
           attributes.
 
@@ -863,8 +865,7 @@ class GitHub:
         ensure_instance('patched_attributes', dict)
 
         response = self._patch(
-            f"repos/{organization_name}/{repository_name}", 
-            patched_attributes
+            f"repos/{organization_name}/{repository_name}", patched_attributes
         )
         return response
 
@@ -1676,7 +1677,7 @@ class GitHub:
         api_url = join_url(self.url, api)
         return self.session().delete(api_url)
 
-    def _patch(        
+    def _patch(
         self,
         api: str,
         json: Optional[Mapping[str, Any]] = None,

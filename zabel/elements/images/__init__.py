@@ -43,7 +43,7 @@ __all__ = [
     'Jira',
     'SonarQube',
     'SquashTM',
-    'Okta'
+    'Okta',
 ]
 
 
