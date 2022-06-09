@@ -115,7 +115,9 @@ class Okta:
 
         async def get_user_info_async(self, user: str):
             okta_user, resp, err = await self._client().get_user(user)
-            return okta_user.as_dict()
+            if okta_user is not None:
+                return okta_user.as_dict()
+            return okta_user
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(get_user_info_async(self, user))
