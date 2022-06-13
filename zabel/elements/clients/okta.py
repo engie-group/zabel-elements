@@ -69,10 +69,10 @@ class Okta(Base):
 
         """
         okta_group = self.get_group_by_name(group)
-        okta_group_id = okta_group.id
+        okta_group_id = okta_group['id']
         for user in users:
             okta_user = self.get_user_info(user)
-            okta_user_id = okta_user.id
+            okta_user_id = okta_user['id']
             try:
                 self.add_user_to_group(okta_group_id, okta_user_id)
             except ApiError:
@@ -91,10 +91,10 @@ class Okta(Base):
 
         """
         okta_group = self.get_group_by_name(group)
-        okta_group_id = okta_group.id
+        okta_group_id = okta_group['id']
         for user in users:
             okta_user = self.get_user_info(user)
-            okta_user_id = okta_user.id
+            okta_user_id = okta_user['id']
             try:
                 self.remove_user_from_group(okta_group_id, okta_user_id)
             except ApiError:
@@ -120,7 +120,7 @@ class Okta(Base):
 
         okta_group = self.get_group_by_name(group_name)
 
-        return self.list_users_by_group_id(okta_group.id)
+        return self.list_users_by_group_id(okta_group['id'])
 
     def list_user_groups(self, user_login: str):
         """List user groups by login
@@ -139,4 +139,4 @@ class Okta(Base):
         """
 
         user = self.get_user_info(user_login)
-        return self.list_users_by_group_id(user.id)
+        return self.list_users_by_group_id(user['id'])

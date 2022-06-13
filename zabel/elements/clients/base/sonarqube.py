@@ -937,6 +937,31 @@ class SonarQube:
         result = self._post('users/deactivate', {'login': login})
         return result  # type: ignore
 
+    @api_call
+    def update_identity_provider(
+        self, login: str, provider: str, externalIdentity: Optional[str]
+    ):
+        """Update identity provider
+
+        # Required Parameters
+
+        - login: a non-empty string
+        - provider: a non-empty string
+
+        # Optional Parameter
+
+        - externalIdentity: a string
+
+        """
+        ensure_nonemptystring('login')
+        ensure_noneornonemptystring('provider')
+        ensure_noneornonemptystring('externalIdentity')
+
+        data = {'login': login, 'newExternalProvider': provider}
+        add_if_specified(data, 'newExternalIdentity', externalIdentity)
+
+        self._post('users/update_identity_provider', data)
+
     ####################################################################
     # SonarQube qualitygates
     #
