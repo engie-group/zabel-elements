@@ -19,7 +19,7 @@ from typing import Iterable, List, Dict, Any
 
 from zabel.commons.exceptions import ApiError
 
-from .base.okta import Okta as Base
+from .base.okta import Okta as Base, OktaException
 
 
 class Okta(Base):
@@ -71,7 +71,12 @@ class Okta(Base):
         okta_group = self.get_group_by_name(group)
         okta_group_id = okta_group['id']
         for user in users:
-            okta_user = self.get_user_info(user)
+            try:
+                okta_user = self.get_user_info(user)
+            except OktaException as ex:
+                print(f'Could not add user {user} to group {group}, because : {str(ex)}')
+                continue   
+
             okta_user_id = okta_user['id']
             try:
                 self.add_user_to_group(okta_group_id, okta_user_id)
@@ -93,7 +98,12 @@ class Okta(Base):
         okta_group = self.get_group_by_name(group)
         okta_group_id = okta_group['id']
         for user in users:
-            okta_user = self.get_user_info(user)
+            try:
+                okta_user = self.get_user_info(user)
+            except OktaException as ex:
+                print(f'Could not remove user {user} from group {group}, because : {str(ex)}')
+                continue
+
             okta_user_id = okta_user['id']
             try:
                 self.remove_user_from_group(okta_group_id, okta_user_id)
@@ -137,6 +147,10 @@ class Okta(Base):
 
         Return a list of groups. Refer to #get_group_by_name() for more information.
         """
-
-        user = self.get_user_info(user_login)
-        return self.list_users_by_group_id(user['id'])
+        try:
+            user = self.get_user_info(user_login)
+            return self.list_users_by_group_id(user['id'])
+        except OktaException as ex:
+            # just wrap the exception as the contract method 
+            # says we can expect this.
+            raise ApiError(ex)

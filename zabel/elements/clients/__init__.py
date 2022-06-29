@@ -69,6 +69,7 @@ __all__ = [
     'Jira',
     'Kubernetes',
     'Okta',
+    'OktaException',
     'SonarQube',
     'SquashTM',
 ]
@@ -83,3 +84,4 @@ from .kubernetes import Kubernetes
 from .sonarqube import SonarQube
 from .squashtm import SquashTM
 from .okta import Okta
+from .base.okta import OktaException
