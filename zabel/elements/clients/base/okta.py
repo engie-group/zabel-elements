@@ -22,6 +22,10 @@ from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import ensure_nonemptystring, api_call
 
 
+class OktaException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class Okta:
     """Okta Base-Level Wrapper.
 
@@ -114,9 +118,14 @@ class Okta:
 
         async def get_user_info_async(self, user: str):
             okta_user, resp, err = await self._client().get_user(user)
+            if (err):
+                # TODO : check if err is itself an exception, no time 
+                # for this for now
+                raise OktaException(err)
             if okta_user is not None:
                 return okta_user.as_dict()
-            return okta_user
+            else:
+                raise OktaException(f"User {user} not found")
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(get_user_info_async(self, user))
