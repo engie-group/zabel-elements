@@ -17,6 +17,8 @@ This module depends on the #:tooling.base.okta module.
 
 from typing import Iterable, List, Dict, Any
 
+import asyncio
+
 from zabel.commons.exceptions import ApiError
 
 from .base.okta import Okta as Base, OktaException
@@ -70,18 +72,23 @@ class Okta(Base):
         """
         okta_group = self.get_group_by_name(group)
         okta_group_id = okta_group['id']
-        for user in users:
-            try:
-                okta_user = self.get_user_info(user)
-            except OktaException as ex:
-                print(f'Could not add user {user} to group {group}, because : {str(ex)}')
-                continue   
 
-            okta_user_id = okta_user['id']
-            try:
-                self.add_user_to_group(okta_group_id, okta_user_id)
-            except ApiError:
-                print(f'Could not add user {user} to group {group}')
+        loop = asyncio.get_event_loop()
+        okta_users = loop.run_until_complete(
+            asyncio.gather(*[self._client().get_user(u) for u in users])
+        )
+
+        loop.run_until_complete(
+            asyncio.gather(
+                *[
+                    self._client().add_user_to_group(
+                        userId=u[0].id, groupId=okta_group_id
+                    )
+                    for u in okta_users
+                    if u[0]
+                ]
+            )
+        )
 
     def remove_users_from_group(self, group: str, users: Iterable[str]):
         """Remove users from Okta group.
@@ -101,7 +108,9 @@ class Okta(Base):
             try:
                 okta_user = self.get_user_info(user)
             except OktaException as ex:
-                print(f'Could not remove user {user} from group {group}, because : {str(ex)}')
+                print(
+                    f'Could not remove user {user} from group {group}, because : {str(ex)}'
+                )
                 continue
 
             okta_user_id = okta_user['id']
@@ -151,6 +160,6 @@ class Okta(Base):
             user = self.get_user_info(user_login)
             return self.list_users_by_group_id(user['id'])
         except OktaException as ex:
-            # just wrap the exception as the contract method 
+            # just wrap the exception as the contract method
             # says we can expect this.
             raise ApiError(ex)
