@@ -580,6 +580,38 @@ class GitHub:
 
         self._delete(f'orgs/{login}/members/{user}')
 
+    @api_call
+    def add_organization_outside_collaborator(self, login: str, user: str):
+        """Add an outside collaborator on an organization.
+
+        # Required parameters
+
+        - login: a non-empty string, the name of the Organization
+        - user: a non-empty string, the login of the user
+        """
+
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('user')
+        
+        self._put(f'/orgs/{login}/outside_collaborators/{user}')
+
+    @api_call
+    def rm_organization_outside_collaborator(self, login: str, user: str):
+        """Removes an outside collaborator on an organization.
+
+        # Required parameters
+
+        - login: a non-empty string, the name of the Organization
+        - user: a non-empty string, the login of the user
+        """
+
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('user')
+        
+        self._delete(
+                f'/orgs/{login}/outside_collaborators/{user}'
+            )
+
     ####################################################################
     # GitHub teams
     #
