@@ -1898,6 +1898,7 @@ class Confluence:
                 api_url = join_url(
                     workload['_links']['base'], workload['_links']['next']
                 )
+                params = {}
         return collected
 
     def _put(
