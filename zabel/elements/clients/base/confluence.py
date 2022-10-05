@@ -423,7 +423,7 @@ class Confluence:
         )
 
     @api_call
-    def list_group_members(self, group_name: str) -> List[Dict[str, Any]]:
+    def list_group_members(self, group_name: str, expand: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return a list of users in the group.
 
         # Required parameters
@@ -445,8 +445,10 @@ class Confluence:
         the first n users).
         """
         ensure_nonemptystring('group_name')
-
-        return self._collect_data(f'group/{group_name}/member')
+        params = {}
+        add_if_specified(params, 'expand', expand)
+        ensure_noneorinstance('expand', str)
+        return self._collect_data(f'group/{group_name}/member', params=params)
 
     @api_call
     def get_user(
