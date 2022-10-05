@@ -265,6 +265,9 @@ class GitHub:
     # list_organization_outsidecollaborators
     # get_organization_membership
     # add_organization_membership
+    # rm_organization_membership
+    # add_organization_outside_collaborator
+    # rm_organization_outside_collaborator
     # list_organization_teams
     #
     # Part of enterprise administration
@@ -580,6 +583,36 @@ class GitHub:
 
         self._delete(f'orgs/{login}/members/{user}')
 
+    @api_call
+    def add_organization_outside_collaborator(self, login: str, user: str):
+        """Add an outside collaborator on an organization.
+
+        # Required parameters
+
+        - login: a non-empty string, the name of the Organization
+        - user: a non-empty string, the login of the user
+        """
+
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('user')
+
+        self._put(f'/orgs/{login}/outside_collaborators/{user}')
+
+    @api_call
+    def rm_organization_outside_collaborator(self, login: str, user: str):
+        """Removes an outside collaborator on an organization.
+
+        # Required parameters
+
+        - login: a non-empty string, the name of the Organization
+        - user: a non-empty string, the login of the user
+        """
+
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('user')
+
+        self._delete(f'/orgs/{login}/outside_collaborators/{user}')
+
     ####################################################################
     # GitHub teams
     #
@@ -640,6 +673,9 @@ class GitHub:
     # get_repository_commit
     # list_reporitory_teams
     # list_repository_collaborators
+    # add_repository_collaborator
+    # rm_repository_collaborator
+    # list_repository_permissions_user
 
     @api_call
     def list_repositories(self) -> List[Dict[str, Any]]:
@@ -1130,6 +1166,86 @@ class GitHub:
         ensure_nonemptystring('repository_name')
 
         return self._collect_data(f'repos/{organization_name}/{repository_name}/collaborators')  # type: ignore
+
+    @api_call
+    def add_repository_collaborator(
+        self,
+        organization_name: str,
+        repository_name: str,
+        user: str,
+        permission: str = 'push',
+    ) -> None:
+        """Add a collaborator on a repository.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - user: a non-empty string
+        - permission: a non-empty string
+        """
+
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('user')
+        ensure_in('permission', ['pull', 'triage', 'push', 'maintain', 'admin'])
+
+        params = {'permission': permission}
+
+        self._put(
+            f'/repos/{organization_name}/{repository_name}/collaborators/{user}',
+            json=params,
+        )
+
+    @api_call
+    def rm_repository_collaborator(
+        self, organization_name: str, repository_name: str, user: str
+    ) -> None:
+        """Removes a collaborator on a repository.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - user: a non-empty string
+        """
+
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('user')
+
+        self._delete(
+            f'/repos/{organization_name}/{repository_name}/collaborators/{user}'
+        )
+
+    @api_call
+    def list_repository_permissions_user(
+        self, organization_name: str, repository_name: str, user: str
+    ) -> Dict[str, Any]:
+        """List permissions of an user on a repository.
+        
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - user: a non-empty string
+
+        # Returned value
+        
+        Return a dictionary with following keys:
+
+        - permission: a string
+        - user: a dictionary
+        - role_name: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('user')
+
+        result = self._get(
+            f'/repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
+        )
+        return result
 
     ####################################################################
     # GitHub repository contents

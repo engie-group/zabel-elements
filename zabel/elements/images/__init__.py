@@ -669,25 +669,25 @@ class SquashTM(clients.SquashTM, ManagedService):
         """
         return self.get_user(self.get_internal_member_id(member_id))
 
-    class Okta(clients.Okta, Utility):
-        """Abstract base _Okta_ class.
+class Okta(clients.Okta, Utility):
+    """Abstract base _Okta_ class.
 
-        Provides a default implementation for the following #::Utility
-        method:
+    Provides a default implementation for the following #::Utility
+    method:
 
-        - `__init__()`
+    - `__init__()`
 
-        The following environment variables must exist:
+    The following environment variables must exist:
 
-        - OKTA_URL: a string
-        - OKTA_TOKEN: a string
+    - OKTA_URL: a string
+    - OKTA_TOKEN: a string
 
-        The `OKTA_URL` entry refers to the API entry point:
+    The `OKTA_URL` entry refers to the API entry point:
 
-            https://okta.example.com
-        """
+        https://okta.example.com
+    """
 
-        def __init__(self) -> None:
-            url = _get_credential('OKTA_URL')
-            token = _get_credential('OKTA_TOKEN')
-            super().__init__(url, token)
+    def __init__(self) -> None:
+        url = _get_credential('OKTA_URL')
+        token = _get_credential('OKTA_TOKEN')
+        super().__init__(url, token)
