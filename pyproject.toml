@@ -3,8 +3,5 @@ line-length = 79
 target-version = ['py38']
 skip-string-normalization = true
 
-[tool.pylint.messages_control]
-disable = "bad-continuation"
-
 [tool.pylint.reports]
 output-format = "colorized"

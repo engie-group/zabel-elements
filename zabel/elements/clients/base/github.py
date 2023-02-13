@@ -412,13 +412,16 @@ class GitHub:
 
     @api_call
     def create_organization(
-        self, login: str, admin: str, profile_name: Optional[str] = None
+        self,
+        organization_name: str,
+        admin: str,
+        profile_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create GitHub organization.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - admin: a non-empty string
 
         # Optional parameters
@@ -429,11 +432,11 @@ class GitHub:
 
         A dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('admin')
         ensure_noneorinstance('profile_name', str)
 
-        data = {'login': login, 'admin': admin}
+        data = {'login': organization_name, 'admin': admin}
         add_if_specified(data, 'profile_name', profile_name)
 
         result = self._post('admin/organizations', json=data)
@@ -441,13 +444,13 @@ class GitHub:
 
     @api_call
     def list_organization_members(
-        self, login: str, role: str = 'all'
+        self, organization_name: str, role: str = 'all'
     ) -> List[Dict[str, Any]]:
         """Return the list of organization members.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
 
         # Optional parameters
 
@@ -458,41 +461,43 @@ class GitHub:
 
         A list of _members_.  Each member is a dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_in('role', ('all', 'member', 'admin'))
 
         return self._collect_data(
-            f'orgs/{login}/members', params={'role': role}
+            f'orgs/{organization_name}/members', params={'role': role}
         )
 
     @api_call
     def list_organization_outsidecollaborators(
-        self, login: str
+        self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return the list of organization outside collaborators.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
 
         # Returned value
 
         A list of _members_ (outside collaborators).  Each member is a
         dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
 
-        return self._collect_data(f'orgs/{login}/outside_collaborators')
+        return self._collect_data(
+            f'orgs/{organization_name}/outside_collaborators'
+        )
 
     @api_call
     def get_organization_membership(
-        self, login: str, user: str
+        self, organization_name: str, user: str
     ) -> Dict[str, Any]:
         """Get organization membership.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - user: a non-empty string
 
         # Returned value
@@ -514,20 +519,20 @@ class GitHub:
         Raises an _ApiError_ if the caller is not a member of the
         organization.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        return self._get(f'orgs/{login}/memberships/{user}')  # type: ignore
+        return self._get(f'orgs/{organization_name}/memberships/{user}')  # type: ignore
 
     @api_call
     def add_organization_membership(
-        self, login: str, user: str, role: str = 'member'
+        self, organization_name: str, user: str, role: str = 'member'
     ) -> Dict[str, Any]:
         """Add or update organization membership.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - user: a non-empty string
 
         # Optional parameters
@@ -553,65 +558,87 @@ class GitHub:
         Refer to #list_organizations() and #list_users() for more details
         on `organization` and `user` content.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
         ensure_in('role', ['member', 'admin'])
 
         result = self._put(
-            f'orgs/{login}/memberships/{user}', json={'role': role}
+            f'orgs/{organization_name}/memberships/{user}', json={'role': role}
         )
         return result  # type: ignore
 
     @api_call
     def rm_organization_membership(
-        self, login: str, user: str
-    ) -> Dict[str, Any]:
-        """Removes a user membership from an Organization.
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Remove user from organization.
+
+        Removing users will remove them from all teams and they will no
+        longer have any access to the organization's repositories.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
 
         # Returned Value
 
-        None
+        A boolean.  True if the user has been removed from the
+        organization.
         """
-
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._delete(f'orgs/{login}/members/{user}')
+        result = self._delete(f'orgs/{organization_name}/members/{user}')
+        return (result.status_code // 100) == 2
 
     @api_call
-    def add_organization_outside_collaborator(self, login: str, user: str):
-        """Add an outside collaborator on an organization.
+    def add_organization_outside_collaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Add outside collaborator to organization.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
-        """
 
-        ensure_nonemptystring('login')
+        # Returned value
+
+        A boolean.  True if the outside collaborator was added to the
+        organization.
+        """
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._put(f'/orgs/{login}/outside_collaborators/{user}')
+        result = self._put(
+            f'/orgs/{organization_name}/outside_collaborators/{user}'
+        )
+        return (result.status_code // 100) == 2
 
     @api_call
-    def rm_organization_outside_collaborator(self, login: str, user: str):
-        """Removes an outside collaborator on an organization.
+    def rm_organization_outside_collaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Remove outside collaborator from organization.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
-        """
 
-        ensure_nonemptystring('login')
+        # Returned value
+
+        A boolean.  True if the outside collaborator was removed from
+        the organization.
+        """
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._delete(f'/orgs/{login}/outside_collaborators/{user}')
+        result = self._delete(
+            f'/orgs/{organization_name}/outside_collaborators/{user}'
+        )
+        return (result.status_code // 100) == 2
 
     ####################################################################
     # GitHub teams
@@ -901,9 +928,9 @@ class GitHub:
         ensure_instance('patched_attributes', dict)
 
         response = self._patch(
-            f"repos/{organization_name}/{repository_name}", patched_attributes
+            f'repos/{organization_name}/{repository_name}', patched_attributes
         )
-        return response
+        return response  # type: ignore
 
     @api_call
     def list_repository_topics(
@@ -1088,6 +1115,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
+
         result = self._get(
             f'repos/{organization_name}/{repository_name}/commits/{ref}'
         )
@@ -1341,7 +1369,7 @@ class GitHub:
         if result.status_code // 100 == 2:
             try:
                 return result.json()
-            except:
+            except requests.exceptions.JSONDecodeError:
                 return result.text
         return result  # type: ignore
 
@@ -1613,7 +1641,7 @@ class GitHub:
         repository_name: str,
         name: str,
         config: Dict[str, str],
-        events: List[str] = ['push'],
+        events: Optional[List[str]] = None,
         active: bool = True,
     ) -> Dict[str, Any]:
         """Create a webhook.
@@ -1649,10 +1677,12 @@ class GitHub:
         if name != 'web':
             raise ValueError('name must be "web".')
         ensure_instance('config', dict)
-        ensure_instance('events', list)
+        ensure_noneorinstance('events', list)
         ensure_instance('active', bool)
         if 'url' not in config:
             raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['push']
 
         data = {
             'name': name,
