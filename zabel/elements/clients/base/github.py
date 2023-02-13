@@ -1188,7 +1188,9 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user')
-        ensure_in('permission', ['pull', 'triage', 'push', 'maintain', 'admin'])
+        ensure_in(
+            'permission', ['pull', 'triage', 'push', 'maintain', 'admin']
+        )
 
         params = {'permission': permission}
 
@@ -1223,7 +1225,7 @@ class GitHub:
         self, organization_name: str, repository_name: str, user: str
     ) -> Dict[str, Any]:
         """List permissions of an user on a repository.
-        
+
         # Required parameters
 
         - organization_name: a non-empty string
@@ -1231,7 +1233,7 @@ class GitHub:
         - user: a non-empty string
 
         # Returned value
-        
+
         Return a dictionary with following keys:
 
         - permission: a string

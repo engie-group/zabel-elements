@@ -26,6 +26,7 @@ class OktaException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+
 class Okta:
     """Okta Base-Level Wrapper.
 
@@ -39,7 +40,6 @@ class Okta:
         url: str,
         token: str,
     ):
-
         ensure_nonemptystring('url')
         ensure_nonemptystring('token')
 
@@ -118,8 +118,8 @@ class Okta:
 
         async def get_user_info_async(self, user: str):
             okta_user, resp, err = await self._client().get_user(user)
-            if (err):
-                # TODO : check if err is itself an exception, no time 
+            if err:
+                # TODO : check if err is itself an exception, no time
                 # for this for now
                 raise OktaException(err)
             if okta_user is not None:
