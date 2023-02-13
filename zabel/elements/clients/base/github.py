@@ -568,7 +568,7 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def rm_organization_membership(
+    def remove_organization_membership(
         self, organization_name: str, user: str
     ) -> bool:
         """Remove user from organization.
@@ -591,6 +591,8 @@ class GitHub:
 
         result = self._delete(f'orgs/{organization_name}/members/{user}')
         return (result.status_code // 100) == 2
+
+    rm_organization_membership = remove_organization_membership
 
     @api_call
     def add_organization_outside_collaborator(
@@ -617,7 +619,7 @@ class GitHub:
         return (result.status_code // 100) == 2
 
     @api_call
-    def rm_organization_outside_collaborator(
+    def remove_organization_outside_collaborator(
         self, organization_name: str, user: str
     ) -> bool:
         """Remove outside collaborator from organization.
@@ -639,6 +641,10 @@ class GitHub:
             f'/orgs/{organization_name}/outside_collaborators/{user}'
         )
         return (result.status_code // 100) == 2
+
+    rm_organization_outside_collaborator = (
+        remove_organization_outside_collaborator
+    )
 
     ####################################################################
     # GitHub teams
@@ -683,7 +689,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('team_name')
 
-        return self._get(f'orgs/{organization_name}/teams/{team_name}/members')
+        return self._get(f'orgs/{organization_name}/teams/{team_name}/members')  # type: ignore
 
     ####################################################################
     # GitHub repositories
@@ -916,7 +922,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - patched_attributes: a dict of attributes/values, see
-          create_repository(...) for the details of patchable
+          #create_repository() for the details of patchable
           attributes.
 
         # Returned value
@@ -1203,7 +1209,7 @@ class GitHub:
         user: str,
         permission: str = 'push',
     ) -> None:
-        """Add a collaborator on a repository.
+        """Add collaborator to repository.
 
         # Required parameters
 
@@ -1212,7 +1218,6 @@ class GitHub:
         - user: a non-empty string
         - permission: a non-empty string
         """
-
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user')
@@ -1228,10 +1233,10 @@ class GitHub:
         )
 
     @api_call
-    def rm_repository_collaborator(
+    def remove_repository_collaborator(
         self, organization_name: str, repository_name: str, user: str
     ) -> None:
-        """Removes a collaborator on a repository.
+        """Remove collaborator from repository.
 
         # Required parameters
 
@@ -1239,7 +1244,6 @@ class GitHub:
         - repository_name: a non-empty string
         - user: a non-empty string
         """
-
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user')
@@ -1247,6 +1251,8 @@ class GitHub:
         self._delete(
             f'/repos/{organization_name}/{repository_name}/collaborators/{user}'
         )
+
+    rm_repository_collaborator = remove_repository_collaborator
 
     @api_call
     def list_repository_permissions_user(
@@ -1275,7 +1281,7 @@ class GitHub:
         result = self._get(
             f'/repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
         )
-        return result
+        return result  # type: ignore
 
     ####################################################################
     # GitHub repository contents
@@ -1549,32 +1555,103 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def create_repository_ref(
-        self, organization_name: str, repository_name: str, ref: str, sha: str
+    def get_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
     ) -> Dict[str, Any]:
-        """Create a reference.
+        """Get a repository a reference.
 
         # Required parameters
 
-        - ref: a non-empty string
-        - sha: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (of form `heads/{branch}` or
+          `tags/{tag}`)
 
         # Returned value
 
         A _reference_.  A reference is a dictionary with the following
         entries:
 
-        - node_id: a string
         - ref: a string
+        - node_id: a string
         - url: a string
         - object: a dictionary
-        """
-        ensure_nonemptystring('ref')
-        ensure_nonemptystring('sha')
 
-        result = self._post(
-            f'repos/{organization_name}/{repository_name}/git/refs',
-            json={'ref': ref, 'sha': sha},
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        if not ref.startswith('heads/') or not ref.startswith('tags/'):
+            raise ValueError('ref must start with "heads/" or "tags/".')
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/ref/{ref}',
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_tree(
+        self,
+        organization_name: str,
+        repository_name: str,
+        tree_sha: str,
+        recursive: bool = False,
+    ) -> Dict[str, Any]:
+        """Get a tree.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - tree_sha: a non-empty string (a SHA1)
+
+        # Optional parameters
+
+        - recursive: a boolean (False by default)
+
+        # Returned value
+
+        Return a dictionary with the following keys:
+
+        - sha: a string
+        - url: a string
+        - tree: a list of dictionaries
+        - truncated: a boolean
+
+        The `tree` elements have the following keys:
+
+        - path: a string
+        - mode: a string
+        - type: a string
+        - size: an integer
+        - sha: a string
+        - url: a string
+
+        If `truncated` is `True`, the number of items in the `tree` list
+        exceeds githubs' internal limits (100k entries with a maximum
+        size of 7 MB).  If you need to fetch more items, use the
+        non-recursive method of fetching trees, and fetch one sub-tree
+        at a time.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('tree_sha')
+        ensure_instance('recursive', bool)
+
+        params = {'recursive': 'true'} if recursive else None
+        headers = {'Accept': 'application/vnd.github+json'}
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/tree/{tree_sha}',
+            params=params,
+            headers=headers,
         )
         return result  # type: ignore
 
