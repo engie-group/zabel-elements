@@ -1491,10 +1491,67 @@ class GitHub:
         return result  # type: ignore
 
     ####################################################################
-    # GitHub git database API
+    # GitHub repository git database
     #
+    # create_repository_reference
     # create_repository_tag
-    # create_repository_ref
+    # get_repository_reference
+    # get_repository_tree
+
+    @api_call
+    def create_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+        sha: str,
+        key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a reference.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (a fully-qualified reference, starting with
+          `refs` and having at least two slashed)
+        - sha: a non-empty string
+
+        # Optional parameters
+
+        - key: a string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('key')
+        if not ref.startswith('refs/') or ref.count('/') < 2:
+            raise ValueError(
+                'ref must start with "refs" and contains at least two slashes.'
+            )
+
+        data = {'ref': ref, 'sha': sha}
+        add_if_specified(data, 'key', key)
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/git/ref', json=data
+        )
+        return result  # type: ignore
 
     @api_call
     def create_repository_tag(
