@@ -299,7 +299,7 @@ class Okta:
                 collected += users
             if error:
                 raise ApiError(error)
-            users_dict = [user.as_dict() for user in users]
+            users_dict = [user.as_dict() for user in collected]
             return users_dict
 
         loop = asyncio.get_event_loop()
