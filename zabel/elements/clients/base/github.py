@@ -31,6 +31,7 @@ from zabel.commons.utils import (
     ensure_nonemptystring,
     ensure_noneorinstance,
     ensure_noneornonemptystring,
+    ensure_onlyone,
     join_url,
 )
 
@@ -1491,6 +1492,288 @@ class GitHub:
         return result  # type: ignore
 
     ####################################################################
+    # GitHub repository branches
+    #
+    # list_branches
+    # get_branche
+
+    @api_call
+    def list_branches(
+        self,
+        organization_name: str,
+        repository_name: str,
+        protected: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """List branches.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - protected: a boolean
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('protected', bool)
+
+        return self._collect_data(
+            f'repos/{organization_name}/{repository_name}/branches',
+            params={'protected': 'true'} if protected else None,
+        )
+
+    @api_call
+    def get_branch(
+        self,
+        organization_name: str,
+        repository_name: str,
+        branch_name: str,
+    ) -> Dict[str, Any]:
+        """Get branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - branch_name: a non-empty string
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('branch_name')
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/branches/{branch_name}'
+        )
+        return result  # type: ignore
+
+    ####################################################################
+    # GitHub repository pull requests
+    #
+    # list_pullrequests
+    # create_pullrequest
+    # TODO get_pullrequest
+    # is_pullrequest_merged
+    # merge_pullrequest
+    # update_pullrequest_branch
+
+    @api_call
+    def list_pullrequests(
+        self,
+        organization_name: str,
+        repository_name: str,
+        state: str = 'all',
+    ) -> List[Dict[str, Any]]:
+        """List pull requests.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - state: a string, one of 'open', 'closed', or 'all' (all by
+          default)
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('state', ('open', 'closed', 'all'))
+
+        return self._collect_data(
+            f'repos/{organization_name}/{repository_name}/pulls',
+            params={'state': state},
+        )
+
+    @api_call
+    def create_pullrequest(
+        self,
+        organization_name: str,
+        repository_name: str,
+        head: str,
+        base: str,
+        title: Optional[str] = None,
+        body: Optional[str] = None,
+        maintainer_can_modify: bool = True,
+        draft: bool = False,
+        issue: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """List branches.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - state: a string, one of 'open', 'closed', or 'all' (all by
+          default)
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('head')
+        ensure_nonemptystring('base')
+        ensure_noneornonemptystring('title')
+        ensure_noneornonemptystring('body')
+        ensure_instance('maintainer_can_modify', bool)
+        ensure_instance('draft', bool)
+        ensure_noneorinstance('issue', int)
+        ensure_onlyone('title', 'issue')
+
+        data = {
+            'head': head,
+            'base': base,
+            'maintainer_can_modify': maintainer_can_modify,
+            'draft': draft,
+        }
+        add_if_specified(data, 'body', body)
+        add_if_specified(data, 'title', title)
+        add_if_specified(data, 'issue', issue)
+
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/pulls', json=data
+        )
+        return result  # type: ignore
+
+    @api_call
+    def is_pullrequest_merged(
+        self, organization_name: str, repository_name: str, pull_number: int
+    ) -> bool:
+        """Check if pull request has been merged.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+
+        # Returned value
+
+        A boolean.  True if the pull request has been merged, False
+        otherwise.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        return (
+            self._get(
+                f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge'
+            ).status_code
+            == 204
+        )
+
+    @api_call
+    def merge_pullrequest(
+        self,
+        organization_name: str,
+        repository_name: str,
+        pull_number: int,
+        commit_title: str,
+        commit_message: str,
+        sha: str,
+        merge_method: str,
+    ) -> Dict[str, Any]:
+        """Merge pull request.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+        - commit_title: a non-empty string
+        - commit_message: a non-empty string
+        - sha: a non-empty string
+        - merge_method: a string, one of 'merge', 'squash', or 'rebase'
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        ensure_nonemptystring('commit_title')
+        ensure_nonemptystring('commit_message')
+        ensure_nonemptystring('sha')
+        ensure_in('merge_method', ('merge', 'squash', 'rebase'))
+
+        data = {
+            'commit_title': commit_title,
+            'commit_message': commit_message,
+            'sha': sha,
+            'merge_method': merge_method,
+        }
+
+        result = self._put(
+            f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge',
+            json=data,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def update_pullrequest_branch(
+        self,
+        organization_name: str,
+        repository_name: str,
+        pull_number: int,
+        expected_head_sha: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Update pull request branch with latest upstream changes.
+
+        Update the pull request branch with the latest upstream changes
+        by merging HEAD from the base branch into the pull request
+        branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+
+        # Optional parameters
+
+        - expected_head_sha: a non-empty string or None (None by
+          default)
+
+        # Returned value
+
+        A dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        ensure_noneornonemptystring('expected_head_sha')
+
+        data = (
+            {'expected_head_sha': expected_head_sha}
+            if expected_head_sha
+            else None
+        )
+        result = self._put(
+            f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/update-branch',
+            json=data,
+        )
+        return result  # type: ignore
+
+    ####################################################################
     # GitHub repository git database
     #
     # create_repository_reference
@@ -1539,12 +1822,12 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
-        ensure_nonemptystring('sha')
-        ensure_noneornonemptystring('key')
         if not ref.startswith('refs/') or ref.count('/') < 2:
             raise ValueError(
                 'ref must start with "refs" and contains at least two slashes.'
             )
+        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('key')
 
         data = {'ref': ref, 'sha': sha}
         add_if_specified(data, 'key', key)
