@@ -431,7 +431,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.
+        An _organization_. An organization is a dictionary.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('admin')
@@ -818,7 +818,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary. See #list_repositories() for its description.
+        A _repository_. See #list_repositories() for its description.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -870,7 +870,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.  See #list_repositories() for its content.
+        A _repository_.  See #list_repositories() for its content.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
@@ -928,7 +928,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.  See #list_repositories() for its content.
+        A _repository_.  See #list_repositories() for its content.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
@@ -1097,7 +1097,7 @@ class GitHub:
 
         # Return value
 
-        A list of dictionaries.
+        A list of _commits_.  Each commit is a dictionary.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1118,7 +1118,18 @@ class GitHub:
     def get_repository_commit(
         self, organization_name: str, repository_name: str, ref: str
     ) -> Dict[str, Any]:
-        """Return a specific commit."""
+        """Return a specific commit.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string
+
+        # Returned value
+
+        A _commit_.  A commit is a dictionary.
+        """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
@@ -1517,7 +1528,13 @@ class GitHub:
 
         # Returned value
 
-        A list of dictionaries.
+        A list of _short branches_.  Each short branch is a dictionary
+        with the following entries:
+
+        - name: a string
+        - commit: a dictionary
+        - protected: a boolean
+        - protection: a dictionary
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1545,7 +1562,17 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.
+        A _branch_.  A branch is a dictionary with the following
+        entries:
+
+        - name: a string
+        - commit: a dictionary
+        - protected: a boolean
+        - protection: a dictionary
+        - protetion_url: a string
+        - pattern: a string
+        - required_approving_review_count: an integer
+        - _links: a dictionary
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1587,7 +1614,45 @@ class GitHub:
 
         # Returned value
 
-        A list of dictionaries.
+        A list of _pull requests_.  Each pull request is a dictionary
+        with the following entries:
+
+        - url: a string
+        - id: an integer
+        - node_id: a string
+        - html_url: a string
+        - diff_url: a string
+        - patch_url: a string
+        - issue_url: a string
+        - commits_url: a string
+        - review_comments_url: a string
+        - review_comment_url: a string
+        - comments_url: a string
+        - statuses_url: a string
+        - number: an integer
+        - state: a string
+        - locked: a boolean
+        - title: a string
+        - user: a dictionary
+        - body: a string
+        - labels: a list of dictionaries
+        - milestone: a dictionary,
+        - active_lock_reason: a string
+        - created_at: a string
+        - updated_at: a string
+        - closed_at: a string
+        - merged_at: a string
+        - merge_commit_sha: a string
+        - assignee: a dictionary
+        - assignees: a list of dictionaries
+        - requested_reviewers: a list of dictionaries
+        - requested_teams: a list of dictionaries
+        - head: a dictionary
+        - base: a dictionary
+        - _links: a dictionary
+        - author_association: a string
+        - auto_merge: a dictionary or None
+        - draft: a boolean
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1625,7 +1690,7 @@ class GitHub:
 
         # Returned value
 
-        A list of dictionaries.
+        A _pull request_.  See #list_pullrequests for its description.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1705,7 +1770,12 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.
+        A _pull request merge result_.  A pull request merge result is a
+        dictionary with the following entries:
+
+        - sha: a string
+        - merged: a boolean
+        - message: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1755,7 +1825,10 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.
+        A dictionary with the following entries:
+
+        - message: a string
+        - url: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1959,7 +2032,7 @@ class GitHub:
 
         # Returned value
 
-        Return a dictionary with the following keys:
+        A _tree_.  A tree is a dictionary with the following keys:
 
         - sha: a string
         - url: a string
@@ -2087,7 +2160,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.  See #list_hooks() for its format.
+        A _hook_.  See #list_hooks() for its format.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
