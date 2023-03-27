@@ -615,7 +615,7 @@ class GitHub:
         ensure_nonemptystring('user')
 
         result = self._put(
-            f'/orgs/{organization_name}/outside_collaborators/{user}'
+            f'orgs/{organization_name}/outside_collaborators/{user}'
         )
         return (result.status_code // 100) == 2
 
@@ -639,7 +639,7 @@ class GitHub:
         ensure_nonemptystring('user')
 
         result = self._delete(
-            f'/orgs/{organization_name}/outside_collaborators/{user}'
+            f'orgs/{organization_name}/outside_collaborators/{user}'
         )
         return (result.status_code // 100) == 2
 
@@ -1240,7 +1240,7 @@ class GitHub:
         params = {'permission': permission}
 
         self._put(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}',
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}',
             json=params,
         )
 
@@ -1261,7 +1261,7 @@ class GitHub:
         ensure_nonemptystring('user')
 
         self._delete(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}'
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}'
         )
 
     rm_repository_collaborator = remove_repository_collaborator
@@ -1291,7 +1291,7 @@ class GitHub:
         ensure_nonemptystring('user')
 
         result = self._get(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
         )
         return result  # type: ignore
 
@@ -1653,6 +1653,8 @@ class GitHub:
         - author_association: a string
         - auto_merge: a dictionary or None
         - draft: a boolean
+
+        `number` is the value you use to interact with the pull request.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1682,11 +1684,18 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
+        - head: a non-empty string
+        - base: a non-empty string
+        - title: a non-empty string or None (None by default)
+        - issue: an integer or None
+
+        Either `title` or `issue` must be specified.
 
         # Optional parameters
 
-        - state: a string, one of 'open', 'closed', or 'all' (all by
-          default)
+        - body: a non-empty string or None (None by default)
+        - maintainer_can_modify: a boolean (True by default)
+        - draft: a boolean (False by default)
 
         # Returned value
 
@@ -1740,7 +1749,7 @@ class GitHub:
         ensure_instance('pull_number', int)
         return (
             self._get(
-                f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge'
+                f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge'
             ).status_code
             == 204
         )
@@ -1751,10 +1760,10 @@ class GitHub:
         organization_name: str,
         repository_name: str,
         pull_number: int,
-        commit_title: str,
-        commit_message: str,
-        sha: str,
-        merge_method: str,
+        commit_title: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        sha: Optional[str] = None,
+        merge_method: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Merge pull request.
 
@@ -1763,10 +1772,14 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - pull_number: an integer
-        - commit_title: a non-empty string
-        - commit_message: a non-empty string
-        - sha: a non-empty string
-        - merge_method: a string, one of 'merge', 'squash', or 'rebase'
+
+        # Optional parameters
+
+        - commit_title: a non-empty string or None (None by default)
+        - commit_message: a non-empty string or None (None by default)
+        - sha: a non-empty string or None (None by default)
+        - merge_method: a string, one of 'merge', 'squash', or 'rebase',
+          or None (None by default)
 
         # Returned value
 
@@ -1780,20 +1793,22 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_instance('pull_number', int)
-        ensure_nonemptystring('commit_title')
-        ensure_nonemptystring('commit_message')
-        ensure_nonemptystring('sha')
-        ensure_in('merge_method', ('merge', 'squash', 'rebase'))
+        ensure_noneornonemptystring('commit_title')
+        ensure_noneornonemptystring('commit_message')
+        ensure_noneornonemptystring('sha')
+        ensure_noneornonemptystring('merge_method')
 
-        data = {
-            'commit_title': commit_title,
-            'commit_message': commit_message,
-            'sha': sha,
-            'merge_method': merge_method,
-        }
+        if merge_method is not None:
+            ensure_in('merge_method', ('merge', 'squash', 'rebase'))
+
+        data = {}
+        add_if_specified(data, 'commit_title', commit_title)
+        add_if_specified(data, 'commit_message', commit_message)
+        add_if_specified(data, 'sha', sha)
+        add_if_specified(data, 'merge_method', merge_method)
 
         result = self._put(
-            f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge',
+            f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge',
             json=data,
         )
         return result  # type: ignore
@@ -1841,7 +1856,7 @@ class GitHub:
             else None
         )
         result = self._put(
-            f'/repos/{organization_name}/{repository_name}/pulls/{pull_number}/update-branch',
+            f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/update-branch',
             json=data,
         )
         return result  # type: ignore
