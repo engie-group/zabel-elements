@@ -56,7 +56,7 @@ NOTIFICATIONSCHEME_EXPAND = (
 PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
 
-MAX_RESULTS = 100
+MAX_RESULTS = 1000
 # Helpers
 
 
@@ -2433,14 +2433,18 @@ class Jira:
     # search_user
 
     @api_call
-    def list_users(self) -> List[str]:
+    def list_users(self, include_inactive: bool = True) -> List[str]:
         """Return users list.
 
         # Returned value
 
         A list of _users_.  Each user is a string (the user 'name').
 
-        All known users are returned, including inactive ones.
+        All known users are returned, including inactive ones if include_inactive is true.
+        
+        # Optional parameters
+
+        - include_inactive: a boolean (True by default)
         """
         users = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
@@ -2449,7 +2453,7 @@ class Jira:
             while not exhausted:
                 results = self._client().search_users(
                     letter,
-                    includeInactive=True,
+                    includeInactive=include_inactive,
                     maxResults=MAX_RESULTS,
                     startAt=start,
                 )
