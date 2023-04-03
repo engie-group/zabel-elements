@@ -5,7 +5,7 @@
 This is part of the Zabel platform.  The **zabel-elements** package
 contains the standard _elements_ library for Zabel.
 
-An element is an external service such as _Artifactory_ or _Jenkins_ or a
+An element is an external service such as _Artifactory_ or _Jenkins_ or an
 LDAP server that can be managed or used by Zabel.
 
 This package provides the necessary wrappers for some elements commonly
@@ -21,8 +21,8 @@ found in many workplaces, namely:
 - SonarQube
 - SquashTM
 
-Elements are of two kinds: _ManagedServices_, that represent services that are
-managed by Zabel, and _Utilities_, that represent services that are used by Zabel.
+Elements are of two kinds: _ManagedServices_, which represent services that are
+managed by Zabel, and _Utilities_, which represent services that are used by Zabel.
 
 Managed services host project resources.  They typically are the tools that project
 members interact with directly.
@@ -30,7 +30,7 @@ members interact with directly.
 Utilities may also host project resources, but they typically are not used directly
 by project members.  They are either references or infrastructure services necessary
 for the managed services to function, but otherwise not seen by project members.
-A LDAP server would probably be a utility, used both as a reference and as an access
+An LDAP server would probably be a utility, used both as a reference and as an access
 control tool.
 
 In the above list, Kubernetes is a utility.  The other elements are managed services.
@@ -40,7 +40,7 @@ specific dependencies on it.  In particular, the **zabel.elements.clients**
 module may be of interest if you want to perform some configuration tasks
 from your own Python code.
 
-Contributions of new wrappers, or extensions of existing wrappers are welcomed.
+Contributions of new wrappers or extensions of existing wrappers are welcomed.
 But elements can be provided in their own packages too.
 
 ## Architecture
@@ -51,7 +51,7 @@ It contains two parts:
 - The **zabel.elements.images** base classes module
 
 There is one _image_ per client (hence one image per element).  Images are
-classes with a standardized constructor and a `run()` method, and are how
+classes with a standardized constructor and a `run()` method and are how
 code is packaged so that it can be deployed on the Zabel platform.
 
 ## zabel.elements.clients
@@ -88,7 +88,7 @@ from the base class and contain no additional code.
 At import time, wrapper classes should not import libraries not part of
 the Python standard library or **requests** or modules part of the
 **zabel-commons** library.  That way, projects not needing some tool do
-not have to install its required dependencies.  Wrappers classes may
+not have to install their required dependencies.  Wrapper classes may
 import libraries in their `__init__()` methods, though.
 
 If an API call is successful, it will return a value (possibly None).
@@ -111,7 +111,7 @@ performed if needed).
 ## zabel.elements.images
 
 The **zabel.elements.images** module provides image wrappers for the
-built-in clients classes (those defined in the **zabel.elements.clients**
+built-in clients' classes (those defined in the **zabel.elements.clients**
 module).
 
 Those abstract image wrappers implement an `__init__()` constructor with
@@ -138,7 +138,7 @@ must implement the _ManagedService_ interface.
 ## License
 
 ```text
-Copyright (c) 2019-2022 Martin Lafaix (martin.lafaix@external.engie.com) and others
+Copyright (c) 2019-2023 Martin Lafaix (martin.lafaix@external.engie.com) and others
 
 This program and the accompanying materials are made
 available under the terms of the Eclipse Public License 2.0

@@ -669,6 +669,7 @@ class SquashTM(clients.SquashTM, ManagedService):
         """
         return self.get_user(self.get_internal_member_id(member_id))
 
+
 class Okta(clients.Okta, Utility):
     """Abstract base _Okta_ class.
 

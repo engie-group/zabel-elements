@@ -423,7 +423,9 @@ class Confluence:
         )
 
     @api_call
-    def list_group_members(self, group_name: str, expand: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_group_members(
+        self, group_name: str, expand: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Return a list of users in the group.
 
         # Required parameters

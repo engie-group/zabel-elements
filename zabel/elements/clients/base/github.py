@@ -31,6 +31,7 @@ from zabel.commons.utils import (
     ensure_nonemptystring,
     ensure_noneorinstance,
     ensure_noneornonemptystring,
+    ensure_onlyone,
     join_url,
 )
 
@@ -412,13 +413,16 @@ class GitHub:
 
     @api_call
     def create_organization(
-        self, login: str, admin: str, profile_name: Optional[str] = None
+        self,
+        organization_name: str,
+        admin: str,
+        profile_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create GitHub organization.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - admin: a non-empty string
 
         # Optional parameters
@@ -427,13 +431,13 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.
+        An _organization_. An organization is a dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('admin')
         ensure_noneorinstance('profile_name', str)
 
-        data = {'login': login, 'admin': admin}
+        data = {'login': organization_name, 'admin': admin}
         add_if_specified(data, 'profile_name', profile_name)
 
         result = self._post('admin/organizations', json=data)
@@ -441,13 +445,13 @@ class GitHub:
 
     @api_call
     def list_organization_members(
-        self, login: str, role: str = 'all'
+        self, organization_name: str, role: str = 'all'
     ) -> List[Dict[str, Any]]:
         """Return the list of organization members.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
 
         # Optional parameters
 
@@ -458,41 +462,43 @@ class GitHub:
 
         A list of _members_.  Each member is a dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_in('role', ('all', 'member', 'admin'))
 
         return self._collect_data(
-            f'orgs/{login}/members', params={'role': role}
+            f'orgs/{organization_name}/members', params={'role': role}
         )
 
     @api_call
     def list_organization_outsidecollaborators(
-        self, login: str
+        self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return the list of organization outside collaborators.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
 
         # Returned value
 
         A list of _members_ (outside collaborators).  Each member is a
         dictionary.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
 
-        return self._collect_data(f'orgs/{login}/outside_collaborators')
+        return self._collect_data(
+            f'orgs/{organization_name}/outside_collaborators'
+        )
 
     @api_call
     def get_organization_membership(
-        self, login: str, user: str
+        self, organization_name: str, user: str
     ) -> Dict[str, Any]:
         """Get organization membership.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - user: a non-empty string
 
         # Returned value
@@ -514,20 +520,20 @@ class GitHub:
         Raises an _ApiError_ if the caller is not a member of the
         organization.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        return self._get(f'orgs/{login}/memberships/{user}')  # type: ignore
+        return self._get(f'orgs/{organization_name}/memberships/{user}')  # type: ignore
 
     @api_call
     def add_organization_membership(
-        self, login: str, user: str, role: str = 'member'
+        self, organization_name: str, user: str, role: str = 'member'
     ) -> Dict[str, Any]:
         """Add or update organization membership.
 
         # Required parameters
 
-        - login: a non-empty string
+        - organization_name: a non-empty string
         - user: a non-empty string
 
         # Optional parameters
@@ -553,65 +559,93 @@ class GitHub:
         Refer to #list_organizations() and #list_users() for more details
         on `organization` and `user` content.
         """
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
         ensure_in('role', ['member', 'admin'])
 
         result = self._put(
-            f'orgs/{login}/memberships/{user}', json={'role': role}
+            f'orgs/{organization_name}/memberships/{user}', json={'role': role}
         )
         return result  # type: ignore
 
     @api_call
-    def rm_organization_membership(
-        self, login: str, user: str
-    ) -> Dict[str, Any]:
-        """Removes a user membership from an Organization.
+    def remove_organization_membership(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Remove user from organization.
+
+        Removing users will remove them from all teams and they will no
+        longer have any access to the organization's repositories.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
 
         # Returned Value
 
-        None
+        A boolean.  True if the user has been removed from the
+        organization.
         """
-
-        ensure_nonemptystring('login')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._delete(f'orgs/{login}/members/{user}')
+        result = self._delete(f'orgs/{organization_name}/members/{user}')
+        return (result.status_code // 100) == 2
+
+    rm_organization_membership = remove_organization_membership
 
     @api_call
-    def add_organization_outside_collaborator(self, login: str, user: str):
-        """Add an outside collaborator on an organization.
+    def add_organization_outside_collaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Add outside collaborator to organization.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
-        """
 
-        ensure_nonemptystring('login')
+        # Returned value
+
+        A boolean.  True if the outside collaborator was added to the
+        organization.
+        """
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._put(f'/orgs/{login}/outside_collaborators/{user}')
+        result = self._put(
+            f'orgs/{organization_name}/outside_collaborators/{user}'
+        )
+        return (result.status_code // 100) == 2
 
     @api_call
-    def rm_organization_outside_collaborator(self, login: str, user: str):
-        """Removes an outside collaborator on an organization.
+    def remove_organization_outside_collaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Remove outside collaborator from organization.
 
         # Required parameters
 
-        - login: a non-empty string, the name of the Organization
+        - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
-        """
 
-        ensure_nonemptystring('login')
+        # Returned value
+
+        A boolean.  True if the outside collaborator was removed from
+        the organization.
+        """
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
 
-        self._delete(f'/orgs/{login}/outside_collaborators/{user}')
+        result = self._delete(
+            f'orgs/{organization_name}/outside_collaborators/{user}'
+        )
+        return (result.status_code // 100) == 2
+
+    rm_organization_outside_collaborator = (
+        remove_organization_outside_collaborator
+    )
 
     ####################################################################
     # GitHub teams
@@ -656,7 +690,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('team_name')
 
-        return self._get(f'orgs/{organization_name}/teams/{team_name}/members')
+        return self._get(f'orgs/{organization_name}/teams/{team_name}/members')  # type: ignore
 
     ####################################################################
     # GitHub repositories
@@ -784,7 +818,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary. See #list_repositories() for its description.
+        A _repository_. See #list_repositories() for its description.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -836,7 +870,7 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.  See #list_repositories() for its content.
+        A _repository_.  See #list_repositories() for its content.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
@@ -889,21 +923,21 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - patched_attributes: a dict of attributes/values, see
-          create_repository(...) for the details of patchable
+          #create_repository() for the details of patchable
           attributes.
 
         # Returned value
 
-        A dictionary.  See #list_repositories() for its content.
+        A _repository_.  See #list_repositories() for its content.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
         ensure_instance('patched_attributes', dict)
 
         response = self._patch(
-            f"repos/{organization_name}/{repository_name}", patched_attributes
+            f'repos/{organization_name}/{repository_name}', patched_attributes
         )
-        return response
+        return response  # type: ignore
 
     @api_call
     def list_repository_topics(
@@ -1063,7 +1097,7 @@ class GitHub:
 
         # Return value
 
-        A list of dictionaries.
+        A list of _commits_.  Each commit is a dictionary.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1084,10 +1118,22 @@ class GitHub:
     def get_repository_commit(
         self, organization_name: str, repository_name: str, ref: str
     ) -> Dict[str, Any]:
-        """Return a specific commit."""
+        """Return a specific commit.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string
+
+        # Returned value
+
+        A _commit_.  A commit is a dictionary.
+        """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
+
         result = self._get(
             f'repos/{organization_name}/{repository_name}/commits/{ref}'
         )
@@ -1175,7 +1221,7 @@ class GitHub:
         user: str,
         permission: str = 'push',
     ) -> None:
-        """Add a collaborator on a repository.
+        """Add collaborator to repository.
 
         # Required parameters
 
@@ -1184,24 +1230,25 @@ class GitHub:
         - user: a non-empty string
         - permission: a non-empty string
         """
-
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user')
-        ensure_in('permission', ['pull', 'triage', 'push', 'maintain', 'admin'])
+        ensure_in(
+            'permission', ['pull', 'triage', 'push', 'maintain', 'admin']
+        )
 
         params = {'permission': permission}
 
         self._put(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}',
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}',
             json=params,
         )
 
     @api_call
-    def rm_repository_collaborator(
+    def remove_repository_collaborator(
         self, organization_name: str, repository_name: str, user: str
     ) -> None:
-        """Removes a collaborator on a repository.
+        """Remove collaborator from repository.
 
         # Required parameters
 
@@ -1209,21 +1256,22 @@ class GitHub:
         - repository_name: a non-empty string
         - user: a non-empty string
         """
-
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user')
 
         self._delete(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}'
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}'
         )
+
+    rm_repository_collaborator = remove_repository_collaborator
 
     @api_call
     def list_repository_permissions_user(
         self, organization_name: str, repository_name: str, user: str
     ) -> Dict[str, Any]:
         """List permissions of an user on a repository.
-        
+
         # Required parameters
 
         - organization_name: a non-empty string
@@ -1231,7 +1279,7 @@ class GitHub:
         - user: a non-empty string
 
         # Returned value
-        
+
         Return a dictionary with following keys:
 
         - permission: a string
@@ -1243,9 +1291,9 @@ class GitHub:
         ensure_nonemptystring('user')
 
         result = self._get(
-            f'/repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
+            f'repos/{organization_name}/{repository_name}/collaborators/{user}/permission'
         )
-        return result
+        return result  # type: ignore
 
     ####################################################################
     # GitHub repository contents
@@ -1339,7 +1387,7 @@ class GitHub:
         if result.status_code // 100 == 2:
             try:
                 return result.json()
-            except:
+            except requests.exceptions.JSONDecodeError:
                 return result.text
         return result  # type: ignore
 
@@ -1370,7 +1418,7 @@ class GitHub:
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -1426,7 +1474,7 @@ class GitHub:
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -1455,10 +1503,461 @@ class GitHub:
         return result  # type: ignore
 
     ####################################################################
-    # GitHub git database API
+    # GitHub repository branches
     #
+    # list_branches
+    # get_branch
+
+    @api_call
+    def list_branches(
+        self,
+        organization_name: str,
+        repository_name: str,
+        protected: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """List branches.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - protected: a boolean
+
+        # Returned value
+
+        A list of _short branches_.  Each short branch is a dictionary
+        with the following entries:
+
+        - name: a string
+        - commit: a dictionary
+        - protected: a boolean
+        - protection: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('protected', bool)
+
+        return self._collect_data(
+            f'repos/{organization_name}/{repository_name}/branches',
+            params={'protected': 'true'} if protected else None,
+        )
+
+    @api_call
+    def get_branch(
+        self,
+        organization_name: str,
+        repository_name: str,
+        branch_name: str,
+    ) -> Dict[str, Any]:
+        """Get branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - branch_name: a non-empty string
+
+        # Returned value
+
+        A _branch_.  A branch is a dictionary with the following
+        entries:
+
+        - name: a string
+        - commit: a dictionary
+        - protected: a boolean
+        - protection: a dictionary
+        - protetion_url: a string
+        - pattern: a string
+        - required_approving_review_count: an integer
+        - _links: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('branch_name')
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/branches/{branch_name}'
+        )
+        return result  # type: ignore
+
+    ####################################################################
+    # GitHub repository pull requests
+    #
+    # list_pullrequests
+    # create_pullrequest
+    # TODO get_pullrequest
+    # is_pullrequest_merged
+    # merge_pullrequest
+    # update_pullrequest_branch
+
+    @api_call
+    def list_pullrequests(
+        self,
+        organization_name: str,
+        repository_name: str,
+        state: str = 'all',
+    ) -> List[Dict[str, Any]]:
+        """List pull requests.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - state: a string, one of 'open', 'closed', or 'all' (all by
+          default)
+
+        # Returned value
+
+        A list of _pull requests_.  Each pull request is a dictionary
+        with the following entries:
+
+        - url: a string
+        - id: an integer
+        - node_id: a string
+        - html_url: a string
+        - diff_url: a string
+        - patch_url: a string
+        - issue_url: a string
+        - commits_url: a string
+        - review_comments_url: a string
+        - review_comment_url: a string
+        - comments_url: a string
+        - statuses_url: a string
+        - number: an integer
+        - state: a string
+        - locked: a boolean
+        - title: a string
+        - user: a dictionary
+        - body: a string
+        - labels: a list of dictionaries
+        - milestone: a dictionary,
+        - active_lock_reason: a string
+        - created_at: a string
+        - updated_at: a string
+        - closed_at: a string
+        - merged_at: a string
+        - merge_commit_sha: a string
+        - assignee: a dictionary
+        - assignees: a list of dictionaries
+        - requested_reviewers: a list of dictionaries
+        - requested_teams: a list of dictionaries
+        - head: a dictionary
+        - base: a dictionary
+        - _links: a dictionary
+        - author_association: a string
+        - auto_merge: a dictionary or None
+        - draft: a boolean
+
+        `number` is the value you use to interact with the pull request.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('state', ('open', 'closed', 'all'))
+
+        return self._collect_data(
+            f'repos/{organization_name}/{repository_name}/pulls',
+            params={'state': state},
+        )
+
+    @api_call
+    def create_pullrequest(
+        self,
+        organization_name: str,
+        repository_name: str,
+        head: str,
+        base: str,
+        title: Optional[str] = None,
+        body: Optional[str] = None,
+        maintainer_can_modify: bool = True,
+        draft: bool = False,
+        issue: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """List branches.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - head: a non-empty string
+        - base: a non-empty string
+        - title: a non-empty string or None (None by default)
+        - issue: an integer or None
+
+        Either `title` or `issue` must be specified.
+
+        # Optional parameters
+
+        - body: a non-empty string or None (None by default)
+        - maintainer_can_modify: a boolean (True by default)
+        - draft: a boolean (False by default)
+
+        # Returned value
+
+        A _pull request_.  See #list_pullrequests for its description.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('head')
+        ensure_nonemptystring('base')
+        ensure_noneornonemptystring('title')
+        ensure_noneornonemptystring('body')
+        ensure_instance('maintainer_can_modify', bool)
+        ensure_instance('draft', bool)
+        ensure_noneorinstance('issue', int)
+        ensure_onlyone('title', 'issue')
+
+        data = {
+            'head': head,
+            'base': base,
+            'maintainer_can_modify': maintainer_can_modify,
+            'draft': draft,
+        }
+        add_if_specified(data, 'body', body)
+        add_if_specified(data, 'title', title)
+        add_if_specified(data, 'issue', issue)
+
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/pulls', json=data
+        )
+        return result  # type: ignore
+
+    @api_call
+    def is_pullrequest_merged(
+        self, organization_name: str, repository_name: str, pull_number: int
+    ) -> bool:
+        """Check if pull request has been merged.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+
+        # Returned value
+
+        A boolean.  True if the pull request has been merged, False
+        otherwise.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        return (
+            self._get(
+                f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge'
+            ).status_code
+            == 204
+        )
+
+    @api_call
+    def merge_pullrequest(
+        self,
+        organization_name: str,
+        repository_name: str,
+        pull_number: int,
+        commit_title: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        sha: Optional[str] = None,
+        merge_method: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Merge pull request.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+
+        # Optional parameters
+
+        - commit_title: a non-empty string or None (None by default)
+        - commit_message: a non-empty string or None (None by default)
+        - sha: a non-empty string or None (None by default)
+        - merge_method: a string, one of 'merge', 'squash', or 'rebase',
+          or None (None by default)
+
+        # Returned value
+
+        A _pull request merge result_.  A pull request merge result is a
+        dictionary with the following entries:
+
+        - sha: a string
+        - merged: a boolean
+        - message: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        ensure_noneornonemptystring('commit_title')
+        ensure_noneornonemptystring('commit_message')
+        ensure_noneornonemptystring('sha')
+        ensure_noneornonemptystring('merge_method')
+
+        if merge_method is not None:
+            ensure_in('merge_method', ('merge', 'squash', 'rebase'))
+
+        data = {}
+        add_if_specified(data, 'commit_title', commit_title)
+        add_if_specified(data, 'commit_message', commit_message)
+        add_if_specified(data, 'sha', sha)
+        add_if_specified(data, 'merge_method', merge_method)
+
+        result = self._put(
+            f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge',
+            json=data,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def update_pullrequest_branch(
+        self,
+        organization_name: str,
+        repository_name: str,
+        pull_number: int,
+        expected_head_sha: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Update pull request branch with latest upstream changes.
+
+        Update the pull request branch with the latest upstream changes
+        by merging HEAD from the base branch into the pull request
+        branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - pull_number: an integer
+
+        # Optional parameters
+
+        - expected_head_sha: a non-empty string or None (None by
+          default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - message: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('pull_number', int)
+        ensure_noneornonemptystring('expected_head_sha')
+
+        data = (
+            {'expected_head_sha': expected_head_sha}
+            if expected_head_sha
+            else None
+        )
+        result = self._put(
+            f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/update-branch',
+            json=data,
+        )
+        return result  # type: ignore
+
+    ####################################################################
+    # GitHub repository git database
+    #
+    # create_repository_reference
+    # delete_repository_reference
     # create_repository_tag
-    # create_repository_ref
+    # get_repository_reference
+    # get_repository_references
+    # get_repository_tree
+
+    @api_call
+    def create_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+        sha: str,
+        key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a reference.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (a fully-qualified reference, starting with
+          `refs` and having at least two slashed)
+        - sha: a non-empty string
+
+        # Optional parameters
+
+        - key: a string
+
+        # Returned value
+
+        A _reference_.  A reference is a dictionary with the following
+        entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        if not ref.startswith('refs/') or ref.count('/') < 2:
+            raise ValueError(
+                'ref must start with "refs" and contains at least two slashes.'
+            )
+        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('key')
+
+        data = {'ref': ref, 'sha': sha}
+        add_if_specified(data, 'key', key)
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/git/refs', json=data
+        )
+        return result  # type: ignore
+
+    @api_call
+    def delete_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+    ) -> None:
+        """Delete a reference.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (a fully-qualified reference, starting with
+          `refs` and having at least two slashed)
+
+        # Returned value
+
+        No content.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        if not ref.startswith('refs/') or ref.count('/') < 2:
+            raise ValueError(
+                'ref must start with "refs" and contains at least two slashes.'
+            )
+        result = self._delete(
+            f'repos/{organization_name}/{repository_name}/git/{ref}'
+        )
+        return result  # type: ignore
 
     @api_call
     def create_repository_tag(
@@ -1519,32 +2018,143 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def create_repository_ref(
-        self, organization_name: str, repository_name: str, ref: str, sha: str
+    def get_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
     ) -> Dict[str, Any]:
-        """Create a reference.
+        """Get a repository reference.
 
         # Required parameters
 
-        - ref: a non-empty string
-        - sha: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (of form `heads/{branch}` or
+          `tags/{tag}`)
 
         # Returned value
 
         A _reference_.  A reference is a dictionary with the following
         entries:
 
-        - node_id: a string
         - ref: a string
+        - node_id: a string
         - url: a string
         - object: a dictionary
-        """
-        ensure_nonemptystring('ref')
-        ensure_nonemptystring('sha')
 
-        result = self._post(
-            f'repos/{organization_name}/{repository_name}/git/refs',
-            json={'ref': ref, 'sha': sha},
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        if not (ref.startswith('heads/') or ref.startswith('tags/')):
+            raise ValueError('ref must start with "heads/" or "tags/".')
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/ref/{ref}',
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_references(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+    ) -> Dict[str, Any]:
+        """Get a repository references.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (`heads` or `tags`)
+
+        # Returned value
+
+        A list of _references_.  A reference is a dictionary with the
+        following entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('ref', ('heads', 'tags'))
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_tree(
+        self,
+        organization_name: str,
+        repository_name: str,
+        tree_sha: str,
+        recursive: bool = False,
+    ) -> Dict[str, Any]:
+        """Get a tree.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - tree_sha: a non-empty string (a SHA1)
+
+        # Optional parameters
+
+        - recursive: a boolean (False by default)
+
+        # Returned value
+
+        A _tree_.  A tree is a dictionary with the following keys:
+
+        - sha: a string
+        - url: a string
+        - tree: a list of dictionaries
+        - truncated: a boolean
+
+        The `tree` elements have the following keys:
+
+        - path: a string
+        - mode: a string
+        - type: a string
+        - size: an integer
+        - sha: a string
+        - url: a string
+
+        If `truncated` is `True`, the number of items in the `tree` list
+        exceeds githubs' internal limits (100k entries with a maximum
+        size of 7 MB).  If you need to fetch more items, use the
+        non-recursive method of fetching trees, and fetch one sub-tree
+        at a time.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('tree_sha')
+        ensure_instance('recursive', bool)
+
+        params = {'recursive': 'true'} if recursive else None
+        headers = {'Accept': 'application/vnd.github+json'}
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/tree/{tree_sha}',
+            params=params,
+            headers=headers,
         )
         return result  # type: ignore
 
@@ -1611,7 +2221,7 @@ class GitHub:
         repository_name: str,
         name: str,
         config: Dict[str, str],
-        events: List[str] = ['push'],
+        events: Optional[List[str]] = None,
         active: bool = True,
     ) -> Dict[str, Any]:
         """Create a webhook.
@@ -1640,17 +2250,19 @@ class GitHub:
 
         # Returned value
 
-        A dictionary.  See #list_hooks() for its format.
+        A _hook_.  See #list_hooks() for its format.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         if name != 'web':
             raise ValueError('name must be "web".')
         ensure_instance('config', dict)
-        ensure_instance('events', list)
+        ensure_noneorinstance('events', list)
         ensure_instance('active', bool)
         if 'url' not in config:
             raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['push']
 
         data = {
             'name': name,

@@ -111,6 +111,82 @@ class GitHub(Base):
         return what
 
     ####################################################################
+    # GitHub branch
+    #
+    # create_branch_from_default
+    # delete_branch
+
+    @api_call
+    def create_branch_from_default(
+        self, organization_name: str, repository_name: str, branch: str
+    ) -> Dict[str, Any]:
+        """Create a branch from the head of the default branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - branch: a non-empty string
+
+        # Returned value
+
+        A _reference_.  A reference is a dictionary with the following
+        entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('branch')
+
+        repo = self.get_repository(organization_name, repository_name)
+        default = self.get_repository_reference(
+            organization_name,
+            repository_name,
+            f'heads/{repo["default_branch"]}',
+        )
+        result = self.create_repository_reference(
+            organization_name,
+            repository_name,
+            f'refs/heads/{branch}',
+            default['object']['sha'],
+        )
+        return result
+
+    @api_call
+    def delete_branch(
+        self, organization_name: str, repository_name: str, branch: str
+    ) -> None:
+        """Delete a branch.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - branch: a non-empty string
+
+        # Returned value
+
+        No content.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('branch')
+
+        return self.delete_repository_reference(
+            organization_name, repository_name, f'refs/heads/{branch}'
+        )
+
+    ####################################################################
     # GitHub repository contents
     #
     # get_repository_textfile
@@ -146,7 +222,7 @@ class GitHub(Base):
         - size: an integer
         - content: a string
         - url, html_url, git_url, download_url: strings
-        - _links: a dictionnary
+        - _links: a dictionary
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -191,7 +267,7 @@ class GitHub(Base):
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -225,15 +301,18 @@ class GitHub(Base):
         path: str,
         message: str,
         content: str,
-        sha: str,
+        sha: Optional[str] = None,
         branch: Optional[str] = None,
         committer: Optional[Dict[str, str]] = None,
         author: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Update a repository text file.
 
-        The file must already exist on the repository.  `encoded` is
+        The file must already exist on the repository.  `content` is
         expected to be an utf-8-encoded string.
+
+        You must specify at least `sha` or `branch` (you can specify
+        both).
 
         # Required parameters
 
@@ -242,12 +321,12 @@ class GitHub(Base):
         - path: a string
         - message: a string
         - content: a string
-        - sha: a non-empty string
 
         # Optional parameters
 
+        - sha: a non-empty string or None (None by default)
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -259,10 +338,21 @@ class GitHub(Base):
         ensure_instance('path', str)
         ensure_instance('message', str)
         ensure_instance('content', str)
-        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('sha')
         ensure_noneornonemptystring('branch')
         ensure_noneorinstance('committer', dict)
         ensure_noneorinstance('author', dict)
+        if sha is None and branch is None:
+            raise ValueError('You must specify at least one of: sha, branch.')
+
+        if sha is None:
+            file: Dict[str, str] = self.get_repository_content(
+                organization_name,
+                repository_name,
+                path,
+                ref=f'refs/heads/{branch}',
+            )
+            sha = file['sha']
 
         return self.update_repository_file(
             organization_name,

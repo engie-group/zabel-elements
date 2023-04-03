@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Martin Lafaix (martin.lafaix@external.engie.com)
+# Copyright (c) 2020-2023 Martin Lafaix (martin.lafaix@external.engie.com)
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
@@ -27,7 +27,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='zabel-elements',
-    version='1.13.1',
+    version='1.14.0',
     description='The Zabel default clients and images',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -36,7 +36,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['requests>=2.23', 'zabel-commons>=1.5'],
+    install_requires=['zabel-commons>=1.6'],
     extras_require={
         'jira': ['Jira>=3.0'],
         'kubernetes': ['kubernetes>=10.1.0'],
