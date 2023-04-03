@@ -1865,8 +1865,10 @@ class GitHub:
     # GitHub repository git database
     #
     # create_repository_reference
+    # delete_repository_reference
     # create_repository_tag
     # get_repository_reference
+    # get_repository_references
     # get_repository_tree
 
     @api_call
@@ -1894,7 +1896,8 @@ class GitHub:
 
         # Returned value
 
-        A dictionary with the following entries:
+        A _reference_.  A reference is a dictionary with the following
+        entries:
 
         - ref: a string
         - node_id: a string
@@ -1920,7 +1923,39 @@ class GitHub:
         data = {'ref': ref, 'sha': sha}
         add_if_specified(data, 'key', key)
         result = self._post(
-            f'repos/{organization_name}/{repository_name}/git/ref', json=data
+            f'repos/{organization_name}/{repository_name}/git/refs', json=data
+        )
+        return result  # type: ignore
+
+    @api_call
+    def delete_repository_reference(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+    ) -> None:
+        """Delete a reference.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (a fully-qualified reference, starting with
+          `refs` and having at least two slashed)
+
+        # Returned value
+
+        No content.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('ref')
+        if not ref.startswith('refs/') or ref.count('/') < 2:
+            raise ValueError(
+                'ref must start with "refs" and contains at least two slashes.'
+            )
+        result = self._delete(
+            f'repos/{organization_name}/{repository_name}/git/{ref}'
         )
         return result  # type: ignore
 
@@ -2017,11 +2052,51 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
-        if not ref.startswith('heads/') or not ref.startswith('tags/'):
+        if not (ref.startswith('heads/') or ref.startswith('tags/')):
             raise ValueError('ref must start with "heads/" or "tags/".')
 
         result = self._get(
             f'repos/{organization_name}/{repository_name}/git/ref/{ref}',
+        )
+        return result  # type: ignore
+
+    @api_call
+    def get_repository_references(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: str,
+    ) -> Dict[str, Any]:
+        """Get a repository references.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (`heads` or `tags`)
+
+        # Returned value
+
+        A list of _references_.  A reference is a dictionary with the
+        following entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('ref', ('heads', 'tags'))
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
         )
         return result  # type: ignore
 
