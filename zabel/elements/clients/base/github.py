@@ -1418,7 +1418,7 @@ class GitHub:
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -1474,7 +1474,7 @@ class GitHub:
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -1506,7 +1506,7 @@ class GitHub:
     # GitHub repository branches
     #
     # list_branches
-    # get_branche
+    # get_branch
 
     @api_call
     def list_branches(
@@ -1989,7 +1989,7 @@ class GitHub:
         repository_name: str,
         ref: str,
     ) -> Dict[str, Any]:
-        """Get a repository a reference.
+        """Get a repository reference.
 
         # Required parameters
 
