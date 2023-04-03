@@ -222,7 +222,7 @@ class GitHub(Base):
         - size: an integer
         - content: a string
         - url, html_url, git_url, download_url: strings
-        - _links: a dictionnary
+        - _links: a dictionary
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -267,7 +267,7 @@ class GitHub(Base):
         # Optional parameters
 
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -301,15 +301,18 @@ class GitHub(Base):
         path: str,
         message: str,
         content: str,
-        sha: str,
+        sha: Optional[str] = None,
         branch: Optional[str] = None,
         committer: Optional[Dict[str, str]] = None,
         author: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Update a repository text file.
 
-        The file must already exist on the repository.  `encoded` is
+        The file must already exist on the repository.  `content` is
         expected to be an utf-8-encoded string.
+
+        You must specify at least `sha` or `branch` (you can specify
+        both).
 
         # Required parameters
 
@@ -318,12 +321,12 @@ class GitHub(Base):
         - path: a string
         - message: a string
         - content: a string
-        - sha: a non-empty string
 
         # Optional parameters
 
+        - sha: a non-empty string or None (None by default)
         - branch: a string or None (None by default)
-        - commiter: a dictionary or None (None by default)
+        - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
         # Returned value
@@ -335,10 +338,21 @@ class GitHub(Base):
         ensure_instance('path', str)
         ensure_instance('message', str)
         ensure_instance('content', str)
-        ensure_nonemptystring('sha')
+        ensure_noneornonemptystring('sha')
         ensure_noneornonemptystring('branch')
         ensure_noneorinstance('committer', dict)
         ensure_noneorinstance('author', dict)
+        if sha is None and branch is None:
+            raise ValueError('You must specify at least one of: sha, branch.')
+
+        if sha is None:
+            file: Dict[str, str] = self.get_repository_content(
+                organization_name,
+                repository_name,
+                path,
+                ref=f'refs/heads/{branch}',
+            )
+            sha = file['sha']
 
         return self.update_repository_file(
             organization_name,
@@ -351,51 +365,3 @@ class GitHub(Base):
             committer,
             author,
         )
-
-    def update_repository_textfile_on_branch(
-        self,
-        organization_name: str,
-        repository_name: str,
-        path: str,
-        message: str,
-        content: str,
-        branch: str,
-    ) -> Dict[str, Any]:
-        """Update a text file on a branch.
-
-        # Required parameters
-
-        - organization_name: a non-empty string
-        - repository_name: a non-empty string
-        - path: a non-empty string
-        - message: a non-empty string
-        - content: a string
-        - brfanch: a non-empty string
-
-        # Returned value
-
-        A dictionar
-        """
-        ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repository_name')
-        ensure_nonemptystring('path')
-        ensure_nonemptystring('message')
-        ensure_instance('content', str)
-        ensure_nonemptystring('branch')
-
-        file = self.get_repository_content(
-            organization_name,
-            repository_name,
-            path,
-            ref=f'refs/heads/{branch}',
-        )
-        result = self.update_repository_textfile(
-            organization_name,
-            repository_name,
-            path,
-            message,
-            content,
-            sha=file['sha'],
-            branch=branch,
-        )
-        return result
