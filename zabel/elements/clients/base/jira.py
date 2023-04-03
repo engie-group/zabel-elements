@@ -2440,11 +2440,16 @@ class Jira:
 
         A list of _users_.  Each user is a string (the user 'name').
 
-        All known users are returned, including inactive ones if include_inactive is true.
-        
+        All known users are returned, including inactive ones if
+        `include_inactive` is true.
+
         # Optional parameters
 
         - include_inactive: a boolean (True by default)
+
+        # Returned value
+
+        A list of _user names_ (strings).
         """
         users = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
