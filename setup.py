@@ -50,5 +50,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>= 3.6.5',
+    python_requires='>= 3.8.0',
 )
