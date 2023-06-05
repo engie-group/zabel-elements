@@ -336,6 +336,7 @@ class CloudBeesJenkins:
     # list_managedmaster_plugins
     # install_managedmaster_plugins
     # provision_and_start_managedmaster
+    # stop_managedmaster
     # acknowledge_managedmaster_error
     # get_managedmaster_metrics
     # ping_managedmaster
@@ -643,6 +644,28 @@ class CloudBeesJenkins:
         self._post(
             join_url(managedmaster_url, 'provisionAndStartAction'),
             data={"Submit": "Yes"},
+        )
+
+    @api_call
+    def stop_managedmaster(self, managedmaster_url: str) -> bool:
+        """Stop managed master.
+
+        # Required parameters
+
+        - managedmaster_url: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if the command was successful.
+        """
+        ensure_nonemptystring('managedmaster_url')
+
+        return (
+            self._post(
+                join_url(managedmaster_url, 'stopAction'),
+                data={'Submit': 'Wait'},
+            ).status_code
+            == 200
         )
 
     @api_call

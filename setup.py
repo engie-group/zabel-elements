@@ -27,7 +27,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='zabel-elements',
-    version='1.14.0',
+    version='1.15.0',
     description='The Zabel default clients and images',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -38,10 +38,10 @@ setup(
     packages=find_namespace_packages(include=['zabel.*']),
     install_requires=['zabel-commons>=1.6'],
     extras_require={
-        'jira': ['Jira>=3.0'],
+        'jira': ['Jira>=3.0,< 3.1'],
         'kubernetes': ['kubernetes>=10.1.0'],
         'okta': ['okta>=2.3.1'],
-        'all': ['Jira>=3.0', 'kubernetes>=10.1.0', 'okta>=2.3.1'],
+        'all': ['Jira>=3.0,<3.1', 'kubernetes>=10.1.0', 'okta>=2.3.1'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
