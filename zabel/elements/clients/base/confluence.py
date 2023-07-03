@@ -81,6 +81,7 @@ class Confluence:
     <https://docs.atlassian.com/atlassian-confluence/REST/latest-server/>
     <https://developer.atlassian.com/server/confluence/remote-confluence
         -methods>
+    <https://docs.atlassian.com/ConfluenceServer/rest/8.3.1/>
 
     A non-admin interface (no API for user&group admin features) to
     Confluence.
@@ -256,18 +257,24 @@ class Confluence:
     #
     # list_groups
     # create_group*
+    # create_group2
     # delete_group*
+    # delete_group2
     # add_group_user*
+    # add_group_user2
     # remove_group_user*
+    # remove_group_user2
     # list_group_members
     # get_user
     # create_user*
     # delete_user*
+    # delete_user2
     # update_user*
-    # update_user2*
+    # update_user2 (via gui)
     # list_user_groups
     # get_user_current
     # deactivate_user
+    # deactivate_user2
     #
     # '*' denotes an API based on json-rpc, deprecated but not (yet?)
     # available as a REST API.  It is not part of the method name.
@@ -327,6 +334,33 @@ class Confluence:
         )
 
     @api_call
+    def create_group2(self, group_name: str) -> bool:
+        """Create a new group.
+
+        !!! warning
+            This uses the new (8.2+) interface.  It requires the
+            `system-administrator` permission.
+
+        `group_name` must be in lower case.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+
+        return (
+            self._post(
+                'admin/group', json={'type': 'group', 'name': group_name}
+            ).status_code
+            == 201
+        )
+
+    @api_call
     def delete_group(self, group_name: str) -> bool:
         """Delete group.
 
@@ -355,6 +389,26 @@ class Confluence:
             .text
             == 'true'
         )
+
+    @api_call
+    def delete_group2(self, group_name: str) -> bool:
+        """Delete group.
+
+        !!! warning
+            This uses the new (8.2+) interface.  It requires the
+            `system-administrator` permission.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._delete(f'admin.group/{group_name}').status_code == 204
 
     @api_call
     def add_group_user(self, group_name: str, user_name: str) -> bool:
@@ -390,8 +444,32 @@ class Confluence:
         )
 
     @api_call
-    def remove_group_user(self, group_name: str, user_name: str) -> bool:
+    def add_group_user2(self, group_name: str, user_name: str) -> bool:
         """Add user to group.
+
+        !!! warning
+            This uses the new (8.2+) interface.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False if the operation failed.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('user_name')
+
+        return (
+            self._put(f'user/{user_name}/group/{group_name}').status_code
+            == 204
+        )
+
+    @api_call
+    def remove_group_user(self, group_name: str, user_name: str) -> bool:
+        """Remove user from group.
 
         !!! warning
             This uses the json-rpc interface that is deprecated (but
@@ -420,6 +498,30 @@ class Confluence:
             )
             .text
             == 'true'
+        )
+
+    @api_call
+    def remove_group_user2(self, group_name: str, user_name: str) -> bool:
+        """Remove user from group.
+
+        !!! warning
+            This uses the new (8.2+) interface.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False if the operation failed.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('user_name')
+
+        return (
+            self._delete(f'user/{user_name}/group/{group_name}').status_code
+            == 204
         )
 
     @api_call
@@ -518,7 +620,7 @@ class Confluence:
         # Required parameters
 
         - name: a non-empty string
-        - password: a non-empty string or None
+        - password: a non-empty string or 'NONE'
         - email_address: a non-empty string
         - display_name: a string
 
@@ -539,7 +641,7 @@ class Confluence:
                 join_url(
                     self.url, '/rpc/json-rpc/confluenceservice-v2/addUser'
                 ),
-                json=[user, password],
+                json=[user, password if password is not None else 'NONE'],
             )
             .text
             == ''
@@ -574,6 +676,26 @@ class Confluence:
             .text
             == 'true'
         )
+
+    @api_call
+    def delete_user2(self, user_name: str) -> bool:
+        """Delete user.
+
+        !!! warning
+            This uses the new (8.2+) interface.  It requires the
+            `system-administrator` permission.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        True if the creation was successful, False otherwise.
+        """
+        ensure_nonemptystring('user_name')
+
+        return self._delete(f'admin/user/{user_name}').status_code == 202
 
     @api_call
     def update_user(
@@ -693,6 +815,25 @@ class Confluence:
             .text
             == 'true'
         )
+
+    @api_call
+    def deactivate_user2(self, user_name) -> bool:
+        """Deactivate confluence user.
+
+        !!! warning
+            This uses the new (8.2+) interface.
+
+        # Required parameters
+
+        - `user_name`: a non-empty string
+
+        # Returned value
+
+        True if the deactivation was successful, False otherwise.
+        """
+        ensure_nonemptystring('user_name')
+
+        return self._put(f'admin/user/{user_name}/disable').status_code == 204
 
     @api_call
     def list_user_groups(
@@ -1918,6 +2059,11 @@ class Confluence:
         """Return confluence POST api call results."""
         api_url = join_url(join_url(self.url, 'rest/api'), api)
         return self.session().post(api_url, json=json)
+
+    def _delete(self, api: str) -> requests.Response:
+        """Return confluence DELETE api call results."""
+        api_url = join_url(join_url(self.url, 'rest/api'), api)
+        return self.session().delete(api_url)
 
     def _sanitize_restrictions(
         self, permission_type: str, restrictions: List[Dict[str, Any]]
