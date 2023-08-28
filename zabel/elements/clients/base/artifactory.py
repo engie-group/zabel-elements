@@ -129,8 +129,8 @@ class Artifactory:
         # Required parameters
 
         - url: a non-empty string
-        - user: a string
-        - token: a string
+        - basic_auth: a strings tuple (user, token)
+        - bearer_auth: a string
 
         `url` is the top-level API endpoint.  For example,
         `'https://artifactory.example.com/artifactory/api/'`
@@ -555,7 +555,7 @@ class Artifactory:
         ensure_nonemptystring('group_name')
 
         return self._get(f'security/groups/{group_name}')  # type: ignore
-    
+
     @api_call
     def get_group2(self, group_name: str) -> Dict[str, Any]:
         """Return group details.
