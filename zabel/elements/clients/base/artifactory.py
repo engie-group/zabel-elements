@@ -119,8 +119,7 @@ class Artifactory:
     def __init__(
         self,
         url: str,
-        user: str,
-        token: Optional[str] = None,
+        basic_auth: Optional[Tuple[str, str]] = None,
         bearer_auth: Optional[str] = None,
         xray_url: Optional[str] = None,
         verify: bool = True,
@@ -150,11 +149,11 @@ class Artifactory:
         occur if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_instance('user', str)
-        ensure_instance('token', str)
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_noneorinstance('bearer_auth', str)
 
         self.url = url
-        self.token = token
+        self.basic_auth = basic_auth
         self.bearer_auth = bearer_auth
 
         if xray_url is None:
@@ -162,8 +161,8 @@ class Artifactory:
             xray_url[-2] = 'xray'
             xray_url = '/'.join(xray_url)
 
-        if token is not None:
-            self.auth = (user, token)
+        if basic_auth is not None:
+            self.auth = basic_auth
         if bearer_auth is not None:
             self.auth = BearerAuth(bearer_auth)
 
@@ -516,6 +515,7 @@ class Artifactory:
     #
     # list_groups
     # get_group
+    # get_group2
     # create_or_replace_group
     # update_group
     # delete_group
@@ -555,6 +555,31 @@ class Artifactory:
         ensure_nonemptystring('group_name')
 
         return self._get(f'security/groups/{group_name}')  # type: ignore
+    
+    @api_call
+    def get_group2(self, group_name: str) -> Dict[str, Any]:
+        """Return group details.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - description: a string
+        - autoJoin: a boolean
+        - adminPrivileges: a string
+        - realm: a string
+        - realm_attributes: a string
+        - external_id: a string
+        - members: a list of strings
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._get(f'access/api/v2/groups/{group_name}')  # type: ignore
 
     @api_call
     def create_or_replace_group(
