@@ -46,6 +46,7 @@ from zabel.commons.utils import (
     ensure_noneorinstance,
     ensure_noneornonemptystring,
     join_url,
+    BearerAuth,
 )
 
 ########################################################################
@@ -119,7 +120,8 @@ class Artifactory:
         self,
         url: str,
         user: str,
-        token: str,
+        token: Optional[str] = None,
+        bearer_auth: Optional[str] = None,
         xray_url: Optional[str] = None,
         verify: bool = True,
     ) -> None:
@@ -152,12 +154,20 @@ class Artifactory:
         ensure_instance('token', str)
 
         self.url = url
+        self.token = token
+        self.bearer_auth = bearer_auth
+
         if xray_url is None:
             xray_url = url.strip('/').split('/')
             xray_url[-2] = 'xray'
             xray_url = '/'.join(xray_url)
+
+        if token is not None:
+            self.auth = (user, token)
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
+
         self.url_xray = xray_url
-        self.auth = (user, token)
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
 
