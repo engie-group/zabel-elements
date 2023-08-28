@@ -559,6 +559,8 @@ class Artifactory:
     @api_call
     def get_group2(self, group_name: str) -> Dict[str, Any]:
         """Return group details.
+        
+        Use this endpoint with a bearer_auth.
 
         # Required parameters
 
