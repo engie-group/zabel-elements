@@ -33,6 +33,7 @@ from zabel.commons.utils import (
     ensure_noneornonemptystring,
     ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 
@@ -52,23 +53,6 @@ def _get_atl_token(html: str) -> str:
 
 CONTENT_TYPES = ['page', 'blogpost', 'comment', 'attachment']
 CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
-
-
-class BearerAuth(requests.auth.AuthBase):
-    """A Bearer handler class for requests."""
-
-    def __init__(self, pat: str):
-        self.pat = pat
-
-    def __eq__(self, other):
-        return self.pat == getattr(other, 'pat', None)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __call__(self, r):
-        r.headers['Authorization'] = f'Bearer {self.pat}'
-        return r
 
 
 class Confluence:
