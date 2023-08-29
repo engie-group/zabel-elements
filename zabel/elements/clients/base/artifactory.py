@@ -45,6 +45,7 @@ from zabel.commons.utils import (
     ensure_nonemptystring,
     ensure_noneorinstance,
     ensure_noneornonemptystring,
+    ensure_onlyone,
     join_url,
     BearerAuth,
 )
@@ -149,6 +150,7 @@ class Artifactory:
         occur if this is set to False.
         """
         ensure_nonemptystring('url')
+        ensure_onlyone('basic_auth', 'bearer_auth')
         ensure_noneorinstance('basic_auth', tuple)
         ensure_noneorinstance('bearer_auth', str)
 
@@ -559,7 +561,7 @@ class Artifactory:
     @api_call
     def get_group2(self, group_name: str) -> Dict[str, Any]:
         """Return group details.
-        
+
         Use this endpoint with a bearer_auth.
 
         # Required parameters

@@ -36,7 +36,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['zabel-commons>=1.6'],
+    install_requires=['zabel-commons>=1.7'],
     extras_require={
         'jira': ['Jira>=3.0,< 3.1'],
         'kubernetes': ['kubernetes>=10.1.0'],
