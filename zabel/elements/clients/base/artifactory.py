@@ -45,7 +45,9 @@ from zabel.commons.utils import (
     ensure_nonemptystring,
     ensure_noneorinstance,
     ensure_noneornonemptystring,
+    ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 ########################################################################
@@ -118,8 +120,8 @@ class Artifactory:
     def __init__(
         self,
         url: str,
-        user: str,
-        token: str,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        bearer_auth: Optional[str] = None,
         xray_url: Optional[str] = None,
         verify: bool = True,
     ) -> None:
@@ -128,8 +130,8 @@ class Artifactory:
         # Required parameters
 
         - url: a non-empty string
-        - user: a string
-        - token: a string
+        - basic_auth: a strings tuple (user, token)
+        - bearer_auth: a string
 
         `url` is the top-level API endpoint.  For example,
         `'https://artifactory.example.com/artifactory/api/'`
@@ -148,16 +150,25 @@ class Artifactory:
         occur if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_instance('user', str)
-        ensure_instance('token', str)
+        ensure_onlyone('basic_auth', 'bearer_auth')
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_noneorinstance('bearer_auth', str)
 
         self.url = url
+        self.basic_auth = basic_auth
+        self.bearer_auth = bearer_auth
+
         if xray_url is None:
             xray_url = url.strip('/').split('/')
             xray_url[-2] = 'xray'
             xray_url = '/'.join(xray_url)
+
+        if basic_auth is not None:
+            self.auth = basic_auth
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
+
         self.url_xray = xray_url
-        self.auth = (user, token)
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
 
@@ -506,6 +517,7 @@ class Artifactory:
     #
     # list_groups
     # get_group
+    # get_group2
     # create_or_replace_group
     # update_group
     # delete_group
@@ -545,6 +557,33 @@ class Artifactory:
         ensure_nonemptystring('group_name')
 
         return self._get(f'security/groups/{group_name}')  # type: ignore
+
+    @api_call
+    def get_group2(self, group_name: str) -> Dict[str, Any]:
+        """Return group details.
+
+        Use this endpoint with a bearer_auth.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - description: a string
+        - autoJoin: a boolean
+        - adminPrivileges: a string
+        - realm: a string
+        - realm_attributes: a string
+        - external_id: a string
+        - members: a list of strings
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._get(f'access/api/v2/groups/{group_name}')  # type: ignore
 
     @api_call
     def create_or_replace_group(
