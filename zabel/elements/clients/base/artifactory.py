@@ -516,11 +516,15 @@ class Artifactory:
     # artifactory groups
     #
     # list_groups
+    # list_groups2
     # get_group
     # get_group2
     # create_or_replace_group
+    # create_group
     # update_group
+    # update_group2
     # delete_group
+    # delete_group2
 
     @api_call
     def list_groups(self) -> List[Dict[str, Any]]:
@@ -535,6 +539,22 @@ class Artifactory:
         - uri: a string
         """
         return self._get('security/groups')  # type: ignore
+
+    @api_call
+    def list_groups2(self) -> List[Dict[str, Any]]:
+        """Return the groups list.
+
+        /!\ BearerAuth is mandatory to use this function.
+
+        # Returned value
+
+        A list of _groups_.  Each group is a dictionary with the
+        following entries:
+
+        - name: a string
+        - uri: a string
+        """
+        return self._get('access/api/v2/groups')  # type: ignore
 
     @api_call
     def get_group(self, group_name: str) -> Dict[str, Any]:
@@ -562,7 +582,7 @@ class Artifactory:
     def get_group2(self, group_name: str) -> Dict[str, Any]:
         """Return group details.
 
-        Use this endpoint with a bearer_auth.
+        /!\ BearerAuth is mandatory to use this function.
 
         # Required parameters
 
@@ -646,6 +666,73 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def create_group(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        auto_join: bool = False,
+        admin_priviledge: bool = False,
+        realm: Optional[str] = None,
+        realm_attributes: Optional[str] = None,
+        external_id: Optional[str] = None,
+        members: Optional[List[str]] = [],
+    ) -> None:
+        """Create a group.
+
+        /!\ BearerAuth is mandatory to use this function.
+
+
+        !!! important
+            If the group already exists, it will be replaced and
+            unspecified parameters will have their default values. Use
+            #update_group() if you want to change a parameter of an
+            existing group while keeping the other parameters values.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - description: a non-empty string or None (None by default)
+        - auto_join: a boolean (False by default)
+        - admin_priviledge: a boolean (False by default)
+        - realm: a non-empty string or None (None by default)
+        - realm_attributes: a non-empty string or None (None by default)
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('name')
+
+        if admin_priviledge and auto_join:
+            raise ValueError(
+                'auto_join cannot be True if admin_priviledge  is True'
+            )
+
+        ensure_noneornonemptystring('description')
+        ensure_instance('auto_join', bool)
+        ensure_instance('admin_priviledge', bool)
+        # ?? is '' an allowed value for realm or realm_attributes?
+        ensure_noneornonemptystring('realm')
+        ensure_noneornonemptystring('realm_attributes')
+
+        data = {
+            'name': name,
+            'description': description,
+            'auto_join': auto_join,
+            'adminPrivileges': admin_priviledge,
+            'realm': realm,
+            'realmAttributes': realm_attributes,
+            'external_id': external_id,
+            'members': members,
+        }
+
+        result = self._post(f'access/api/v2/groups', json=data)
+        return result  # type: ignore
+
+    @api_call
     def update_group(
         self,
         name: str,
@@ -712,6 +799,82 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def update_group2(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        auto_join: Optional[bool] = None,
+        admin_priviledge: Optional[bool] = None,
+        realm: Optional[str] = None,
+        realm_attributes: Optional[str] = None,
+        external_id: Optional[str] = None,
+        members: Optional[List[str]] = [],
+    ) -> None:
+        """Update an existing group.
+
+        /!\ BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - description: a non-empty string or None (None by default)
+        - auto_join: a boolean or None (None by default)
+        - admin_priviledge: a boolean or None (None by default)
+        - realm: a non-empty string or None (None by default)
+        - realm_attributes: a non-empty string or None (None by default)
+        - external_id: a non-empty string or None (None by default)
+        - members : a list of strings ([] by default)
+
+        If an optional parameter is not specified, or is None, its
+        existing value will be preserved.
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('name')
+
+        if (
+            admin_priviledge is not None
+            and admin_priviledge
+            and auto_join is not None
+            and auto_join
+        ):
+            raise ValueError(
+                'auto_join cannot be True if admin_priviledge is True'
+            )
+
+        ensure_noneornonemptystring('description')
+        ensure_noneorinstance('auto_join', bool)
+        ensure_noneorinstance('admin_priviledge', bool)
+        # ?? is '' an allowed value for realm or realm_attributes?
+        ensure_noneornonemptystring('realm')
+        ensure_noneornonemptystring('realm_attributes')
+        ensure_nonemptystring('external_id')
+        ensure_instance('members', list)
+
+        _group = self.get_group(name)
+        if admin_priviledge is None:
+            admin_priviledge = _group['adminPrivileges']
+        if auto_join is None:
+            auto_join = _group['autoJoin']
+
+        data = {'name': name}
+        add_if_specified(data, 'adminPrivileges', admin_priviledge)
+        add_if_specified(data, 'autoJoin', auto_join)
+        add_if_specified(data, 'description', description)
+        add_if_specified(data, 'realm', realm)
+        add_if_specified(data, 'realmAttributes', realm_attributes)
+        add_if_specified(data, 'external_id', external_id)
+        add_if_specified(data, 'members', members)
+
+        result = self._patch(f'access/api/v2/groups/{name}', json=data)
+        return result  # type: ignore
+
+    @api_call
     def delete_group(self, group_name: str) -> bool:
         """Delete group_name from Artifactory.
 
@@ -729,6 +892,30 @@ class Artifactory:
         ensure_nonemptystring('group_name')
 
         return self._delete(f'security/groups/{group_name}').status_code == 200
+
+    @api_call
+    def delete_group2(self, group_name: str) -> bool:
+        """Delete group_name from Artifactory.
+
+        /!\ BearerAuth is mandatory to use this function.
+
+        Deleting a group automatically remove the specified group for
+        users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful.
+        """
+        ensure_nonemptystring('group_name')
+
+        return (
+            self._delete(f'access/api/v2/groups/{group_name}').status_code
+            == 204
+        )
 
     ####################################################################
     # artifactory repositories
@@ -1662,6 +1849,15 @@ class Artifactory:
         return [
             self.session().get(join_url(self.url, api)).json() for api in apis
         ]
+
+    def _patch(
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        data: Optional[Union[MutableMapping[str, str], bytes]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().patch(api_url, json=json, data=data)
 
     def _post(
         self,
