@@ -237,6 +237,8 @@ class Artifactory:
     def list_users2(self, limit: int = 1000) -> List[Dict[str, Any]]:
         """Return the users list.
 
+        /!\ BearerAuth is mandatory to use this function.
+
         # Optional parameters
 
         - limit: an integer 1000 by default, valid value between 1 and 99999
@@ -288,6 +290,8 @@ class Artifactory:
     @api_call
     def get_user2(self, user_name: str) -> Dict[str, Any]:
         """Return user details.
+
+        /!\ BearerAuth is mandatory to use this function.
 
         # Required parameters
 
@@ -386,6 +390,8 @@ class Artifactory:
         groups: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Create an user.
+
+        /!\ BearerAuth is mandatory to use this function.
 
         # Required parameters
 
@@ -537,6 +543,8 @@ class Artifactory:
     ) -> None:
         """Update an existing user.
 
+        /!\ BearerAuth is mandatory to use this function.
+
         # Required parameters
 
         - name: a non-empty string
@@ -621,6 +629,8 @@ class Artifactory:
     @api_call
     def delete_user2(self, user_name: str) -> bool:
         """Delete user.
+
+        /!\ BearerAuth is mandatory to use this function.
 
         # Required parameters
 
@@ -743,6 +753,7 @@ class Artifactory:
     # update_group2
     # delete_group
     # delete_group2
+    # add_remove_group_users
 
     @api_call
     def list_groups(self) -> List[Dict[str, Any]]:
@@ -1068,24 +1079,17 @@ class Artifactory:
         ensure_noneornonemptystring('description')
         ensure_noneorinstance('auto_join', bool)
         ensure_noneorinstance('admin_priviledge', bool)
-        # ?? is '' an allowed value for realm or realm_attributes?
         ensure_noneornonemptystring('realm')
         ensure_noneornonemptystring('realm_attributes')
-        ensure_nonemptystring('external_id')
-        ensure_instance('members', list)
-
-        _group = self.get_group(name)
-        if admin_priviledge is None:
-            admin_priviledge = _group['adminPrivileges']
-        if auto_join is None:
-            auto_join = _group['autoJoin']
+        ensure_noneornonemptystring('external_id')
+        ensure_noneorinstance('members', list)
 
         data = {'name': name}
-        add_if_specified(data, 'adminPrivileges', admin_priviledge)
-        add_if_specified(data, 'autoJoin', auto_join)
+        add_if_specified(data, 'admin_priviledges', admin_priviledge)
+        add_if_specified(data, 'auto_join', auto_join)
         add_if_specified(data, 'description', description)
         add_if_specified(data, 'realm', realm)
-        add_if_specified(data, 'realmAttributes', realm_attributes)
+        add_if_specified(data, 'realm_attributes', realm_attributes)
         add_if_specified(data, 'external_id', external_id)
         add_if_specified(data, 'members', members)
 
@@ -1134,6 +1138,41 @@ class Artifactory:
             self._delete(f'access/api/v2/groups/{group_name}').status_code
             == 204
         )
+
+    @api_call
+    def add_remove_group_users(
+        self,
+        group_name: str,
+        add_users: Optional[List[str]] = [],
+        rm_users: Optional[List[str]] = [],
+    ) -> List[str]:
+        """Add or remove users from group.
+
+        # Required parameters
+
+        - group_name: a string
+
+        # Optional parameters
+
+        - add_users: a list of strings
+        _ rm_users: a list of strings
+
+        # Returned value
+
+        A list of strings - The list of group members
+        """
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('add_users', list)
+        ensure_noneorinstance('rm_users', list)
+
+        data = {}
+        add_if_specified(data, 'add', add_users)
+        add_if_specified(data, 'remove', rm_users)
+
+        result = self._patch(
+            f'access/api/v2/groups/{group_name}/members', json=data
+        )
+        return result
 
     ####################################################################
     # artifactory repositories
