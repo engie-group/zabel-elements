@@ -204,10 +204,15 @@ class Artifactory:
     # artifactory users
     #
     # list_users
+    # list_users2
     # get_user
+    # get_user2
     # create_or_replace_user
+    # create_user
     # update_user
+    # update_user2
     # delete_user
+    # delete_user2
     # get_encryptedpassword
     # get_apikey
     # create_apikey
@@ -227,6 +232,31 @@ class Artifactory:
         - uri: a string
         """
         return self._get('security/users')  # type: ignore
+
+    @api_call
+    def list_users2(self, limit: int = 1000) -> List[Dict[str, Any]]:
+        """Return the users list.
+
+        # Optional parameters
+
+        - limit: an integer 1000 by default, valid value between 1 and 99999
+
+        # Returned value
+
+        A list of _users_.  Each user is a dictionary with the following
+        entries:
+
+        - name: a string
+        - realm: a string
+        - status: a string
+        - uri: a string
+        """
+        ensure_noneorinstance('limit', int)
+
+        params = {}
+        add_if_specified(params, 'limit', limit)
+
+        return self._get('access/api/v2/users', params=params)  # type: ignore
 
     @api_call
     def get_user(self, user_name: str) -> Dict[str, Any]:
@@ -254,6 +284,33 @@ class Artifactory:
         ensure_nonemptystring('user_name')
 
         return self._get(f'security/users/{user_name}')  # type: ignore
+
+    @api_call
+    def get_user2(self, user_name: str) -> Dict[str, Any]:
+        """Return user details.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - disable_ui_access: a boolean
+        - internal_password_disabled: a boolean
+        - last_logged_in: a string representing a date
+        - realm: a string
+        - groups: a list of strings
+        - status: a string
+        """
+        ensure_nonemptystring('user_name')
+
+        return self._get(f'access/api/v2/users/{user_name}')  # type: ignore
 
     @api_call
     def create_or_replace_user(
@@ -314,6 +371,71 @@ class Artifactory:
         add_if_specified(data, 'groups', groups)
 
         result = self._put(f'security/users/{name}', json=data)
+        return result  # type: ignore
+
+    @api_call
+    def create_user(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        admin: bool = False,
+        profile_updatable: bool = True,
+        disable_ui_access: bool = True,
+        internal_password_disabled: bool = False,
+        groups: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Create an user.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - email: a non-empty string
+        - password: a non-empty string
+
+        # Optional parameters
+
+        - admin: a boolean (False by default)
+        - profile_updatable: a boolean (True by default)
+        - disable_ui_access: a boolean (True by default)
+        - internal_password_disabled: a boolean (False by default)
+        - groups: a list of strings or None (None by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - groups: a list of strings
+        - realm: a string
+        - status: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - internal_password_disabled: a boolean
+        - disable_ui_access: a boolean
+        """
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('email')
+        ensure_nonemptystring('password')
+        ensure_instance('admin', bool)
+        ensure_instance('profile_updatable', bool)
+        ensure_instance('disable_ui_access', bool)
+        ensure_instance('internal_password_disabled', bool)
+        ensure_noneorinstance('groups', list)
+
+        data = {
+            'username': name,
+            'email': email,
+            'password': password,
+            'admin': admin,
+            'profile_updatable': profile_updatable,
+            'disable_ui_access': disable_ui_access,
+            'internal_password_disabled': internal_password_disabled,
+        }
+        add_if_specified(data, 'groups', groups)
+
+        result = self._post(f'access/api/v2/users', json=data)
         return result  # type: ignore
 
     @api_call
@@ -403,6 +525,84 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def update_user2(
+        self,
+        name: str,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        admin: Optional[bool] = None,
+        profile_updatable: Optional[bool] = None,
+        disable_ui_access: Optional[bool] = None,
+        internal_password_disabled: Optional[bool] = None,
+    ) -> None:
+        """Update an existing user.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - email: a non-empty string or None (None by default)
+        - password: a non-empty string or None (None by default)
+        - admin: a boolean or None (None by default)
+        - profile_updatable: a boolean or None (None by default)
+        - disable_ui_access: a boolean or None (None by default)
+        - internal_password_disabled: a boolean or None (None by
+          default)
+
+        If an optional parameter is not specified, or is None, its
+        existing value will be preserved.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - groups: a list of strings
+        - realm: a string
+        - status: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - internal_password_disabled: a boolean
+        - disable_ui_access: a boolean
+        """
+        ensure_nonemptystring('name')
+
+        if (
+            email is None
+            and password is None
+            and admin is None
+            and profile_updatable is None
+            and disable_ui_access is None
+            and internal_password_disabled is None
+        ):
+            raise ValueError(
+                'At least one parameter must be specified in '
+                'addition to the user name'
+            )
+
+        ensure_noneornonemptystring('email')
+        ensure_noneornonemptystring('password')
+        ensure_noneorinstance('admin', bool)
+        ensure_noneorinstance('profile_updatable', bool)
+        ensure_noneorinstance('disable_ui_access', bool)
+        ensure_noneorinstance('internal_password_disabled', bool)
+
+        data = {}
+        add_if_specified(data, 'email', email)
+        add_if_specified(data, 'password', password)
+        add_if_specified(data, 'admin', admin)
+        add_if_specified(data, 'profile_updatable', profile_updatable)
+        add_if_specified(data, 'disable_ui_access', disable_ui_access)
+        add_if_specified(
+            data, 'internal_password_disabled', internal_password_disabled
+        )
+        result = self._patch(f'access/api/v2/users/{name}', json=data)
+        return result  # type: ignore
+
+    @api_call
     def delete_user(self, user_name: str) -> bool:
         """Delete user.
 
@@ -417,6 +617,24 @@ class Artifactory:
         ensure_nonemptystring('user_name')
 
         return self._delete(f'security/users/{user_name}').status_code == 200
+
+    @api_call
+    def delete_user2(self, user_name: str) -> bool:
+        """Delete user.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful.
+        """
+        ensure_nonemptystring('user_name')
+
+        return (
+            self._delete(f'access/api/v2/users/{user_name}').status_code == 204
+        )
 
     @api_call
     def create_apikey(self, auth: Optional[Tuple[str, str]] = None) -> str:
@@ -1834,10 +2052,16 @@ class Artifactory:
     ####################################################################
     # artifactory private helpers
 
-    def _get(self, api: str) -> requests.Response:
+    def _get(
+        self,
+        api: str,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+    ) -> requests.Response:
         """Return artifactory api call results, as Response."""
         api_url = join_url(self.url, api)
-        return self.session().get(api_url)
+        return self.session().get(api_url, params=params)
 
     def _get_xray(self, api: str) -> requests.Response:
         """Return xray api call results, as Response."""
