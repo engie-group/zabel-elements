@@ -1675,7 +1675,9 @@ class Artifactory:
     # artifactory token
     #
     # create_token
+    # create_token2
     # list_tokens
+    # list_token2
 
     @api_call
     def create_token(
@@ -1733,6 +1735,73 @@ class Artifactory:
 
         result = self._post('security/token', data=data)
         return result  # type: ignore
+    
+    @api_call
+    def create_token2(
+        self,
+        username: str,
+        scope: Optional[str] = None,
+        grant_type: str = 'client_credentials',
+        expires_in: int = 3600,
+        refreshable: bool = False,
+        audience: Optional[str] = None,
+        project_key: Optional[str] = None,
+        description: Optional[str] = None,
+        include_reference_token: bool = False
+    ) -> Dict[str, Any]:
+        """Create a new access token.
+
+        # Required parameters
+
+        - username: a string
+        - scope: a string (only required if `username` does not exists)
+
+        # Optional parameters
+
+        - grant_type: a string (`'client_credentials'` by default)
+        - expires_in: an integer (3600 by default)
+        - refreshable: a boolean (False by default)
+        - audience: a string or None (None by default)
+        - project_key: a string or None (None by default)
+        - description: a string or None (None by default)
+
+        `expires_in` is in seconds (1 hour by default). Administrators
+        can set it to 0 so that the token never expires.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - token_id: a string
+        - scope: a string
+        - access_token: a string
+        - expires_in: an integer
+        - token_type: a string
+        """
+        ensure_instance('username', str)
+        ensure_noneorinstance('scope', str)
+        ensure_instance('grant_type', str)
+        ensure_instance('expires_in', int)
+        ensure_instance('refreshable', bool)
+        ensure_noneorinstance('audience', str)
+        ensure_noneorinstance('project_key', str)
+        ensure_noneorinstance('description', str)
+        ensure_instance('include_reference_token', bool)
+
+        data = {
+            'username': username,
+            'grant_type': grant_type,
+            'expires_in': str(expires_in),
+            'refreshable': str(refreshable),
+            'include_reference_token': str(include_reference_token)
+        }
+        add_if_specified(data, 'scope', scope)
+        add_if_specified(data, 'audience', audience)
+        add_if_specified(data, 'project_key', project_key)
+        add_if_specified(data, 'description', description)
+
+        result = self._post('access/api/v1/tokens', data=data)
+        return result  # type: ignore
 
     @api_call
     def list_tokens(self) -> List[Dict[str, Any]]:
@@ -1752,6 +1821,27 @@ class Artifactory:
         - token_id: a string
         """
         return self._get('security/token').json()['tokens']  # type: ignore
+    
+    @api_call
+    def list_tokens2(self) -> List[Dict[str, Any]]:
+        """Return list of tokens.
+
+        The returned `subject` contains the token creator ID.
+
+        # Returned value
+
+        A list of _tokens_.  Each token is a dictionary with the
+        following entries:
+
+        - issued_at: an integer (a timestamp)
+        - issuer: a string
+        - refreshable: a boolean
+        - subject: a string
+        - token_id: a string
+        - expiry: an interger (a timestamp)
+        - description: a string
+        """
+        return self._get('access/api/v1/tokens').json()['tokens']  # type: ignore
 
     ####################################################################
     # artifactory artefacts information
