@@ -262,12 +262,12 @@ class Artifactory:
         return self._get('access/api/v2/users', params={'limit': limit})  # type: ignore
 
     @api_call
-    def get_user(self, user_name: str) -> Dict[str, Any]:
+    def get_user(self, username: str) -> Dict[str, Any]:
         """Return user details.
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
@@ -284,12 +284,12 @@ class Artifactory:
         - profileUpdatable: a boolean
         - realm: a string
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
-        return self._get(f'security/users/{user_name}')  # type: ignore
+        return self._get(f'security/users/{username}')  # type: ignore
 
     @api_call
-    def get_user2(self, user_name: str) -> Dict[str, Any]:
+    def get_user2(self, username: str) -> Dict[str, Any]:
         """Return user details.
 
         !!! important
@@ -297,7 +297,7 @@ class Artifactory:
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
@@ -314,9 +314,9 @@ class Artifactory:
         - groups: a list of strings
         - status: a string
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
-        return self._get(f'access/api/v2/users/{user_name}')  # type: ignore
+        return self._get(f'access/api/v2/users/{username}')  # type: ignore
 
     @api_call
     def create_or_replace_user(
@@ -613,23 +613,23 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
-    def delete_user(self, user_name: str) -> bool:
+    def delete_user(self, username: str) -> bool:
         """Delete user.
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful.
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
-        return self._delete(f'security/users/{user_name}').status_code == 200
+        return self._delete(f'security/users/{username}').status_code == 200
 
     @api_call
-    def delete_user2(self, user_name: str) -> bool:
+    def delete_user2(self, username: str) -> bool:
         """Delete user.
 
         !!! important
@@ -637,16 +637,16 @@ class Artifactory:
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful.
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
         return (
-            self._delete(f'access/api/v2/users/{user_name}').status_code == 204
+            self._delete(f'access/api/v2/users/{username}').status_code == 204
         )
 
     @api_call
@@ -668,6 +668,8 @@ class Artifactory:
         If the API key already exists, an _ApiError_ exception is
         raised.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = self._post2('security/apiKey', auth=auth or self.auth).json()
         if 'apiKey' not in result:
             raise ApiError('Error while creating apiKey, already exists?')
@@ -690,6 +692,8 @@ class Artifactory:
         A string, the API key, or None, if no API key has been created
         yet.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = (
             self._get2('security/apiKey', auth=auth or self.auth)
             .json()
@@ -718,6 +722,8 @@ class Artifactory:
         If the specified credentials are invalid, raises an _ApiError_
         exception.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = self._delete2('security/apiKey', auth=auth or self.auth)
         if 'errors' in result.json():
             raise ApiError('Errors while revoking apiKey, bad credentials?')
@@ -739,6 +745,8 @@ class Artifactory:
 
         A string.
         """
+        ensure_noneorinstance('auth', tuple)
+
         return self._get2(
             'security/encryptedPassword', auth=auth or self.auth
         ).text
