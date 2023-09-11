@@ -159,9 +159,9 @@ class Artifactory:
         self.bearer_auth = bearer_auth
 
         if xray_url is None:
-            xray_url = url.strip('/').split('/')
-            xray_url[-2] = 'xray'
-            xray_url = '/'.join(xray_url)
+            xray_url_segments = url.strip('/').split('/')
+            xray_url_segments[-2] = 'xray'
+            xray_url = '/'.join(xray_url_segments)
 
         if basic_auth is not None:
             self.auth = basic_auth
@@ -204,10 +204,15 @@ class Artifactory:
     # artifactory users
     #
     # list_users
+    # list_users2
     # get_user
+    # get_user2
     # create_or_replace_user
+    # create_user
     # update_user
+    # update_user2
     # delete_user
+    # delete_user2
     # get_encryptedpassword
     # get_apikey
     # create_apikey
@@ -229,12 +234,40 @@ class Artifactory:
         return self._get('security/users')  # type: ignore
 
     @api_call
-    def get_user(self, user_name: str) -> Dict[str, Any]:
+    def list_users2(self, limit: int = 1000) -> List[Dict[str, Any]]:
+        """Return the users list.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Optional parameters
+
+        - limit: an integer (1000 by default), valid value between 1 and
+          99999
+
+        # Returned value
+
+        A list of _users_.  Each user is a dictionary with the following
+        entries:
+
+        - name: a string
+        - realm: a string
+        - status: a string
+        - uri: a string
+        """
+        ensure_instance('limit', int)
+        if limit < 1 or limit > 99999:
+            raise ValueError('limit must be between 1 and 99999')
+
+        return self._get('access/api/v2/users', params={'limit': limit})  # type: ignore
+
+    @api_call
+    def get_user(self, username: str) -> Dict[str, Any]:
         """Return user details.
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
@@ -251,9 +284,39 @@ class Artifactory:
         - profileUpdatable: a boolean
         - realm: a string
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
-        return self._get(f'security/users/{user_name}')  # type: ignore
+        return self._get(f'security/users/{username}')  # type: ignore
+
+    @api_call
+    def get_user2(self, username: str) -> Dict[str, Any]:
+        """Return user details.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - username: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - disable_ui_access: a boolean
+        - internal_password_disabled: a boolean
+        - last_logged_in: a string representing a date
+        - realm: a string
+        - groups: a list of strings
+        - status: a string
+        """
+        ensure_nonemptystring('username')
+
+        return self._get(f'access/api/v2/users/{username}')  # type: ignore
 
     @api_call
     def create_or_replace_user(
@@ -317,6 +380,74 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def create_user(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        admin: bool = False,
+        profile_updatable: bool = True,
+        disable_ui_access: bool = True,
+        internal_password_disabled: bool = False,
+        groups: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Create an user.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - email: a non-empty string
+        - password: a non-empty string
+
+        # Optional parameters
+
+        - admin: a boolean (False by default)
+        - profile_updatable: a boolean (True by default)
+        - disable_ui_access: a boolean (True by default)
+        - internal_password_disabled: a boolean (False by default)
+        - groups: a list of strings or None (None by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - groups: a list of strings
+        - realm: a string
+        - status: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - internal_password_disabled: a boolean
+        - disable_ui_access: a boolean
+        """
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('email')
+        ensure_nonemptystring('password')
+        ensure_instance('admin', bool)
+        ensure_instance('profile_updatable', bool)
+        ensure_instance('disable_ui_access', bool)
+        ensure_instance('internal_password_disabled', bool)
+        ensure_noneorinstance('groups', list)
+
+        data = {
+            'username': name,
+            'email': email,
+            'password': password,
+            'admin': admin,
+            'profile_updatable': profile_updatable,
+            'disable_ui_access': disable_ui_access,
+            'internal_password_disabled': internal_password_disabled,
+        }
+        add_if_specified(data, 'groups', groups)
+
+        result = self._post('access/api/v2/users', json=data)
+        return result  # type: ignore
+
+    @api_call
     def update_user(
         self,
         name: str,
@@ -364,8 +495,7 @@ class Artifactory:
             and groups is None
         ):
             raise ValueError(
-                'At least one parameter must be specified in '
-                'addition to the user name'
+                'At least one parameter must be specified in addition to the user name'
             )
 
         ensure_noneornonemptystring('email')
@@ -403,20 +533,121 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
-    def delete_user(self, user_name: str) -> bool:
+    def update_user2(
+        self,
+        name: str,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        admin: Optional[bool] = None,
+        profile_updatable: Optional[bool] = None,
+        disable_ui_access: Optional[bool] = None,
+        internal_password_disabled: Optional[bool] = None,
+    ) -> None:
+        """Update an existing user.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - email: a non-empty string or None (None by default)
+        - password: a non-empty string or None (None by default)
+        - admin: a boolean or None (None by default)
+        - profile_updatable: a boolean or None (None by default)
+        - disable_ui_access: a boolean or None (None by default)
+        - internal_password_disabled: a boolean or None (None by
+          default)
+
+        If an optional parameter is not specified, or is None, its
+        existing value will be preserved.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - username: a string
+        - email: a string
+        - groups: a list of strings
+        - realm: a string
+        - status: a string
+        - admin: a boolean
+        - profile_updatable: a boolean
+        - internal_password_disabled: a boolean
+        - disable_ui_access: a boolean
+        """
+        ensure_nonemptystring('name')
+
+        if (
+            email is None
+            and password is None
+            and admin is None
+            and profile_updatable is None
+            and disable_ui_access is None
+            and internal_password_disabled is None
+        ):
+            raise ValueError(
+                'At least one parameter must be specified in addition to the user name'
+            )
+
+        ensure_noneornonemptystring('email')
+        ensure_noneornonemptystring('password')
+        ensure_noneorinstance('admin', bool)
+        ensure_noneorinstance('profile_updatable', bool)
+        ensure_noneorinstance('disable_ui_access', bool)
+        ensure_noneorinstance('internal_password_disabled', bool)
+
+        data = {}
+        add_if_specified(data, 'email', email)
+        add_if_specified(data, 'password', password)
+        add_if_specified(data, 'admin', admin)
+        add_if_specified(data, 'profile_updatable', profile_updatable)
+        add_if_specified(data, 'disable_ui_access', disable_ui_access)
+        add_if_specified(
+            data, 'internal_password_disabled', internal_password_disabled
+        )
+        result = self._patch(f'access/api/v2/users/{name}', json=data)
+        return result  # type: ignore
+
+    @api_call
+    def delete_user(self, username: str) -> bool:
         """Delete user.
 
         # Required parameters
 
-        - user_name: a non-empty string
+        - username: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful.
         """
-        ensure_nonemptystring('user_name')
+        ensure_nonemptystring('username')
 
-        return self._delete(f'security/users/{user_name}').status_code == 200
+        return self._delete(f'security/users/{username}').status_code == 200
+
+    @api_call
+    def delete_user2(self, username: str) -> bool:
+        """Delete user.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - username: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful.
+        """
+        ensure_nonemptystring('username')
+
+        return (
+            self._delete(f'access/api/v2/users/{username}').status_code == 204
+        )
 
     @api_call
     def create_apikey(self, auth: Optional[Tuple[str, str]] = None) -> str:
@@ -437,6 +668,8 @@ class Artifactory:
         If the API key already exists, an _ApiError_ exception is
         raised.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = self._post2('security/apiKey', auth=auth or self.auth).json()
         if 'apiKey' not in result:
             raise ApiError('Error while creating apiKey, already exists?')
@@ -459,6 +692,8 @@ class Artifactory:
         A string, the API key, or None, if no API key has been created
         yet.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = (
             self._get2('security/apiKey', auth=auth or self.auth)
             .json()
@@ -487,6 +722,8 @@ class Artifactory:
         If the specified credentials are invalid, raises an _ApiError_
         exception.
         """
+        ensure_noneorinstance('auth', tuple)
+
         result = self._delete2('security/apiKey', auth=auth or self.auth)
         if 'errors' in result.json():
             raise ApiError('Errors while revoking apiKey, bad credentials?')
@@ -508,6 +745,8 @@ class Artifactory:
 
         A string.
         """
+        ensure_noneorinstance('auth', tuple)
+
         return self._get2(
             'security/encryptedPassword', auth=auth or self.auth
         ).text
@@ -516,11 +755,16 @@ class Artifactory:
     # artifactory groups
     #
     # list_groups
+    # list_groups2
     # get_group
     # get_group2
     # create_or_replace_group
+    # create_group
     # update_group
+    # update_group2
     # delete_group
+    # delete_group2
+    # add_remove_group_users
 
     @api_call
     def list_groups(self) -> List[Dict[str, Any]]:
@@ -535,6 +779,23 @@ class Artifactory:
         - uri: a string
         """
         return self._get('security/groups')  # type: ignore
+
+    @api_call
+    def list_groups2(self) -> List[Dict[str, Any]]:
+        """Return the groups list.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Returned value
+
+        A list of _groups_.  Each group is a dictionary with the
+        following entries:
+
+        - name: a string
+        - uri: a string
+        """
+        return self._get('access/api/v2/groups')  # type: ignore
 
     @api_call
     def get_group(self, group_name: str) -> Dict[str, Any]:
@@ -562,7 +823,8 @@ class Artifactory:
     def get_group2(self, group_name: str) -> Dict[str, Any]:
         """Return group details.
 
-        Use this endpoint with a bearer_auth.
+        !!! important
+            BearerAuth is mandatory to use this function.
 
         # Required parameters
 
@@ -646,6 +908,75 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def create_group(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        auto_join: bool = False,
+        admin_priviledge: bool = False,
+        realm: Optional[str] = None,
+        realm_attributes: Optional[str] = None,
+        external_id: Optional[str] = None,
+        members: Optional[List[str]] = None,
+    ) -> None:
+        """Create a group.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        !!! important
+            If the group already exists, it will be replaced and
+            unspecified parameters will have their default values. Use
+            #update_group() if you want to change a parameter of an
+            existing group while keeping the other parameters values.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - description: a non-empty string or None (None by default)
+        - auto_join: a boolean (False by default)
+        - admin_priviledge: a boolean (False by default)
+        - realm: a non-empty string or None (None by default)
+        - realm_attributes: a non-empty string or None (None by default)
+        - external_id: a non-empty string or None (None by default)
+        - members : a list of strings or None (None by default)
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('name')
+        ensure_noneornonemptystring('description')
+        ensure_instance('auto_join', bool)
+        ensure_instance('admin_priviledge', bool)
+        # ?? is '' an allowed value for realm or realm_attributes?
+        ensure_noneornonemptystring('realm')
+        ensure_noneornonemptystring('realm_attributes')
+        ensure_noneorinstance('members', list)
+
+        if admin_priviledge and auto_join:
+            raise ValueError(
+                'auto_join cannot be True if admin_priviledge is True'
+            )
+
+        data = {
+            'name': name,
+            'description': description,
+            'auto_join': auto_join,
+            'adminPrivileges': admin_priviledge,
+            'realm': realm,
+            'realmAttributes': realm_attributes,
+            'external_id': external_id,
+            'members': members or [],
+        }
+
+        result = self._post('access/api/v2/groups', json=data)
+        return result  # type: ignore
+
+    @api_call
     def update_group(
         self,
         name: str,
@@ -677,23 +1008,17 @@ class Artifactory:
         None.
         """
         ensure_nonemptystring('name')
-
-        if (
-            admin_priviledge is not None
-            and admin_priviledge
-            and auto_join is not None
-            and auto_join
-        ):
-            raise ValueError(
-                'auto_join cannot be True if admin_priviledge is True'
-            )
-
         ensure_noneornonemptystring('description')
         ensure_noneorinstance('auto_join', bool)
         ensure_noneorinstance('admin_priviledge', bool)
         # ?? is '' an allowed value for realm or realm_attributes?
         ensure_noneornonemptystring('realm')
         ensure_noneornonemptystring('realm_attributes')
+
+        if admin_priviledge and auto_join:
+            raise ValueError(
+                'auto_join cannot be True if admin_priviledge is True'
+            )
 
         _group = self.get_group(name)
         if admin_priviledge is None:
@@ -709,6 +1034,70 @@ class Artifactory:
         add_if_specified(data, 'realmAttributes', realm_attributes)
 
         result = self._post(f'security/groups/{name}', json=data)
+        return result  # type: ignore
+
+    @api_call
+    def update_group2(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        auto_join: Optional[bool] = None,
+        admin_priviledge: Optional[bool] = None,
+        realm: Optional[str] = None,
+        realm_attributes: Optional[str] = None,
+        external_id: Optional[str] = None,
+        members: Optional[List[str]] = None,
+    ) -> None:
+        """Update an existing group.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Optional parameters
+
+        - description: a non-empty string or None (None by default)
+        - auto_join: a boolean or None (None by default)
+        - admin_priviledge: a boolean or None (None by default)
+        - realm: a non-empty string or None (None by default)
+        - realm_attributes: a non-empty string or None (None by default)
+        - external_id: a non-empty string or None (None by default)
+        - members : a list of strings or None (None by default)
+
+        If an optional parameter is not specified, or is None, its
+        existing value will be preserved.
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('name')
+        ensure_noneornonemptystring('description')
+        ensure_noneorinstance('auto_join', bool)
+        ensure_noneorinstance('admin_priviledge', bool)
+        ensure_noneornonemptystring('realm')
+        ensure_noneornonemptystring('realm_attributes')
+        ensure_noneornonemptystring('external_id')
+        ensure_noneorinstance('members', list)
+
+        if admin_priviledge and auto_join:
+            raise ValueError(
+                'auto_join cannot be True if admin_priviledge is True'
+            )
+
+        data = {'name': name}
+        add_if_specified(data, 'admin_priviledges', admin_priviledge)
+        add_if_specified(data, 'auto_join', auto_join)
+        add_if_specified(data, 'description', description)
+        add_if_specified(data, 'realm', realm)
+        add_if_specified(data, 'realm_attributes', realm_attributes)
+        add_if_specified(data, 'external_id', external_id)
+        add_if_specified(data, 'members', members or [])
+
+        result = self._patch(f'access/api/v2/groups/{name}', json=data)
         return result  # type: ignore
 
     @api_call
@@ -729,6 +1118,66 @@ class Artifactory:
         ensure_nonemptystring('group_name')
 
         return self._delete(f'security/groups/{group_name}').status_code == 200
+
+    @api_call
+    def delete_group2(self, group_name: str) -> bool:
+        """Delete group_name from Artifactory.
+
+        !!! important
+            BearerAuth is mandatory to use this function.
+
+        Deleting a group automatically remove the specified group for
+        users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful.
+        """
+        ensure_nonemptystring('group_name')
+
+        return (
+            self._delete(f'access/api/v2/groups/{group_name}').status_code
+            == 204
+        )
+
+    @api_call
+    def add_remove_group_users(
+        self,
+        group_name: str,
+        add_users: Optional[List[str]] = None,
+        rm_users: Optional[List[str]] = None,
+    ) -> List[str]:
+        """Add or remove users from group.
+
+        # Required parameters
+
+        - group_name: a string
+
+        # Optional parameters
+
+        - add_users: a list of strings or None (None by default)
+        _ rm_users: a list of strings or None (None by default)
+
+        # Returned value
+
+        A list of strings - The list of group members
+        """
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('add_users', list)
+        ensure_noneorinstance('rm_users', list)
+
+        data = {}
+        add_if_specified(data, 'add', add_users)
+        add_if_specified(data, 'remove', rm_users)
+
+        result = self._patch(
+            f'access/api/v2/groups/{group_name}/members', json=data
+        )
+        return result  # type: ignore
 
     ####################################################################
     # artifactory repositories
@@ -860,11 +1309,11 @@ class Artifactory:
         Provides a minimal direct interface.  In order to fully qualify
         a repository, use the `json` parameter.
 
-        Legend: `+` = required entry, `-` = optional entry.
+        Legend: `'+'` = required entry, `'-'` = optional entry.
 
         JSON for a local repository:
 
-        ```json
+        ```text
         {
           - "key": "local-repo1",
           + "rclass" : "local",
@@ -900,7 +1349,7 @@ class Artifactory:
 
         JSON for a remote repository:
 
-        ```json
+        ```text
         {
           - "key": "remote-repo1",
           + "rclass" : "remote",
@@ -958,7 +1407,7 @@ class Artifactory:
 
         JSON for a virtual repository:
 
-        ```json
+        ```text
         {
           - "key": "virtual-repo1",
           + "rclass" : "virtual",
@@ -992,10 +1441,8 @@ class Artifactory:
         An _ApiError_ exception is raised if the repository creation
         was not successful.
         """
+        ensure_nonemptystring('name')
         ensure_noneorinstance('pos', int)
-        api_url = f'repositories/{name}'
-        if pos is not None:
-            api_url += f'?pos={pos}'
 
         if json is not None:
             if rclass is not None:
@@ -1037,8 +1484,7 @@ class Artifactory:
                 if default_deployment_repo is not None:
                     raise ValueError(
                         'default deployment repository cannot '
-                        'be specified for non-virtual '
-                        'repositories'
+                        'be specified for non-virtual repositories'
                     )
 
             data = {'key': name, 'rclass': rclass, 'packageType': package_type}
@@ -1051,6 +1497,10 @@ class Artifactory:
             add_if_specified(
                 data, 'defaultDeploymentRepo', default_deployment_repo
             )
+
+        api_url = f'repositories/{name}'
+        if pos is not None:
+            api_url += f'?pos={pos}'
 
         result = self._put(api_url, json=data)
         return None if result.status_code == 200 else result  # type: ignore
@@ -1173,21 +1623,21 @@ class Artifactory:
 
         `principals` is a dictionary or None:
 
-        ```python
+        ```json
         {
           "users" : {
-            "bob": ["r","w","m"],
-            "alice" : ["d","w","n", "r"]
+            "bob": ["r", "w", "m"],
+            "alice" : ["d", "w", "n", "r"]
           },
           "groups" : {
-            "dev-leads" : ["m","r","n"],
+            "dev-leads" : ["m", "r", "n"],
             "readers" : ["r"]
           }
         }
         ```
 
-        Legend: `m`=admin, `d`=delete, `w`=deploy, `n`=annotate,
-        `r`=read.
+        Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy, `'n'`=annotate,
+        `'r'`=read.
 
         # Returned value
 
@@ -1231,7 +1681,9 @@ class Artifactory:
     # artifactory token
     #
     # create_token
+    # create_token2
     # list_tokens
+    # list_token2
 
     @api_call
     def create_token(
@@ -1291,6 +1743,72 @@ class Artifactory:
         return result  # type: ignore
 
     @api_call
+    def create_token2(
+        self,
+        username: str,
+        scope: Optional[str] = None,
+        grant_type: str = 'client_credentials',
+        expires_in: int = 3600,
+        refreshable: bool = False,
+        audience: Optional[str] = None,
+        project_key: Optional[str] = None,
+        description: Optional[str] = None,
+        include_reference_token: bool = False,
+    ) -> Dict[str, Any]:
+        """Create a new access token.
+
+        # Required parameters
+
+        - username: a string
+        - scope: a string (only required if `username` does not exists)
+
+        # Optional parameters
+
+        - grant_type: a string (`'client_credentials'` by default)
+        - expires_in: an integer (3600 by default)
+        - refreshable: a boolean (False by default)
+        - audience: a string or None (None by default)
+        - project_key: a string or None (None by default)
+        - description: a string or None (None by default)
+
+        `expires_in` is in seconds (1 hour by default). Administrators
+        can set it to 0 so that the token never expires.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - token_id: a string
+        - scope: a string
+        - access_token: a string
+        - expires_in: an integer
+        - token_type: a string
+        """
+        ensure_instance('username', str)
+        ensure_noneorinstance('scope', str)
+        ensure_instance('grant_type', str)
+        ensure_instance('expires_in', int)
+        ensure_instance('refreshable', bool)
+        ensure_noneorinstance('audience', str)
+        ensure_noneorinstance('project_key', str)
+        ensure_noneorinstance('description', str)
+        ensure_instance('include_reference_token', bool)
+
+        data = {
+            'username': username,
+            'grant_type': grant_type,
+            'expires_in': str(expires_in),
+            'refreshable': str(refreshable),
+            'include_reference_token': str(include_reference_token),
+        }
+        add_if_specified(data, 'scope', scope)
+        add_if_specified(data, 'audience', audience)
+        add_if_specified(data, 'project_key', project_key)
+        add_if_specified(data, 'description', description)
+
+        return self._post('access/api/v1/tokens', data=data)  # type: ignore
+
+    @api_call
     def list_tokens(self) -> List[Dict[str, Any]]:
         """Return list of tokens.
 
@@ -1308,6 +1826,27 @@ class Artifactory:
         - token_id: a string
         """
         return self._get('security/token').json()['tokens']  # type: ignore
+
+    @api_call
+    def list_tokens2(self) -> List[Dict[str, Any]]:
+        """Return list of tokens.
+
+        The returned `subject` contains the token creator ID.
+
+        # Returned value
+
+        A list of _tokens_.  Each token is a dictionary with the
+        following entries:
+
+        - issued_at: an integer (a timestamp)
+        - issuer: a string
+        - refreshable: a boolean
+        - subject: a string
+        - token_id: a string
+        - expiry: an interger (a timestamp)
+        - description: a string
+        """
+        return self._get('access/api/v1/tokens').json()['tokens']  # type: ignore
 
     ####################################################################
     # artifactory artefacts information
@@ -1588,7 +2127,7 @@ class Artifactory:
 
         # Optional parameters
 
-        - bin_mgr_id: a string ('default' by default)
+        - bin_mgr_id: a string (`'default'` by default)
 
         # Returned value
 
@@ -1607,7 +2146,7 @@ class Artifactory:
         """
         ensure_nonemptystring('bin_mgr_id')
 
-        return self._get_xray('/v1/binMgr/{id}/repos'.format(id=bin_mgr_id))
+        return self._get_xray(f'/v1/binMgr/{bin_mgr_id}/repos')  # type: ignore
 
     @api_call
     def update_reposindexing_configuration(
@@ -1625,7 +2164,7 @@ class Artifactory:
 
         # Optional parameters
 
-        - bin_mgr_id: a string ('default' by default)
+        - bin_mgr_id: a string (`'default'` by default)
 
         # Returned value
 
@@ -1640,17 +2179,21 @@ class Artifactory:
             'indexed_repos': indexed_repos,
             'non_indexed_repos': non_indexed_repos,
         }
-        return self._put_xray(
-            '/v1/binMgr/{id}/repos'.format(id=bin_mgr_id), json=what
-        )
+        return self._put_xray(f'/v1/binMgr/{bin_mgr_id}/repos', json=what)  # type: ignore
 
     ####################################################################
     # artifactory private helpers
 
-    def _get(self, api: str) -> requests.Response:
+    def _get(
+        self,
+        api: str,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+    ) -> requests.Response:
         """Return artifactory api call results, as Response."""
         api_url = join_url(self.url, api)
-        return self.session().get(api_url)
+        return self.session().get(api_url, params=params)
 
     def _get_xray(self, api: str) -> requests.Response:
         """Return xray api call results, as Response."""
@@ -1662,6 +2205,15 @@ class Artifactory:
         return [
             self.session().get(join_url(self.url, api)).json() for api in apis
         ]
+
+    def _patch(
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        data: Optional[Union[MutableMapping[str, str], bytes]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().patch(api_url, json=json, data=data)
 
     def _post(
         self,
