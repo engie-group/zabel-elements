@@ -36,6 +36,7 @@ from zabel.commons.utils import (
     ensure_noneorinstance,
     ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 
@@ -77,23 +78,6 @@ def _get_scheme_id(
     if not any(str(s['id']) == str(name_or_id) for s in schemes):
         raise ApiError('Scheme ID %s not found.' % str(name_or_id))
     return str(name_or_id)
-
-
-class BearerAuth(requests.auth.AuthBase):
-    """A Bearer handler class for requests."""
-
-    def __init__(self, pat: str):
-        self.pat = pat
-
-    def __eq__(self, other):
-        return self.pat == getattr(other, 'pat', None)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __call__(self, r):
-        r.headers['Authorization'] = f'Bearer {self.pat}'
-        return r
 
 
 # JIRA low-level api
