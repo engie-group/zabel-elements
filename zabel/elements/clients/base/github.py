@@ -2214,6 +2214,7 @@ class GitHub:
     # GitHub hook operations
     #
     # list_hooks
+    # create_organization_hook
     # create_hook
     # delete_hook
 
@@ -2266,6 +2267,64 @@ class GitHub:
         )
         return result  # type: ignore
 
+    @api_call
+    def create_organization_hook(
+        self,
+        organization_name: str,
+        name: str,
+        config: Dict[str, str],
+        events: Optional[List[str]] = None,
+        active: bool = True,
+    ) -> Dict[str, Any]:
+        """Create an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - name: a string (must be `'web'`)
+        - config: a dictionary
+
+        The `config` dictionary must contain the following entry:
+
+        - url: a string
+
+        It may contain the following entries:
+
+        - content_type: a string
+        - secret: a string
+        - insecure_ssl: a string
+
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Returned value
+
+        A _hook_.  See #list_hooks() for its format.
+        """
+        ensure_nonemptystring('organization_name')
+        if name != 'web':
+            raise ValueError('name must be "web".')
+        ensure_instance('config', dict)
+        ensure_noneorinstance('events', list)
+        ensure_instance('active', bool)
+        if 'url' not in config:
+            raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['push']
+
+        data = {
+            'name': name,
+            'active': active,
+            'config': config,
+            'events': events,
+        }
+
+        return self._post(
+            f'orgs/{organization_name}/hooks', json=data
+        )
+    
     @api_call
     def create_hook(
         self,
