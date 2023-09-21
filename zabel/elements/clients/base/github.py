@@ -701,6 +701,7 @@ class GitHub:
     # list_public_repositories
     # get_repository
     # create_repository
+    # create_repository_from_template
     # TODO update_repository
     # TODO delete_repository
     # list_repository_commits
@@ -903,6 +904,57 @@ class GitHub:
 
         result = self._post(f'orgs/{organization_name}/repos', json=data)
         return result  # type: ignore
+
+    @api_call
+    def create_repository_from_template(
+        self,
+        template_owner: str,
+        template_repo: str,
+        organization_name: str,
+        repository_name: str,
+        description: Optional[str] = None,
+        include_all_branches: bool = False,
+        private: bool = False,
+    ) -> Dict[str, Any]:
+        """Create a new repository in organization organization_name from a
+        template.
+
+        # Required parameters
+
+        - template_owner: a non-empty string
+        - template_repo: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - description: a string or None (None by default)
+        - include_all_branches: a boolean (False by default)
+        - private: a boolean (False by default)
+
+        # Returned value
+
+        A _repository_.  See #list_repositories() for its content.
+        """
+        ensure_nonemptystring('template_owner')
+        ensure_nonemptystring('template_repo')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        ensure_noneorinstance('description', str)
+        ensure_instance('include_all_branches', bool)
+        ensure_instance('private', bool)
+
+        data = {
+            'owner': organization_name,
+            'name': repository_name,
+            'include_all_branches': include_all_branches,
+            'private': private,
+        }
+        add_if_specified(data, 'description', description)
+        return self._post(
+            f'repos/{template_owner}/{template_repo}/generate', json=data
+        )
 
     @api_call
     def update_repository(
