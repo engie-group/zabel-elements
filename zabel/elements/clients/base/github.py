@@ -2309,7 +2309,6 @@ class GitHub:
         - status: a string
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repository_name')
 
         result = self._get(
             f'orgs/{organization_name}/hooks'
