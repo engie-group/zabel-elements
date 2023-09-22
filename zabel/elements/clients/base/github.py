@@ -2214,6 +2214,7 @@ class GitHub:
     # GitHub hook operations
     #
     # list_hooks
+    # list_organization_hooks
     # create_organization_hook
     # create_hook
     # delete_hook
@@ -2264,6 +2265,54 @@ class GitHub:
 
         result = self._get(
             f'repos/{organization_name}/{repository_name}/hooks'
+        )
+        return result  # type: ignore
+    
+    @api_call
+    def list_organization_hooks(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the list of hooks for repository.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _hooks_.  A hook is a dictionary with the following
+        entries:
+
+        - active: a boolean
+        - config: a dictionary
+        - created_at: a string (a timestamp)
+        - events: a list of strings
+        - id: an integer
+        - last_response: a dictionary
+        - name: a string (always `'web'`)
+        - ping_url: a string
+        - test_url: a a string
+        - type: a string
+        - updated_at: a string (a timestamp)
+        - url: a string
+
+        `config` has the following entries:
+
+        - insecure_ssl: a string
+        - content_type: a string
+        - url: a string
+
+        `last_response` has the following entries:
+
+        - message: a string
+        - code: an integer
+        - status: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        result = self._get(
+            f'orgs/{organization_name}/hooks'
         )
         return result  # type: ignore
 
