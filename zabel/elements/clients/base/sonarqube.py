@@ -1519,7 +1519,7 @@ class SonarQube:
         add_if_specified(params, 'projectId', project_id)
         add_if_specified(params, 'projectKey', project_key)
 
-        result = self._get('project_links/search').json()
+        result = self._get('project_links/search', params=params).json()
         return result.get('links', {})
 
     ####################################################################
