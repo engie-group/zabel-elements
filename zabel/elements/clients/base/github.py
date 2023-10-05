@@ -701,6 +701,7 @@ class GitHub:
     # list_public_repositories
     # get_repository
     # create_repository
+    # create_repository_from_template
     # TODO update_repository
     # TODO delete_repository
     # list_repository_commits
@@ -903,6 +904,57 @@ class GitHub:
 
         result = self._post(f'orgs/{organization_name}/repos', json=data)
         return result  # type: ignore
+
+    @api_call
+    def create_repository_from_template(
+        self,
+        template_owner: str,
+        template_repo: str,
+        organization_name: str,
+        repository_name: str,
+        description: Optional[str] = None,
+        include_all_branches: bool = False,
+        private: bool = False,
+    ) -> Dict[str, Any]:
+        """Create a new repository in organization organization_name from a
+        template.
+
+        # Required parameters
+
+        - template_owner: a non-empty string
+        - template_repo: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - description: a string or None (None by default)
+        - include_all_branches: a boolean (False by default)
+        - private: a boolean (False by default)
+
+        # Returned value
+
+        A _repository_.  See #list_repositories() for its content.
+        """
+        ensure_nonemptystring('template_owner')
+        ensure_nonemptystring('template_repo')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        ensure_noneorinstance('description', str)
+        ensure_instance('include_all_branches', bool)
+        ensure_instance('private', bool)
+
+        data = {
+            'owner': organization_name,
+            'name': repository_name,
+            'include_all_branches': include_all_branches,
+            'private': private,
+        }
+        add_if_specified(data, 'description', description)
+        return self._post(
+            f'repos/{template_owner}/{template_repo}/generate', json=data
+        )
 
     @api_call
     def update_repository(
@@ -2162,6 +2214,8 @@ class GitHub:
     # GitHub hook operations
     #
     # list_hooks
+    # list_organization_hooks
+    # create_organization_hook
     # create_hook
     # delete_hook
 
@@ -2213,7 +2267,112 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks'
         )
         return result  # type: ignore
+    
+    @api_call
+    def list_organization_hooks(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the list of hooks for repository.
 
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _hooks_.  A hook is a dictionary with the following
+        entries:
+
+        - active: a boolean
+        - config: a dictionary
+        - created_at: a string (a timestamp)
+        - events: a list of strings
+        - id: an integer
+        - last_response: a dictionary
+        - name: a string (always `'web'`)
+        - ping_url: a string
+        - test_url: a a string
+        - type: a string
+        - updated_at: a string (a timestamp)
+        - url: a string
+
+        `config` has the following entries:
+
+        - insecure_ssl: a string
+        - content_type: a string
+        - url: a string
+
+        `last_response` has the following entries:
+
+        - message: a string
+        - code: an integer
+        - status: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        result = self._get(
+            f'orgs/{organization_name}/hooks'
+        )
+        return result  # type: ignore
+
+    @api_call
+    def create_organization_hook(
+        self,
+        organization_name: str,
+        name: str,
+        config: Dict[str, str],
+        events: Optional[List[str]] = None,
+        active: bool = True,
+    ) -> Dict[str, Any]:
+        """Create an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - name: a string (must be `'web'`)
+        - config: a dictionary
+
+        The `config` dictionary must contain the following entry:
+
+        - url: a string
+
+        It may contain the following entries:
+
+        - content_type: a string
+        - secret: a string
+        - insecure_ssl: a string
+
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Returned value
+
+        A _hook_.  See #list_hooks() for its format.
+        """
+        ensure_nonemptystring('organization_name')
+        if name != 'web':
+            raise ValueError('name must be "web".')
+        ensure_instance('config', dict)
+        ensure_noneorinstance('events', list)
+        ensure_instance('active', bool)
+        if 'url' not in config:
+            raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['push']
+
+        data = {
+            'name': name,
+            'active': active,
+            'config': config,
+            'events': events,
+        }
+
+        return self._post(
+            f'orgs/{organization_name}/hooks', json=data
+        )
+    
     @api_call
     def create_hook(
         self,
