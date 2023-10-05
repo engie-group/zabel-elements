@@ -58,6 +58,7 @@ PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
 
 MAX_RESULTS = 1000
+
 # Helpers
 
 
@@ -2537,10 +2538,15 @@ class Jira:
         return self._get_json('myself', params=params)  # type: ignore
 
     @api_call
-    def search_users(self, name: str) -> List[Dict[str, Any]]:
+    def search_users(
+        self,
+        name: str,
+        inactive: bool = True,
+        max_results: int = MAX_RESULTS,
+    ) -> List[Dict[str, Any]]:
         """Return list of user details for users matching name.
 
-        Return at most 1000 entries.
+        Return at most `MAX_RESULTS` entries.
 
         # Required parameters
 
@@ -2549,17 +2555,26 @@ class Jira:
         `name` will be searched in `name` and `displayName` fields, and
         is case-insensitive.
 
+        # Optional parameters
+
+        - inactive: a boolean (True by default)
+        - max_results: an integer (`MAX_RESULTS` by default)
+
         # Returned value
 
         A list of _user details_.  Each user details is a dictionary.
         Refer to #get_user() for its structure.
         """
         ensure_nonemptystring('name')
+        ensure_instance('inactive', bool)
+        ensure_noneorinstance('max_results', int)
 
         return [
             self.get_user(u.name)
             for u in self._client().search_users(
-                name, includeInactive=True, maxResults=1000
+                name,
+                includeInactive=inactive,
+                maxResults=min(max_results or MAX_RESULTS, MAX_RESULTS),
             )
         ]
 
