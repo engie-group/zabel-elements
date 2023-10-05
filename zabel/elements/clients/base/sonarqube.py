@@ -343,6 +343,45 @@ class SonarQube:
         return self._get('languages/list').json()['languages']  # type: ignore
 
     ####################################################################
+    # SonarQube measures
+    #
+    # list_component_measures
+
+    @api_call
+    def list_component_measures(
+        self,
+        component_key: str,
+        metric_keys: str,
+        additional_fields: Optional[str] = None,
+        branch: Optional[str] = None,
+        pull_request: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return component with specified measures.
+
+        # Required parameters
+
+        - component_key: a string
+        - metric_keys: a string
+
+        # Optional parameters
+
+        - additional_fields: a string
+        - branch: a string
+        - pull_request: a string
+        """
+
+        ensure_instance('component_key', str)
+        ensure_instance('metric_keys', str)
+
+        params = {'component': component_key, 'metricKeys': metric_keys}
+        add_if_specified(params, 'additionalFields', additional_fields)
+        add_if_specified(params, 'branch', branch)
+        add_if_specified(params, 'pullRequest', pull_request)
+
+        result = self._get('measures/component', params=params).json()
+        return result.get('component', {}).get('measures')
+
+    ####################################################################
     # SonarQube permissions
     #
     # add_permission_group
@@ -1445,6 +1484,43 @@ class SonarQube:
         return self._collect_data(
             'project_analyses/search', 'analyses', params
         )
+
+    ####################################################################
+    # SonarQube projectlinks
+    #
+    # list_projectlinks
+
+    @api_call
+    def list_projectlinks(
+        self,
+        project_id: Optional[int] = None,
+        project_key: Optional[str] = None,
+    ) -> List[Dict[str, str]]:
+        """List links of a project.
+
+        # Required parameters
+
+        - `project_id` OR `project_key`: an integer or a string (None by
+          default)
+
+        # Returned value
+
+        A list of _project links_. Each project links_ is a
+        dictionary with the following four entries:
+
+        - id: a string
+        - name: a string
+        - type: a string
+        - url: a string
+        """
+        ensure_onlyone('project_id', 'project_key')
+
+        params = {}
+        add_if_specified(params, 'projectId', project_id)
+        add_if_specified(params, 'projectKey', project_key)
+
+        result = self._get('project_links/search', params=params).json()
+        return result.get('links', {})
 
     ####################################################################
     # SonarQube usergroups
