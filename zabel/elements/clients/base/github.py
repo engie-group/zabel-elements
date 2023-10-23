@@ -17,7 +17,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Union, Tuple
 
 import requests
 
@@ -33,6 +33,7 @@ from zabel.commons.utils import (
     ensure_noneornonemptystring,
     ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 
@@ -81,8 +82,8 @@ class GitHub:
     def __init__(
         self,
         url: str,
-        user: str,
-        token: str,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        bearer_auth: Optional[str] = None,
         management_url: Optional[str] = None,
         verify: bool = True,
     ) -> None:
@@ -94,8 +95,8 @@ class GitHub:
         # Required parameters
 
         - url: a non-empty string
-        - user: a string
-        - token: a string
+        - basic_auth: a string tuple (user, token)
+        - bearer_auth: a string
 
         # Optional parameters
 
@@ -108,12 +109,20 @@ class GitHub:
         if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_instance('user', str)
-        ensure_instance('token', str)
+        ensure_onlyone('basic_auth', 'bearer_auth')
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_noneorinstance('bearer_auth', str)
         ensure_noneornonemptystring('management_url')
 
         self.url = url
-        self.auth = (user, token)
+        self.basic_auth = basic_auth
+        self.bearer_auth = bearer_auth
+
+        if basic_auth is not None:
+            self.auth = basic_auth
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
+
         self.management_url = management_url
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
@@ -2267,7 +2276,7 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks'
         )
         return result  # type: ignore
-    
+
     @api_call
     def list_organization_hooks(
         self, organization_name: str
@@ -2310,9 +2319,7 @@ class GitHub:
         """
         ensure_nonemptystring('organization_name')
 
-        result = self._get(
-            f'orgs/{organization_name}/hooks'
-        )
+        result = self._get(f'orgs/{organization_name}/hooks')
         return result  # type: ignore
 
     @api_call
@@ -2369,10 +2376,8 @@ class GitHub:
             'events': events,
         }
 
-        return self._post(
-            f'orgs/{organization_name}/hooks', json=data
-        )
-    
+        return self._post(f'orgs/{organization_name}/hooks', json=data)
+
     @api_call
     def create_hook(
         self,
@@ -2459,6 +2464,38 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}'
         )
         return result.status_code == 204
+
+    ####################################################################
+    # GitHub copilot
+    #
+    # get_copilot_billing_seats
+
+    @api_call
+    def get_copilot_billing_seats(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Get billing seats for organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _seats_.  A seat is a dictionary with the following
+        entries:
+
+        - created_at: a string representing a datetime
+        - assignee: a dictionary
+        - updated_at: a string representing a datetime
+        - pending_cancellation_date: a string representing a datetime
+        - last_activity_at: a string representing a datetime
+        - last_activity_editor: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        result = self._get(f'orgs/{organization_name}/copilot/billing/seats').json()
+        return result.get('seats', [])  # type: ignore
 
     ####################################################################
     # GitHub misc. operations
