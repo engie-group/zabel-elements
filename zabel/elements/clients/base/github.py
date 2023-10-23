@@ -279,6 +279,7 @@ class GitHub:
     # add_organization_outside_collaborator
     # rm_organization_outside_collaborator
     # list_organization_teams
+    # send_organization_invitation
     #
     # Part of enterprise administration
     # create_organization
@@ -341,6 +342,54 @@ class GitHub:
         ensure_nonemptystring('organization_name')
 
         return self._get(f'orgs/{organization_name}/teams')  # type: ignore
+
+    @api_call
+    def send_organization_invitation(
+        self,
+        organization_name: str,
+        invitee_id: Optional[int] = None,
+        email: Optional[str] = None,
+        role: str = 'direct_member',
+        team_ids: List[int] = [],
+    ) -> Dict[str, Any]:
+        """Send an invitation to an user to join an organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - invitee_id: an integer or None (None by default)
+        - email: a string or None (None by default)
+        - role: a string, one of 'direct_member', 'billing_manager ' or 'admin' ('direct_member' by default)
+        - team_ids: a list of integers (empty by default)
+
+        # Returned value
+
+        An invitation object.  An invitation is a dictionary with the following keys:
+
+        - id: an integer
+        - login: a string
+        - email: a string
+        - role: a string
+        - created_at: a string
+        - inviter: a dictionary
+        - team_count: an integer
+        - invitation_team_url: a string (url)
+        - invitation_teams_url: a string (url)
+        """
+
+        ensure_nonemptystring('organization_name')
+        ensure_noneorinstance('invitee_id', int)
+        ensure_noneornonemptystring('email')
+        ensure_onlyone('invitee_id', 'email')
+        ensure_in('role', ('direct_member', 'admin', 'billing_manager'))
+        ensure_instance('team_ids', list)
+
+        data = {'role': role}
+        add_if_specified(data, 'invitee_id', invitee_id)
+        add_if_specified(data, 'email', email)
+        add_if_specified(data, 'team_ids', team_ids)
+
+        return self._post(f'orgs/{organization_name}/invitations', json=data)  # type: ignore
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -2494,7 +2543,9 @@ class GitHub:
         """
         ensure_nonemptystring('organization_name')
 
-        result = self._get(f'orgs/{organization_name}/copilot/billing/seats').json()
+        result = self._get(
+            f'orgs/{organization_name}/copilot/billing/seats'
+        ).json()
         return result.get('seats', [])  # type: ignore
 
     ####################################################################
