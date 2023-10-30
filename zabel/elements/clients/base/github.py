@@ -775,7 +775,7 @@ class GitHub:
     # get_repository
     # create_repository
     # create_repository_from_template
-    # TODO update_repository
+    # update_repository
     # TODO delete_repository
     # list_repository_commits
     # get_repository_commit
@@ -1039,20 +1039,13 @@ class GitHub:
         repository_name: str,
         patched_attributes: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """
-        Updates the attributes of a repository using a patch
-        (a subset of attributes).
-
-        The endpoint on GitHub is :
-        https://docs.github.com/en/enterprise-server@3.3/rest/repos/repos#update-a-repository
+        """Update a repository attributes.
 
         # Required parameters
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - patched_attributes: a dict of attributes/values, see
-          #create_repository() for the details of patchable
-          attributes.
+        - patched_attributes: a dictionary
 
         # Returned value
 
@@ -1063,7 +1056,8 @@ class GitHub:
         ensure_instance('patched_attributes', dict)
 
         response = self._patch(
-            f'repos/{organization_name}/{repository_name}', patched_attributes
+            f'repos/{organization_name}/{repository_name}',
+            json=patched_attributes,
         )
         return response  # type: ignore
 
@@ -2752,8 +2746,7 @@ class GitHub:
         """
         api_url = join_url(self.url, api)
         collected: List[Dict[str, Any]] = []
-        more = True
-        while more:
+        while True:
             response = self.session().get(
                 api_url, params=params, headers=headers
             )
@@ -2763,17 +2756,21 @@ class GitHub:
                 collected += response.json()
             except Exception as exception:
                 raise ApiError(exception)
-            more = 'next' in response.links
-            if more:
+            if 'next' in response.links:
                 api_url = response.links['next']['url']
+            else:
+                break
 
         return collected
 
     def _post(
-        self, api: str, json: Optional[Mapping[str, Any]] = None
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().post(api_url, json=json)
+        return self.session().post(api_url, json=json, headers=headers)
 
     def _put(
         self,
@@ -2785,10 +2782,13 @@ class GitHub:
         return self.session().put(api_url, json=json, headers=headers)
 
     def _delete(
-        self, api: str, json: Optional[Mapping[str, Any]] = None
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().delete(api_url, json=json)
+        return self.session().delete(api_url, json=json, headers=headers)
 
     def _patch(
         self,
