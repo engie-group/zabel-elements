@@ -49,7 +49,7 @@ class GitHub:
     # Reference URL
 
     - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.20/v3>
+    - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
     # Implemented features
@@ -57,8 +57,14 @@ class GitHub:
     - users
     - organizations
     - repositories
+    - branches
+    - pullrequests
+    - references
     - hooks
+    - copilot
     - misc. operations (version, staff reports & stats)
+
+    Some methods require an Enterprise Cloud account.
 
     # Sample use
 
@@ -67,14 +73,14 @@ class GitHub:
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
-    gh = GitHub(url, user, token)
+    gh = GitHub(url, bearer_auth=token)
     gh.list_users()
 
     # enabling management features
     from zabel.elements import clients
 
     mngt = 'https://github.example.com/'
-    gh = clients.GitHub(url, user, token, mngt)
+    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """
@@ -91,6 +97,8 @@ class GitHub:
 
         The optional `management_url` is only required if
         'enterprise' features are used (staff reports, ...).
+
+        Some methods require an Enterprise Cloud account.
 
         # Required parameters
 
@@ -2559,6 +2567,8 @@ class GitHub:
     def get_copilot_billing(self, organization_name: str) -> Dict[str, Any]:
         """Get billing information for organization.
 
+        Can only be used on a GitHub Enterprise Cloud instance.
+
         # Required parameters
 
         - organization_name: a non-empty string
@@ -2591,6 +2601,8 @@ class GitHub:
     ) -> List[Dict[str, Any]]:
         """Get billing seats for organization.
 
+        Can only be used on a GitHub Enterprise Cloud instance.
+
         # Required parameters
 
         - organization_name: a non-empty string
@@ -2620,6 +2632,8 @@ class GitHub:
     ) -> List[Dict[str, Any]]:
         """Add users to copilot.
 
+        Can only be used on a GitHub Enterprise Cloud instance.
+
         # Required parameters
 
         - organization_name: a non-empty string
@@ -2646,6 +2660,8 @@ class GitHub:
         self, organization_name: str, users: List[str]
     ) -> List[Dict[str, Any]]:
         """Remove users from copilot.
+
+        Can only be used on a GitHub Enterprise Cloud instance.
 
         # Required parameters
 
