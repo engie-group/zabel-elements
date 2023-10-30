@@ -347,10 +347,11 @@ class GitHub:
     def send_organization_invitation(
         self,
         organization_name: str,
+        *,
         invitee_id: Optional[int] = None,
         email: Optional[str] = None,
         role: str = 'direct_member',
-        team_ids: List[int] = [],
+        team_ids: Optional[List[int]] = None,
     ) -> Dict[str, Any]:
         """Send an invitation to an user to join an organization.
 
@@ -359,8 +360,14 @@ class GitHub:
         - organization_name: a non-empty string
         - invitee_id: an integer or None (None by default)
         - email: a string or None (None by default)
-        - role: a string, one of 'direct_member', 'billing_manager ' or 'admin' ('direct_member' by default)
-        - team_ids: a list of integers (empty by default)
+
+        Either `invitee_id` or `email` must be specified.
+
+        # Optional parameters
+
+        - role: a string, one of `direct_member`, `billing_manager`, or
+          `admin` (`direct_member` by default)
+        - team_ids: a list of integers or None (None by default)
 
         # Returned value
 
@@ -376,20 +383,20 @@ class GitHub:
         - invitation_team_url: a string (url)
         - invitation_teams_url: a string (url)
         """
-
         ensure_nonemptystring('organization_name')
         ensure_noneorinstance('invitee_id', int)
         ensure_noneornonemptystring('email')
         ensure_onlyone('invitee_id', 'email')
         ensure_in('role', ('direct_member', 'admin', 'billing_manager'))
-        ensure_instance('team_ids', list)
+        ensure_noneorinstance('team_ids', list)
 
         data = {'role': role}
         add_if_specified(data, 'invitee_id', invitee_id)
         add_if_specified(data, 'email', email)
         add_if_specified(data, 'team_ids', team_ids)
 
-        return self._post(f'orgs/{organization_name}/invitations', json=data)  # type: ignore
+        result = self._post(f'orgs/{organization_name}/invitations', json=data)
+        return result  # type: ignore
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -889,6 +896,7 @@ class GitHub:
         self,
         organization_name: str,
         repository_name: str,
+        *,
         description: Optional[str] = None,
         homepage: Optional[str] = None,
         private: bool = False,
@@ -1010,9 +1018,11 @@ class GitHub:
             'private': private,
         }
         add_if_specified(data, 'description', description)
-        return self._post(
+
+        result = self._post(
             f'repos/{template_owner}/{template_repo}/generate', json=data
         )
+        return result  # type: ignore
 
     @api_call
     def update_repository(
@@ -2273,6 +2283,7 @@ class GitHub:
     #
     # list_hooks
     # list_organization_hooks
+    # get_organization_hook
     # create_organization_hook
     # create_hook
     # delete_hook
@@ -2281,7 +2292,7 @@ class GitHub:
     def list_hooks(
         self, organization_name: str, repository_name: str
     ) -> Dict[str, Any]:
-        """Return the list of hooks for repository.
+        """List webhooks for repository.
 
         # Required parameters
 
@@ -2330,7 +2341,7 @@ class GitHub:
     def list_organization_hooks(
         self, organization_name: str
     ) -> Dict[str, Any]:
-        """Return the list of hooks for repository.
+        """List organization webhooks.
 
         # Required parameters
 
@@ -2369,6 +2380,27 @@ class GitHub:
         ensure_nonemptystring('organization_name')
 
         result = self._get(f'orgs/{organization_name}/hooks')
+        return result  # type: ignore
+
+    @api_call
+    def get_organization_hook(
+        self, organization_name: str, hook_id: int
+    ) -> Dict[str, Any]:
+        """Return an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - hook_id: an integer
+
+        # Returned value
+
+        A _hook_.  See #list_hooks() for its format.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('hook_id', int)
+
+        result = self._get(f'orgs/{organization_name}/hooks/{hook_id}')
         return result  # type: ignore
 
     @api_call
@@ -2425,7 +2457,8 @@ class GitHub:
             'events': events,
         }
 
-        return self._post(f'orgs/{organization_name}/hooks', json=data)
+        result = self._post(f'orgs/{organization_name}/hooks', json=data)
+        return result  # type: ignore
 
     @api_call
     def create_hook(
@@ -2515,9 +2548,42 @@ class GitHub:
         return result.status_code == 204
 
     ####################################################################
-    # GitHub copilot
+    # GitHub copilot (Enterprise cloud)
     #
+    # get_copilot_billing
     # get_copilot_billing_seats
+    # add_copilot_users
+    # remove_copilot_users
+
+    @api_call
+    def get_copilot_billing(self, organization_name: str) -> Dict[str, Any]:
+        """Get billing information for organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A _billing information_ dictionary with the following entries:
+
+        - seat_breakdown: a dictionary
+        - seat_management_settings: a string
+        - public_code_suggestions: a string
+
+        The `seat_breakdown` dictionary has the following entries:
+
+        - total: an integer
+        - added_this_cycle: an integer
+        - pending_invitation: an integer
+        - pending_cancellation: an integer
+        - active_this_cycle: an integer
+        - inactive_this_cycle: an integer
+        """
+        ensure_nonemptystring('organization_name')
+
+        result = self._get(f'orgs/{organization_name}/copilot/billing')
+        return result  # type: ignore
 
     @api_call
     def get_copilot_billing_seats(
@@ -2547,6 +2613,60 @@ class GitHub:
             f'orgs/{organization_name}/copilot/billing/seats'
         ).json()
         return result.get('seats', [])  # type: ignore
+
+    @api_call
+    def add_copilot_users(
+        self, organization_name: str, users: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Add users to copilot.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - users: a list of non-empty strings
+
+        # Returned value
+
+        A dictionary with a `seats_created` entry.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('users', list)
+        for user in users:
+            ensure_nonemptystring(user)
+
+        data = {'selected_usernames': users}
+        result = self._post(
+            f'orgs/{organization_name}/copilot/billing/selected_users',
+            json=data,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def remove_copilot_users(
+        self, organization_name: str, users: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Remove users from copilot.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - users: a list of non-empty strings
+
+        # Returned value
+
+        A dictionary with a `seats_cancelled` entry.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('users', list)
+        for user in users:
+            ensure_nonemptystring(user)
+
+        data = {'selected_usernames': users}
+        result = self._delete(
+            f'orgs/{organization_name}/copilot/billing/selected_users',
+            json=data,
+        )
+        return result  # type: ignore
 
     ####################################################################
     # GitHub misc. operations
@@ -2648,9 +2768,11 @@ class GitHub:
         api_url = join_url(self.url, api)
         return self.session().put(api_url, json=json, headers=headers)
 
-    def _delete(self, api: str) -> requests.Response:
+    def _delete(
+        self, api: str, json: Optional[Mapping[str, Any]] = None
+    ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().delete(api_url)
+        return self.session().delete(api_url, json=json)
 
     def _patch(
         self,
