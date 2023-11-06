@@ -2291,6 +2291,8 @@ class GitHub:
     # create_global_hook
     # create_organization_hook
     # delete_hook
+    # delete_global_hook
+    # delete_organization_hook
     # ping_hook
     # ping_global_hook
     # ping_organization_hook
@@ -2629,6 +2631,44 @@ class GitHub:
         result = self._delete(
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}'
         )
+        return result.status_code == 204
+
+    @api_call
+    def delete_global_hook(self, hook_id: int) -> bool:
+        """Delete a global webhook.
+
+        # Required parameters
+
+        - hook_id: an integer
+
+        # Returned value
+
+        A boolean.  True when successful.
+        """
+        ensure_instance('hook_id', int)
+
+        result = self._delete(f'admin/hooks/{hook_id}')
+        return result.status_code == 204
+
+    @api_call
+    def delete_organization_hook(
+        self, organization_name: str, hook_id: int
+    ) -> bool:
+        """Delete an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - hook_id: an integer
+
+        # Returned value
+
+        A boolean.  True when successful.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('hook_id', int)
+
+        result = self._delete(f'orgs/{organization_name}/hooks/{hook_id}')
         return result.status_code == 204
 
     @api_call
