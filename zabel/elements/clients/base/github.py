@@ -2284,16 +2284,21 @@ class GitHub:
     # GitHub hook operations
     #
     # list_hooks
+    # list_global_hooks
     # list_organization_hooks
     # get_organization_hook
-    # create_organization_hook
     # create_hook
+    # create_global_hook
+    # create_organization_hook
     # delete_hook
+    # ping_hook
+    # ping_global_hook
+    # ping_organization_hook
 
     @api_call
     def list_hooks(
         self, organization_name: str, repository_name: str
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """List webhooks for repository.
 
         # Required parameters
@@ -2306,18 +2311,18 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - active: a boolean
-        - config: a dictionary
-        - created_at: a string (a timestamp)
-        - events: a list of strings
+        - type: a string (`"Repository"`)
         - id: an integer
-        - last_response: a dictionary
         - name: a string (always `'web'`)
-        - ping_url: a string
-        - test_url: a a string
-        - type: a string
+        - active: a boolean
+        - events: a list of strings
+        - config: a dictionary
         - updated_at: a string (a timestamp)
+        - created_at: a string (a timestamp)
         - url: a string
+        - test_url: a a string
+        - ping_url: a string
+        - last_response: a dictionary
 
         `config` has the following entries:
 
@@ -2327,22 +2332,51 @@ class GitHub:
 
         `last_response` has the following entries:
 
-        - message: a string
+        - message: a string or None
         - code: an integer
-        - status: a string
+        - status: a string or None
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        result = self._get(
+        result = self._collect_data(
             f'repos/{organization_name}/{repository_name}/hooks'
         )
         return result  # type: ignore
 
     @api_call
+    def list_global_hooks(self) -> List[Dict[str, Any]]:
+        """List global webhooks.
+
+        # Returned value
+
+        A list of _hooks_.  A hook is a dictionary with the following
+        entries:
+
+        - type: a string (`"Global"`)
+        - id: an integer
+        - name: a string (always `'web'`)
+        - active: a boolean
+        - events: a list of strings
+        - config: a dictionary
+        - updated_at: a string (a timestamp)
+        - created_at: a string (a timestamp)
+        - url: a string
+        - test_url: a string
+
+        `config` has the following entries:
+
+        - url: a string
+        - content_type: a string
+        - insecure_ssl: a string
+        - secret: a string
+        """
+        return self._collect_data('admin/hooks')
+
+    @api_call
     def list_organization_hooks(
         self, organization_name: str
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """List organization webhooks.
 
         # Required parameters
@@ -2354,35 +2388,28 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
+        - id: an integer
+        - url: a string
+        - ping_url: a string
+        - delivery_url: a string
+        - name: a string (always `'web'`)
+        - events: a list of strings
         - active: a boolean
         - config: a dictionary
-        - created_at: a string (a timestamp)
-        - events: a list of strings
-        - id: an integer
-        - last_response: a dictionary
-        - name: a string (always `'web'`)
-        - ping_url: a string
-        - test_url: a a string
-        - type: a string
         - updated_at: a string (a timestamp)
-        - url: a string
+        - created_at: a string (a timestamp)
+        - type: a string (`"Organization"`)
 
         `config` has the following entries:
 
         - insecure_ssl: a string
         - content_type: a string
         - url: a string
-
-        `last_response` has the following entries:
-
-        - message: a string
-        - code: an integer
-        - status: a string
+        - secret: a string
         """
         ensure_nonemptystring('organization_name')
 
-        result = self._get(f'orgs/{organization_name}/hooks')
-        return result  # type: ignore
+        return self._collect_data(f'orgs/{organization_name}/hooks')
 
     @api_call
     def get_organization_hook(
@@ -2397,69 +2424,12 @@ class GitHub:
 
         # Returned value
 
-        A _hook_.  See #list_hooks() for its format.
+        A _hook_.  See #list_organization_hooks() for its format.
         """
         ensure_nonemptystring('organization_name')
         ensure_instance('hook_id', int)
 
         result = self._get(f'orgs/{organization_name}/hooks/{hook_id}')
-        return result  # type: ignore
-
-    @api_call
-    def create_organization_hook(
-        self,
-        organization_name: str,
-        name: str,
-        config: Dict[str, str],
-        events: Optional[List[str]] = None,
-        active: bool = True,
-    ) -> Dict[str, Any]:
-        """Create an organization webhook.
-
-        # Required parameters
-
-        - organization_name: a non-empty string
-        - name: a string (must be `'web'`)
-        - config: a dictionary
-
-        The `config` dictionary must contain the following entry:
-
-        - url: a string
-
-        It may contain the following entries:
-
-        - content_type: a string
-        - secret: a string
-        - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['push']` by default)
-        - active: a boolean (True by default)
-
-        # Returned value
-
-        A _hook_.  See #list_hooks() for its format.
-        """
-        ensure_nonemptystring('organization_name')
-        if name != 'web':
-            raise ValueError('name must be "web".')
-        ensure_instance('config', dict)
-        ensure_noneorinstance('events', list)
-        ensure_instance('active', bool)
-        if 'url' not in config:
-            raise ValueError('config must contain an "url" entry.')
-        if events is None:
-            events = ['push']
-
-        data = {
-            'name': name,
-            'active': active,
-            'config': config,
-            'events': events,
-        }
-
-        result = self._post(f'orgs/{organization_name}/hooks', json=data)
         return result  # type: ignore
 
     @api_call
@@ -2525,6 +2495,118 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
+    def create_global_hook(
+        self,
+        name: str,
+        config: Dict[str, str],
+        events: Optional[List[str]] = None,
+        active: bool = True,
+    ) -> Dict[str, Any]:
+        """Create a global webhook.
+
+        # Required parameters
+
+        - name: a string (must be `'web'`)
+        - config: a dictionary
+
+        The `config` dictionary must contain the following entry:
+
+        - url: a string
+
+        It may contain the following entries:
+
+        - content_type: a string
+        - secret: a string
+        - insecure_ssl: a string
+
+        # Optional parameters
+
+        - events: a list of strings (`['user', 'organization']` by
+          default)
+        - active: a boolean (True by default)
+
+        # Returned value
+
+        A _hook_.  See #list_global_hooks() for its format.
+        """
+        if name != 'web':
+            raise ValueError('name must be "web".')
+        ensure_instance('config', dict)
+        ensure_noneorinstance('events', list)
+        ensure_instance('active', bool)
+        if 'url' not in config:
+            raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['user', 'organization']
+
+        data = {
+            'name': name,
+            'active': active,
+            'config': config,
+            'events': events,
+        }
+
+        result = self._post('admin/hooks', json=data)
+        return result  # type: ignore
+
+    @api_call
+    def create_organization_hook(
+        self,
+        organization_name: str,
+        name: str,
+        config: Dict[str, str],
+        events: Optional[List[str]] = None,
+        active: bool = True,
+    ) -> Dict[str, Any]:
+        """Create an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - name: a string (must be `'web'`)
+        - config: a dictionary
+
+        The `config` dictionary must contain the following entry:
+
+        - url: a string
+
+        It may contain the following entries:
+
+        - content_type: a string
+        - secret: a string
+        - insecure_ssl: a string
+
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Returned value
+
+        A _hook_.  See #list_organization_hooks() for its format.
+        """
+        ensure_nonemptystring('organization_name')
+        if name != 'web':
+            raise ValueError('name must be "web".')
+        ensure_instance('config', dict)
+        ensure_noneorinstance('events', list)
+        ensure_instance('active', bool)
+        if 'url' not in config:
+            raise ValueError('config must contain an "url" entry.')
+        if events is None:
+            events = ['push']
+
+        data = {
+            'name': name,
+            'active': active,
+            'config': config,
+            'events': events,
+        }
+
+        result = self._post(f'orgs/{organization_name}/hooks', json=data)
+        return result  # type: ignore
+
+    @api_call
     def delete_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
@@ -2547,6 +2629,69 @@ class GitHub:
         result = self._delete(
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}'
         )
+        return result.status_code == 204
+
+    @api_call
+    def ping_hook(
+        self, organization_name: str, repository_name: str, hook_id: int
+    ) -> bool:
+        """Ping a webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - hook_id: an integer
+
+        # Returned value
+
+        A boolean.  True when successful.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_instance('hook_id', int)
+
+        result = self._post(
+            f'repos/{organization_name}/{repository_name}/hooks/{hook_id}/pings'
+        )
+        return result.status_code == 204
+
+    @api_call
+    def ping_global_hook(self, hook_id: int) -> bool:
+        """Ping a global webhook.
+
+        # Required parameters
+
+        - hook_id: an integer
+
+        # Returned value
+
+        A boolean.  True when successful.
+        """
+        ensure_instance('hook_id', int)
+
+        result = self._post(f'admin/hooks/{hook_id}/pings')
+        return result.status_code == 204
+
+    @api_call
+    def ping_organization_hook(
+        self, organization_name: str, hook_id: int
+    ) -> bool:
+        """Ping an organization webhook.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - hook_id: an integer
+
+        # Returned value
+
+        A boolean.  True when successful.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('hook_id', int)
+
+        result = self._post(f'orgs/{organization_name}/hooks/{hook_id}/pings')
         return result.status_code == 204
 
     ####################################################################
