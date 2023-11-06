@@ -101,13 +101,13 @@ class GitHub(Base):
         if self.management_url is None:
             raise ApiError('Management URL is not defined')
 
-        retry = True
-        while retry:
+        while True:
             rep = self.session().get(join_url(self.management_url, report))
-            retry = rep.status_code == 202
-            if retry:
+            if rep.status_code == 202:
                 print('Sleeping...')
                 time.sleep(5)
+            else:
+                break
 
         what = list(csv.reader(rep.text.split('\n')[1:], delimiter=','))
         if not what[-1]:
