@@ -17,9 +17,10 @@ This module depends on the #::.base.github module.
 
 from typing import Any, Dict, List, Optional
 
-import base64
 import csv
 import time
+
+from base64 import b64decode, b64encode
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
@@ -32,6 +33,9 @@ from zabel.commons.utils import (
 )
 
 from .base.github import GitHub as Base
+
+
+MAX_ATTEMPTS = 3
 
 
 class GitHub(Base):
@@ -236,7 +240,7 @@ class GitHub(Base):
             raise ApiError('Content not in base64')
         if result.get('type') != 'file':
             raise ApiError('Content is not a file')
-        result['content'] = str(base64.b64decode(result['content']), 'utf-8')
+        result['content'] = str(b64decode(result['content']), 'utf-8')
         del result['encoding']
         return result
 
@@ -288,7 +292,7 @@ class GitHub(Base):
             repository_name,
             path,
             message,
-            str(base64.b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
+            str(b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
             branch,
             committer,
             author,
@@ -313,6 +317,11 @@ class GitHub(Base):
 
         You must specify at least `sha` or `branch` (you can specify
         both).
+
+        If `sha` is not specified, the sha is retrieved from the
+        `branch` branch, and up to `MAX_ATTMEPTS` attempts are made to
+        update the file, in case the branch is updated between the
+        retrieval of the sha and the update of the file.
 
         # Required parameters
 
@@ -345,23 +354,35 @@ class GitHub(Base):
         if sha is None and branch is None:
             raise ValueError('You must specify at least one of: sha, branch.')
 
-        if sha is None:
-            file: Dict[str, str] = self.get_repository_content(
-                organization_name,
-                repository_name,
-                path,
-                ref=f'refs/heads/{branch}',
-            )
-            sha = file['sha']
+        attempts = 0
+        while True:
+            if sha is None:
+                file: Dict[str, str] = self.get_repository_content(
+                    organization_name,
+                    repository_name,
+                    path,
+                    ref=f'refs/heads/{branch}',
+                )
+                effective_sha = file['sha']
+            else:
+                effective_sha = sha
 
-        return self.update_repository_file(
-            organization_name,
-            repository_name,
-            path,
-            message,
-            str(base64.b64encode(bytes(content, encoding='utf-8')), 'utf-8'),
-            sha,
-            branch,
-            committer,
-            author,
-        )
+            content = str(b64encode(bytes(content, encoding='utf-8')), 'utf-8')
+            try:
+                result = self.update_repository_file(
+                    organization_name,
+                    repository_name,
+                    path,
+                    message,
+                    content,
+                    effective_sha,
+                    branch,
+                    committer,
+                    author,
+                )
+                return result  # type: ignore
+            except ApiError:
+                if sha is None and attempts < MAX_ATTEMPTS:
+                    attempts += 1
+                    continue
+                raise
