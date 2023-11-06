@@ -202,7 +202,7 @@ class GitHub:
         - bio:
         - blog:
         - company:
-        - created_at: a string representing a datetime
+        - created_at: a string (a timestamp)
         - email:
         - events_url: a string
         - followers: an integer
@@ -283,9 +283,9 @@ class GitHub:
     # list_organization_outsidecollaborators
     # get_organization_membership
     # add_organization_membership
-    # rm_organization_membership
-    # add_organization_outside_collaborator
-    # rm_organization_outside_collaborator
+    # remove_organization_membership
+    # add_organization_outsidecollaborator
+    # remove_organization_outsidecollaborator
     # list_organization_teams
     # send_organization_invitation
     #
@@ -669,7 +669,7 @@ class GitHub:
     rm_organization_membership = remove_organization_membership
 
     @api_call
-    def add_organization_outside_collaborator(
+    def add_organization_outsidecollaborator(
         self, organization_name: str, user: str
     ) -> bool:
         """Add outside collaborator to organization.
@@ -692,8 +692,12 @@ class GitHub:
         )
         return (result.status_code // 100) == 2
 
+    add_organization_outside_collaborator = (
+        add_organization_outsidecollaborator
+    )
+
     @api_call
-    def remove_organization_outside_collaborator(
+    def remove_organization_outsidecollaborator(
         self, organization_name: str, user: str
     ) -> bool:
         """Remove outside collaborator from organization.
@@ -717,7 +721,10 @@ class GitHub:
         return (result.status_code // 100) == 2
 
     rm_organization_outside_collaborator = (
-        remove_organization_outside_collaborator
+        remove_organization_outsidecollaborator
+    )
+    remove_organization_outside_collaborator = (
+        remove_organization_outsidecollaborator
     )
 
     ####################################################################
@@ -782,7 +789,7 @@ class GitHub:
     # list_reporitory_teams
     # list_repository_collaborators
     # add_repository_collaborator
-    # rm_repository_collaborator
+    # remove_repository_collaborator
     # list_repository_permissions_user
 
     @api_call
@@ -919,7 +926,7 @@ class GitHub:
         allow_merge_commit: bool = True,
         allow_rebase_merge: bool = True,
     ) -> Dict[str, Any]:
-        """Create a new repository in organization organization_name.
+        """Create a new repository in organization_name.
 
         # Required parameters
 
@@ -990,8 +997,7 @@ class GitHub:
         include_all_branches: bool = False,
         private: bool = False,
     ) -> Dict[str, Any]:
-        """Create a new repository in organization organization_name from a
-        template.
+        """Create a new repository in organization_name from a template.
 
         # Required parameters
 
@@ -1194,11 +1200,11 @@ class GitHub:
         self,
         organization_name: str,
         repository_name: str,
-        sha: Optional['str'] = None,
-        path: Optional['str'] = None,
-        author: Optional['str'] = None,
-        since: Optional['str'] = None,
-        until: Optional['str'] = None,
+        sha: Optional[str] = None,
+        path: Optional[str] = None,
+        author: Optional[str] = None,
+        since: Optional[str] = None,
+        until: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return the list of commits.
 
@@ -1731,7 +1737,7 @@ class GitHub:
 
         # Optional parameters
 
-        - state: a string, one of 'open', 'closed', or 'all' (all by
+        - state: a string, one of `open`, `closed`, or `all` (`all` by
           default)
 
         # Returned value
@@ -1900,7 +1906,7 @@ class GitHub:
         - commit_title: a non-empty string or None (None by default)
         - commit_message: a non-empty string or None (None by default)
         - sha: a non-empty string or None (None by default)
-        - merge_method: a string, one of 'merge', 'squash', or 'rebase',
+        - merge_method: a string, one of `merge`, `squash`, `rebase`,
           or None (None by default)
 
         # Returned value
@@ -2008,8 +2014,8 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - ref: a non-empty string (a fully-qualified reference, starting with
-          `refs` and having at least two slashed)
+        - ref: a non-empty string (a fully-qualified reference, starting
+          with `refs` and having at least two slashed)
         - sha: a non-empty string
 
         # Optional parameters
@@ -2062,8 +2068,8 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - ref: a non-empty string (a fully-qualified reference, starting with
-          `refs` and having at least two slashed)
+        - ref: a non-empty string (a fully-qualified reference, starting
+          with `refs` and having at least two slashed)
 
         # Returned value
 
@@ -2313,17 +2319,17 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`"Repository"`)
+        - type: a string (`Repository`)
         - id: an integer
-        - name: a string (always `'web'`)
+        - name: a string (always `web`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
         - updated_at: a string (a timestamp)
         - created_at: a string (a timestamp)
         - url: a string
-        - test_url: a a string
         - ping_url: a string
+        - test_url: a a string
         - last_response: a dictionary
 
         `config` has the following entries:
@@ -2355,9 +2361,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`"Global"`)
+        - type: a string (`Global`)
         - id: an integer
-        - name: a string (always `'web'`)
+        - name: a string (always `web`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -2390,17 +2396,17 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
+        - type: a string (`Organization`)
         - id: an integer
-        - url: a string
-        - ping_url: a string
-        - delivery_url: a string
-        - name: a string (always `'web'`)
-        - events: a list of strings
+        - name: a string (always `web`)
         - active: a boolean
+        - events: a list of strings
         - config: a dictionary
         - updated_at: a string (a timestamp)
         - created_at: a string (a timestamp)
-        - type: a string (`"Organization"`)
+        - url: a string
+        - ping_url: a string
+        - delivery_url: a string
 
         `config` has the following entries:
 
@@ -2450,7 +2456,7 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - name: a string (must be `'web'`)
+        - name: a string (must be `web`)
         - config: a dictionary
 
         The `config` dictionary must contain the following entry:
@@ -2508,7 +2514,7 @@ class GitHub:
 
         # Required parameters
 
-        - name: a string (must be `'web'`)
+        - name: a string (must be `web`)
         - config: a dictionary
 
         The `config` dictionary must contain the following entry:
@@ -2565,7 +2571,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - name: a string (must be `'web'`)
+        - name: a string (must be `web`)
         - config: a dictionary
 
         The `config` dictionary must contain the following entry:
@@ -2791,11 +2797,11 @@ class GitHub:
         A list of _seats_.  A seat is a dictionary with the following
         entries:
 
-        - created_at: a string representing a datetime
+        - created_at: a string (a timestamp)
         - assignee: a dictionary
-        - updated_at: a string representing a datetime
-        - pending_cancellation_date: a string representing a datetime
-        - last_activity_at: a string representing a datetime
+        - updated_at: a string (a timestamp)
+        - pending_cancellation_date: a string (a timestamp)
+        - last_activity_at: a string (a timestamp)
         - last_activity_editor: a string
         """
         ensure_nonemptystring('organization_name')
@@ -2883,17 +2889,17 @@ class GitHub:
 
         # Optional parameters
 
-        - what: a string (`'all'` by default)
+        - what: a string (`all` by default)
 
-        `what` can be `'issues'`, `'hooks'`, `'milestones'`, `'orgs'`,
-        `'comments'`, `'pages'`, `'users'`, `'gists'`, `'pulls'`,
-        `'repos'` or `'all'`.
+        `what` can be `all`, `comments`, `gists`, `hooks`, `issues`,
+        `milestones`, `orgs`, `pages`, `pulls`, `repos`,
+        `security-products`, or `users`.
 
         Requires sysadmin rights.
 
         # Returned value
 
-        A dictionary with either one entry (if `what` is not `'all'`)
+        A dictionary with either one entry (if `what` is not `all`)
         or one entry per item.
 
         Values are dictionaries.
