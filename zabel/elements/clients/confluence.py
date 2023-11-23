@@ -134,29 +134,3 @@ class Confluence(Base):
         page['version'] = {'number': page['version']['number'] + 1}
 
         return self.update_page(page_id, page)
-
-    @api_call
-    def delete_space(self, space_key: str) -> None:
-        """Delete a space.
-
-        # Required parameters
-
-        - space_key: a non-empty string
-
-        # Returned value
-
-        None.
-        """
-        ensure_noneornonemptystring('space_key')
-
-        response = self._delete(f'/space/{space_key}')
-        
-        if response.status_code == 202:
-            longtask = response.json()
-            longtask_id = longtask['id']
-            percentageComplete = 0
-            while percentageComplete != 100:
-                longtask = self.get_longtask(longtask_id)
-                percentageComplete = longtask['percentageComplete']
-                print(f"Space deletion in progress: {percentageComplete}%")
-                time.sleep(10)

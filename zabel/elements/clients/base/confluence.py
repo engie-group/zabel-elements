@@ -903,6 +903,7 @@ class Confluence:
     # list_space_permissions*
     # list_space_permissionsets*
     # create_space
+    # delete_space
     # add_space_label*
     # remove_space_permission*
     # add_space_permissions*
@@ -1185,7 +1186,24 @@ class Confluence:
             'space' if public else 'space/_private', definition
         )
         return result  # type: ignore
+    
+    @api_call
+    def delete_space(self, space_key: str) -> Dict[str, Any]:
+        """Delete a space.
 
+        # Required parameters
+
+        - space_key: a non-empty string
+
+        # Returned value
+
+        None.
+        """
+        ensure_noneornonemptystring('space_key')
+
+        response = self._delete(f'/space/{space_key}')
+        return response
+    
     @api_call
     def add_space_label(self, space_key: str, label: str) -> bool:
         """Add label to space.
