@@ -17,8 +17,6 @@ This module depends on the #::.base.confluence module.
 
 from typing import Any, Dict, List, Union, Optional
 
-import time
-
 from zabel.commons.utils import (
     api_call,
     ensure_instance,
