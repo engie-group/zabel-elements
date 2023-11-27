@@ -1197,7 +1197,10 @@ class Confluence:
 
         # Returned value
 
-        None.
+        A dictionary with the following entries:
+        
+        - id: a string
+        - links: a dictionary
         """
         ensure_noneornonemptystring('space_key')
 
