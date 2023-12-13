@@ -903,6 +903,7 @@ class Confluence:
     # list_space_permissions*
     # list_space_permissionsets*
     # create_space
+    # delete_space
     # add_space_label*
     # remove_space_permission*
     # add_space_permissions*
@@ -1185,7 +1186,27 @@ class Confluence:
             'space' if public else 'space/_private', definition
         )
         return result  # type: ignore
+    
+    @api_call
+    def delete_space(self, space_key: str) -> Dict[str, Any]:
+        """Delete a space.
 
+        # Required parameters
+
+        - space_key: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+        
+        - id: a string
+        - links: a dictionary
+        """
+        ensure_noneornonemptystring('space_key')
+
+        response = self._delete(f'/space/{space_key}')
+        return response
+    
     @api_call
     def add_space_label(self, space_key: str, label: str) -> bool:
         """Add label to space.
@@ -1992,6 +2013,71 @@ class Confluence:
             == 'true'
         )
 
+    ####################################################################
+    # Confluence long tasks
+    #
+    # list_longtasks
+    # get_longtask
+
+    @api_call
+    def list_longtasks(self, expand: Optional[str] = None, start: Optional[int] = None, limit: int=100) -> List[Dict[str, Any]]:
+        """Return a list of long tasks.
+        
+        # Optional parameters
+        
+        - expand: a string or None (None by default)
+        - start: an integer or None (None by default)
+        - limit: an integer (`100` by default)
+        
+        # Returned value
+        
+        A possibly empty list of items.  Items are dictionaries.
+        """
+        
+        ensure_noneornonemptystring('expand')
+        ensure_noneorinstance('start', int)
+        ensure_instance('limit', int)
+        
+        params = {'limit': str(limit)}
+        add_if_specified(params, 'expand', expand)
+        add_if_specified(params, 'start', start)
+        
+        return self._collect_data('longtask', params=params)
+    
+    @api_call
+    def get_longtask(self, task_id: Union[str, int], expand: Optional[str] = None) -> Dict[str, Any]:
+        """Return the definition of a long task.
+        
+        # Required parameters
+        
+        - task_id: an integer or a string
+        
+        # Optional parameters
+        
+        - expand: a string or None (None by default)
+        
+        # Returned value
+        
+        A dictionary with the following entries (assuming the default
+        for `expand`):
+        
+        - id: a string
+        - name: a dictionary
+        - elapsedTime: an integer
+        - percentageComplete: an integer
+        - successful: a boolean
+        - messages: a list of dictionaries
+        - _links: a dictionary
+        """
+        
+        ensure_instance('task_id', (str, int))
+        ensure_noneornonemptystring('expand')
+        
+        params = {}
+        add_if_specified(params, 'expand', expand)
+        result = self._get(f'longtask/{task_id}', params=params)
+        return result
+        
     ####################################################################
     # confluence helpers
 
