@@ -37,6 +37,7 @@ from zabel.commons.utils import (
     ensure_noneorinstance,
     ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 
