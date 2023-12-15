@@ -346,7 +346,6 @@ class GitHub:
     def send_organization_invitation(
         self,
         organization_name: str,
-        *,
         invitee_id: Optional[int] = None,
         email: Optional[str] = None,
         role: str = 'direct_member',
