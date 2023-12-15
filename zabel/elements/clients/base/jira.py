@@ -24,6 +24,7 @@ import re
 
 from urllib.parse import urlencode
 
+
 import requests
 
 from zabel.commons.exceptions import ApiError
@@ -36,7 +37,6 @@ from zabel.commons.utils import (
     ensure_noneorinstance,
     ensure_onlyone,
     join_url,
-    BearerAuth,
 )
 
 
@@ -3137,7 +3137,7 @@ class Jira:
     # get_issue_fields
     # create_issue
     # create_issues
-    # TODO delete_issue
+    # delete_issue
     # update_issue
     # assign_issue
     # TEST add_issue_attachment
@@ -3386,6 +3386,31 @@ class Jira:
         ensure_instance('issue_list', list)
 
         return self._client().create_issues(field_list=issue_list)
+    
+    @api_call
+    def delete_issue(
+        self, issue_id_or_key: str, delete_subtasks: bool = True
+    ) -> bool:
+        """Delete a issue.
+
+        # Required parameters
+
+         - issue_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - delete_subtasks: a boolean (True by default)
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+
+        """
+        ensure_nonemptystring('issue_id_or_key')
+
+        result = self._delete(f'issue/{issue_id_or_key}',json_data={'deleteSubtasks': str(delete_subtasks)}
+        )
+        return result.status_code == 204 
 
     @api_call
     def assign_issue(self, issue_id_or_key: str, assignee: str) -> bool:
@@ -3408,6 +3433,8 @@ class Jira:
         ensure_nonemptystring('assignee')
 
         return self._client().assign_issue(issue_id_or_key, assignee)
+    
+    
 
     @api_call
     def update_issue(
@@ -3500,12 +3527,39 @@ class Jira:
     ####################################################################
     # JIRA sprints
     #
+    # get_sprint
     # create_sprint
-    # TODO delete_sprint
+    # delete_sprint
     # update_sprint
-    # TODO get_sprint
     # add_sprint_issues
     # TODO get_sprint_issues
+
+
+    @api_call
+    def get_sprint(
+        self,
+        sprint_id: int,
+    ) -> Dict[str, Any]:
+        """Get a sprint by id.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Returned value
+
+        Dictionary with the following entries:
+
+        """
+        ensure_instance('sprint_id', int)
+
+        result = self.session().get(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
+        )
+
+        return result.json()
+
+
 
     @api_call
     def create_sprint(
@@ -3536,6 +3590,29 @@ class Jira:
             .create_sprint(name, board_id, start_date, end_date)
             .raw
         )
+    
+    @api_call
+    def delete_sprint(
+        self,
+        sprint_id: int,
+    ) -> bool:
+        """Delete existing sprint, only future sprints can be deleted.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Returned value
+
+        None.
+        """
+        ensure_instance('sprint_id', int)
+
+        result = self.session().delete(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
+        )
+
+        return result.status_code == 204 
 
     @api_call
     def update_sprint(
@@ -4073,6 +4150,27 @@ class Jira:
         return requests.post(
             api_url, json=json, auth=self.auth, verify=self.verify
         )
+    
+    def _delete(
+        self, 
+        api: str, 
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None
+    ) -> requests.Response:
+        api_url = self._get_url(api)
+        return requests.delete(
+            api_url, json=json_data, params=params, auth=self.auth, verify=self.verify, timeout=10
+        )
+
+    def _put(
+        self, api: str, json_data: Optional[Mapping[str, Any]] = None
+    ) -> requests.Response:
+        api_url = self._get_url(api)
+        return requests.put(
+            api_url, json=json_data, auth=self.auth, verify=self.verify, timeout=10
+        )    
 
     def _collect_data(
         self,
