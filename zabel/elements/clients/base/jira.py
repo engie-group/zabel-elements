@@ -3533,7 +3533,7 @@ class Jira:
     # delete_sprint
     # update_sprint
     # add_sprint_issues
-    # TODO get_sprint_issues
+    # get_sprint_issues
 
 
     @api_call
@@ -3550,6 +3550,13 @@ class Jira:
         # Returned value
 
         Dictionary with the following entries:
+        -id: a string, 
+        -self : a string, 
+        -state': a string,
+        -name: a string
+        -originBoardId: a string, 
+        -synced: boolean, 
+        -autoStartStop: boolean
 
         """
         ensure_instance('sprint_id', int)
@@ -3559,8 +3566,7 @@ class Jira:
         )
 
         return result.json()
-
-
+    
 
     @api_call
     def create_sprint(
@@ -3684,6 +3690,49 @@ class Jira:
         """
         return self._client().add_issues_to_sprint(sprint_id, issue_keys)
 
+    @api_call
+    def get_sprint_issues(
+        self, 
+        sprint_id: int, 
+        params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Returns all issues in a sprint, for a given sprint Id.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Optional parameters
+
+        - params: a dictionary or None (None by default)
+
+        `params`, if provided, is a dictionary with at least one of the
+        following entries:
+
+        
+        - startAt: an integer
+        - maxResults: an integer
+        - jql: a string
+        - validateQuery: a boolean
+        - fields: a list of strings
+        - expand: a string
+        
+
+        # Returned value
+
+        A list of _issues_.  Each issue is a dictionary with the
+        following entries:
+
+        - status: a string (`'Success'` or `'Error'`)
+        - error: a string or None (in case of success)
+        - issue: a dictionary or None
+        - input_fields: a dictionary, the corresponding entry in
+          `issue_list
+        """
+        ensure_noneorinstance('params', dict)
+
+        return self._collect_agile_data(f'sprint/{sprint_id}/issue', params=params)
+    
     ####################################################################
     # Xray for JIRA
     #
