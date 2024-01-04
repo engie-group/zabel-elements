@@ -481,7 +481,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
 
         return self._collect_data(
-            f'orgs/{organization_name}/pending_invitations'
+            f'orgs/{organization_name}/invitations'
         )
 
     @api_call
