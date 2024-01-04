@@ -279,6 +279,9 @@ class GitHub:
     # remove_organization_outsidecollaborator
     # list_organization_teams
     # send_organization_invitation
+    # cancel_organization_invitation
+    # list_failed_invitations
+    # list_pending_invitations
     #
     # Part of enterprise administration
     # create_organization
@@ -395,6 +398,91 @@ class GitHub:
 
         result = self._post(f'orgs/{organization_name}/invitations', json=data)
         return result  # type: ignore
+
+    @api_call
+    def cancel_organization_invitation(
+        self, organization_name: str, invitation_id: int
+    ) -> bool:
+        """Cancel an invitation to an user to join an organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - invitation_id: an integer
+
+        # Returned value
+
+        A boolean.  True if the invitation was cancelled.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_instance('invitation_id', int)
+
+        result = self._delete(
+            f'orgs/{organization_name}/invitations/{invitation_id}'
+        )
+        return (result.status_code // 100) == 2
+
+    @api_call
+    def list_failed_invitations(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return list of failed invitations.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _failed invitations_.  Each failed invitation is a dictionary with the following
+        keys:
+
+        - id: an integer
+        - login: a string
+        - node_id: a string
+        - email: a string
+        - role: a string
+        - created_at: a string
+        - failed_at: a string
+        - failed_reason: a string
+        - inviter: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(
+            f'orgs/{organization_name}/failed_invitations'
+        )
+
+    @api_call
+    def list_pending_invitations(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return list of pending invitations.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _pending invitations_.  Each pending invitation is a dictionary with the following
+        keys:
+
+        - id: an integer
+        - login: a string
+        - node_id: a string
+        - email: a string
+        - role: a string
+        - created_at: a string
+        - failed_at: a string
+        - failed_reason: a string
+        - inviter: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(
+            f'orgs/{organization_name}/pending_invitations'
+        )
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
