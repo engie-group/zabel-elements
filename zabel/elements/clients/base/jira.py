@@ -75,10 +75,10 @@ def _get_scheme_id(
     if isinstance(name_or_id, str):
         matches = [s['id'] for s in schemes if s['name'] == name_or_id]
         if len(matches) != 1:
-            raise ApiError('Scheme %s not found.' % name_or_id)
+            raise ApiError(f'Scheme {name_or_id} not found.')
         return str(matches.pop())
     if not any(str(s['id']) == str(name_or_id) for s in schemes):
-        raise ApiError('Scheme ID %s not found.' % str(name_or_id))
+        raise ApiError(f'Scheme ID {str(name_or_id)} not found.')
     return str(name_or_id)
 
 
@@ -1015,7 +1015,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Notification Scheme %s could not be found.' % scheme_id
+                f'Notification Scheme {scheme_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1082,7 +1082,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Priority Scheme %s could not be found.' % scheme_id
+                f'Priority Scheme {scheme_id} could not be found.' 
             )
 
         self._do_form_step(
@@ -1156,7 +1156,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Field Configuration Scheme %s could not be found.' % scheme_id
+                f'Field Configuration Scheme {scheme_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1226,7 +1226,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Field Configuration %s could not be found.' % conf_id
+                f'Field Configuration {conf_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1303,8 +1303,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Workflow %s not found or attached to project(s).'
-                % workflow_name
+                f'Workflow {workflow_name} not found or attached to project(s).'
             )
 
         self._do_form_step(
@@ -1366,7 +1365,7 @@ class Jira:
             )
             scheme = self._get_json(f'workflowscheme/{scheme_id}')
             if scheme['name'] != scheme_id_or_name:
-                raise ApiError('Scheme %s not found.' % scheme_id_or_name)
+                raise ApiError(f'Scheme {scheme_id_or_name} not found.')
         else:
             scheme_id = str(scheme_id_or_name)
 
@@ -1374,6 +1373,7 @@ class Jira:
             self._get_url(f'workflowscheme/{scheme_id}'),
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
 
     ####################################################################
@@ -1482,6 +1482,7 @@ class Jira:
             join_url(self.url, '/secure/project/BrowseProjects.jspa'),
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         upd = result.text.split(
             'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
@@ -1715,7 +1716,7 @@ class Jira:
             return self._get_json(
                 f'project/{project_id_or_key}/notificationscheme'
             )
-        except:
+        except ApiError:
             return None
 
     @api_call
@@ -1751,12 +1752,11 @@ class Jira:
             ]
             if len(nss) > 1:
                 raise ApiError(
-                    'More than one notificationscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one notificationscheme with name {scheme_id_or_name}.'
                 )
             if not nss:
                 raise ApiError(
-                    'No notificationscheme with name %s.' % scheme_id_or_name
+                    f'No notificationscheme with name {scheme_id_or_name}.'
                 )
             scheme_id = nss[0]
 
@@ -1832,12 +1832,11 @@ class Jira:
             ]
             if len(pss) > 1:
                 raise ApiError(
-                    'More than one permissionscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one permissionscheme with name {scheme_id_or_name}.'
                 )
             if not pss:
                 raise ApiError(
-                    'No permissionscheme with name %s.' % scheme_id_or_name
+                    f'No permissionscheme with name {scheme_id_or_name}.'
                 )
             data = {'id': pss[0]}
 
@@ -1918,17 +1917,17 @@ class Jira:
                     self._get_url('priorityschemes'),
                     auth=self.auth,
                     verify=self.verify,
+                    timeout=10
                 ).json()['schemes']
                 if ps['name'] == scheme_id_or_name
             ]
             if len(pss) > 1:
                 raise ApiError(
-                    'More than one priorityscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one priorityscheme with name {scheme_id_or_name}.'
                 )
             if not pss:
                 raise ApiError(
-                    'No priorityscheme with name %s.' % scheme_id_or_name
+                    f'No priorityscheme with name {scheme_id_or_name}.'
                 )
             data = {'id': pss[0]}
 
@@ -2216,6 +2215,7 @@ class Jira:
             json={'url': url, 'name': description, 'icon': ''},
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -2874,6 +2874,7 @@ class Jira:
             json=data,
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -2900,6 +2901,7 @@ class Jira:
             join_url(self.AGILE_BASE_URL, f'board/{board_id}'),
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -2948,6 +2950,7 @@ class Jira:
             params={'rapidViewId': board_id},
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -2997,6 +3000,7 @@ class Jira:
             json={'id': board_id, 'boardAdmins': board_admins},
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -3056,7 +3060,7 @@ class Jira:
         if statistics_field not in [
             sf['id'] for sf in model['rapidListConfig']['statisticsFields']
         ]:
-            raise ApiError('Unknown statistics_field %s.' % statistics_field)
+            raise ApiError(f'Unknown statistics_field {statistics_field}.')
 
         # collecting known statuses
         statuses = list(model['rapidListConfig']['unmappedStatuses'])
@@ -3070,9 +3074,9 @@ class Jira:
             col_statuses = []
             for name in col['mappedStatuses']:
                 if name in mapped_names:
-                    raise ApiError('Status %s mapped more than once.' % name)
+                    raise ApiError(f'Status {name} mapped more than once.')
                 if name not in statuses_names:
-                    raise ApiError('Unknown status %s.' % name)
+                    raise ApiError(f'Unknown status {name}.')
                 mapped_names.append(name)
                 col_statuses.append(name)
             column_definition = col.copy()
@@ -3090,6 +3094,7 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -3123,6 +3128,7 @@ class Jira:
             json={'rapidViewId': board_id, 'showDaysInColumn': days_in_column},
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -3311,8 +3317,7 @@ class Jira:
             ]
             if len(transitions) != 1:
                 raise ApiError(
-                    'Got %d transitions to %s, was expecting one.'
-                    % (len(transitions), name)
+                    f'Got {len(transitions)} transitions to {name}, was expecting one.'
                 )
             self._client().transition_issue(issue_id_or_key, transitions[0])
 
@@ -3692,8 +3697,8 @@ class Jira:
 
     @api_call
     def get_sprint_issues(
-        self, 
-        sprint_id: int, 
+        self,
+        sprint_id: int,
         params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Returns all issues in a sprint, for a given sprint Id.
@@ -3737,6 +3742,9 @@ class Jira:
     # Xray for JIRA
     #
     # list_xray_projects
+    # enable_xray_to_project
+    # disable_xray_to_project
+    
 
     @api_call
     def list_xray_projects(self) -> List[Dict[str, Any]]:
@@ -3755,17 +3763,65 @@ class Jira:
         - avatarId: an integer
         - type: a string (the project type)
 
-        TODO: support more than 100 projects.
         """
-        params = {'iDisplayStart': 0, 'iDisplayLength': 100}
+        max_projects = self._get_max_xray_projects()
 
+        params = {'iDisplayStart': 0, 'iDisplayLength': max_projects}
         result = requests.get(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
+            timeout=10
         ).json()
 
         return result['entries']
+    
+    @api_call
+    def enable_xray_to_project(self, project_id:int) -> bool:
+        """Enable Xray to the given jira project.
+
+        # Required parameters
+
+        - project_id: an integer
+
+        # Returned value
+
+        true if successful, false otherwise.
+
+        """
+        ensure_instance('project_id', int)
+        body = f'[{project_id}]'
+        result = requests.post(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            data=body,
+            auth=self.auth,
+            timeout=10
+        ).json()
+
+        return result[0] == project_id
+    
+    @api_call
+    def disable_xray_to_project(self, project_id:int) -> bool:
+        """Disable Xray to the given jira project.
+
+        # Required parameters
+
+        - project_id: an integer
+
+        # Returned value
+        true if successful, false otherwise.
+
+        """
+        ensure_instance('project_id', int)
+        params = {'projectKeys': project_id}
+        result = requests.delete(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            params=params,
+            auth=self.auth,
+            timeout=10
+        ).json()
+
+        return result[0] == project_id
 
     ####################################################################
     # JIRA Service Desk
@@ -3818,6 +3874,7 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -3867,6 +3924,7 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return response  # type: ignore
 
@@ -3925,6 +3983,7 @@ class Jira:
             json={'body': body, 'public': public},
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -3950,6 +4009,8 @@ class Jira:
             join_url(self.SDBUNDLE_BASE_URL, 'jsdbundled/getBundledFields'),
             params={'contextId': context_id, 'customFieldId': customfield_id},
             auth=self.auth,
+            verify=self.verify,
+            timeout=10
         )
         return result  # type: ignore
 
@@ -4065,7 +4126,10 @@ class Jira:
         Not all entries are present for all plugins.
         """
         return requests.get(
-            self.UPM_BASE_URL, auth=self.auth, verify=self.verify
+            self.UPM_BASE_URL,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=10
         ).json()['plugins']
 
     @api_call
@@ -4191,6 +4255,7 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
 
     def _post(
@@ -4198,7 +4263,11 @@ class Jira:
     ) -> requests.Response:
         api_url = self._get_url(api)
         return requests.post(
-            api_url, json=json, auth=self.auth, verify=self.verify
+            api_url,
+            json=json,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=10
         )
     
     def _delete(
@@ -4318,6 +4387,7 @@ class Jira:
             cookies=cookies,
             auth=self.auth,
             verify=self.verify,
+            timeout=10
         )
 
     def _get_projectconfig_scheme(
@@ -4334,7 +4404,7 @@ class Jira:
             r'class="project-config-scheme-name"[^>]+>([^<]+)<', page.text
         )
         if match is None:
-            raise ApiError('Scheme %s not found' % scheme)
+            raise ApiError(f'Scheme {scheme} not found')
         return match.group(1)
 
     def _get_projectconfig_option(
@@ -4345,5 +4415,17 @@ class Jira:
             r'<option value="(\d+)"[^>]*>\s*%s\s*</option>' % scheme, page.text
         )
         if option is None:
-            raise ApiError('Scheme %s not found.' % scheme)
+            raise ApiError(f'Scheme {scheme} not found.')
         return page, option.group(1)
+    
+    def _get_max_xray_projects(self) -> int:
+        """Return the maximum number of Xray projects."""
+
+        params = {'iDisplayStart': 0, 'iDisplayLength': 1}
+        result = requests.get(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            params=params,
+            auth=self.auth,
+            timeout=10.
+        ).json()
+        return result['iTotalRecords']
