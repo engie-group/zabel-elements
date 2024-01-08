@@ -64,8 +64,15 @@ class Okta:
     # list_groups_by_user_id
 
     @api_call
-    def list_users(self) -> List[Dict[str, Any]]:
+    def list_users(
+        self, query_params: Dict[str, str] = {}
+    ) -> List[Dict[str, Any]]:
         """Return users list.
+
+        # Optional parameters
+
+        - query_params: a dictionary.  Refer to Okta API documentation for
+            more information.
 
         # Returned value
 
@@ -73,8 +80,10 @@ class Okta:
         #get_user_info() for its format.
         """
 
-        async def list_users_async(self):
-            users, response, error = await self._client().list_users()
+        async def list_users_async(self, params: Dict[str, str] = {}):
+            users, response, error = await self._client().list_users(
+                query_params=params
+            )
             if error:
                 raise ApiError(error)
             collected = users
@@ -87,7 +96,7 @@ class Okta:
             return users_dict
 
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(list_users_async(self))
+        return loop.run_until_complete(list_users_async(self, query_params))
 
     @api_call
     def get_user_info(self, user: str) -> Dict[str, Any]:

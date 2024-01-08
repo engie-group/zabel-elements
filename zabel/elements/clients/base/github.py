@@ -17,7 +17,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import requests
 
@@ -33,7 +33,6 @@ from zabel.commons.utils import (
     ensure_noneornonemptystring,
     ensure_onlyone,
     join_url,
-    BearerAuth,
 )
 
 
@@ -88,8 +87,8 @@ class GitHub:
     def __init__(
         self,
         url: str,
-        basic_auth: Optional[Tuple[str, str]] = None,
-        bearer_auth: Optional[str] = None,
+        user: str,
+        token: str,
         management_url: Optional[str] = None,
         verify: bool = True,
     ) -> None:
@@ -103,8 +102,8 @@ class GitHub:
         # Required parameters
 
         - url: a non-empty string
-        - basic_auth: a string tuple (user, token)
-        - bearer_auth: a string
+        - user: a string
+        - token: a string
 
         # Optional parameters
 
@@ -117,20 +116,12 @@ class GitHub:
         if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_onlyone('basic_auth', 'bearer_auth')
-        ensure_noneorinstance('basic_auth', tuple)
-        ensure_noneorinstance('bearer_auth', str)
+        ensure_instance('user', str)
+        ensure_instance('token', str)
         ensure_noneornonemptystring('management_url')
 
         self.url = url
-        self.basic_auth = basic_auth
-        self.bearer_auth = bearer_auth
-
-        if basic_auth is not None:
-            self.auth = basic_auth
-        if bearer_auth is not None:
-            self.auth = BearerAuth(bearer_auth)
-
+        self.auth = (user, token)
         self.management_url = management_url
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
@@ -394,7 +385,6 @@ class GitHub:
     def send_organization_invitation(
         self,
         organization_name: str,
-        *,
         invitee_id: Optional[int] = None,
         email: Optional[str] = None,
         role: str = 'direct_member',
