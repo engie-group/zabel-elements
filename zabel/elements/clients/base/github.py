@@ -17,7 +17,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import requests
 
@@ -33,6 +33,7 @@ from zabel.commons.utils import (
     ensure_noneornonemptystring,
     ensure_onlyone,
     join_url,
+    BearerAuth,
 )
 
 
@@ -72,7 +73,7 @@ class GitHub:
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
-    gh = GitHub(url, bearer_auth=token)
+    gh = GitHub(url, basic_auth=(user, token))
     gh.list_users()
 
     # enabling management features
@@ -87,8 +88,11 @@ class GitHub:
     def __init__(
         self,
         url: str,
-        user: str,
-        token: str,
+        user: Optional[str] = None,
+        token: Optional[str] = None,
+        *,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        bearer_auth: Optional[str] = None,
         management_url: Optional[str] = None,
         verify: bool = True,
     ) -> None:
@@ -99,11 +103,14 @@ class GitHub:
 
         Some methods require an Enterprise Cloud account.
 
+        The legacy `user` and `token` parameters are still supported.
+
         # Required parameters
 
         - url: a non-empty string
-        - user: a string
-        - token: a string
+        - basic_auth: a string tuple (user, token) or None (None by
+          default)
+        - bearer_auth: a string or None (None by default)
 
         # Optional parameters
 
@@ -116,12 +123,17 @@ class GitHub:
         if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_instance('user', str)
-        ensure_instance('token', str)
+        ensure_noneorinstance('user', str)
+        ensure_noneorinstance('token', str)
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_noneorinstance('bearer_auth', str)
         ensure_noneornonemptystring('management_url')
 
         self.url = url
-        self.auth = (user, token)
+        if basic_auth is not None or bearer_auth is not None:
+            self.auth = basic_auth or BearerAuth(bearer_auth)
+        else:
+            self.auth = (user, token)
         self.management_url = management_url
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
@@ -385,6 +397,7 @@ class GitHub:
     def send_organization_invitation(
         self,
         organization_name: str,
+        *,
         invitee_id: Optional[int] = None,
         email: Optional[str] = None,
         role: str = 'direct_member',
