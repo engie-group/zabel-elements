@@ -271,6 +271,45 @@ class GitHub:
         return self._delete(f'users/{user_name}/suspended').status_code == 204
 
     ####################################################################
+    # Personal access tokens
+    #
+    # list_tokens
+    # delete_token
+
+    @api_call
+    def list_tokens(self) -> List[Dict[str, Any]]:
+        """Return the list of personal access tokens.
+
+        # Returned value
+
+        A list of _tokens_.  A token is a dictionary with the following
+        entries:
+
+        - id: an integer
+        - name: a string
+        - url: a string
+        - token_last_eight: a string
+        - created_at: a string (a timestamp)
+        - updated_at: a string (a timestamp)
+        - scopes: a list of strings
+        """
+        return self._collect_data('admin/tokens')
+
+    @api_call
+    def delete_token(self, token_id: int) -> bool:
+        """Delete a personal access token.
+
+        # Required parameters
+
+        - token_id: an integer
+
+        # Returned value
+
+        A boolean.  True if the deletion was successful.
+        """
+        return self._delete(f'admin/tokens/{token_id}').status_code == 204
+
+    ####################################################################
     # GitHub organizations
     #
     # organization name = login key
@@ -726,6 +765,166 @@ class GitHub:
     remove_organization_outside_collaborator = (
         remove_organization_outsidecollaborator
     )
+
+    ####################################################################
+    # GitHub apps
+    #
+    # https://docs.github.com/en/enterprise-server@3.10/rest/orgs/personal-access-tokens?apiVersion=2022-11-28
+
+    @api_call
+    def get_app(self, app_slug: str) -> Dict[str, Any]:
+        """Return the app details.
+
+        # Required parameters
+
+        - app_slug: a non-empty string
+
+        # Returned value
+
+        An _app_.  An app is a dictionary with the following entries:
+
+        - id: an integer
+        - node_id: a string
+        - owner: a dictionary
+        - name: a string
+        - description: a string
+        - external_url: a string
+        - html_url: a string
+        - created_at: a string
+        - updated_at: a string
+        - permissions: a dictionary
+        - events: a list of strings
+        - installations_count: an integer
+        - slug: a string
+        """
+        ensure_nonemptystring('app_slug')
+
+        return self._get(f'app/{app_slug}')  # type: ignore
+
+    @api_call
+    def list_app_installations(self) -> List[Dict[str, Any]]:
+        """Return the list of app installations.
+
+        !!! warning
+            Requires a JWT-based authentication.
+
+        # Returned value
+
+        A list of _installations_.  Each installation is a dictionary
+        with the following entries:
+
+        - id: an integer
+        - account: a dictionary
+        - repository_selection: a string
+        - access_tokens_url: a string
+        - repositories_url: a string
+        - html_url: a string
+        - app_id: an integer
+        - target_id: an integer
+        - target_type: a string
+        - permissions: a dictionary
+        - events: a list of strings
+        - created_at: a string
+        - updated_at: a string
+        - single_file_name: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data('app/installations')
+
+    @api_call
+    def get_app_installation(self, installation_id: int) -> Dict[str, Any]:
+        """Return the app installation details.
+
+        !!! warning
+            Requires a JWT-based authentication.
+
+        # Required parameters
+
+        - installation_id: an integer
+
+        # Returned value
+
+        An _installation_.  An installation is a dictionary with the
+        following entries:
+
+        - id: an integer
+        - account: a dictionary
+        - repository_selection: a string
+        - access_tokens_url: a string
+        - repositories_url: a string
+        - html_url: a string
+        - app_id: an integer
+        - target_id: an integer
+        - target_type: a string
+        - permissions: a dictionary
+        - events: a list of strings
+        - created_at: a string
+        - updated_at: a string
+        - single_file_name: a string
+        """
+        ensure_instance('installation_id', int)
+
+        return self._get(f'app/installations/{installation_id}')  # type: ignore
+
+    @api_call
+    def delete_app_installation(self, installation_id: int) -> bool:
+        """Delete the app installation.
+
+        !!! warning
+            Requires a JWT-based authentication.
+
+        # Required parameters
+
+        - installation_id: an integer
+
+        # Returned value
+
+        A boolean.  True if the installation has been deleted.
+        """
+        ensure_instance('installation_id', int)
+
+        return (
+            self._delete(f'app/installations/{installation_id}').status_code
+            == 204
+        )
+
+    @api_call
+    def create_app_installation_access_token(
+        self,
+        installation_id: int,
+        repositories: Optional[List[str]] = None,
+        permissions: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create an access token for the app installation.
+
+        !!! warning
+            Requires a JWT-based authentication.
+
+        # Required parameters
+
+        - installation_id: an integer
+
+        # Returned value
+
+        An _access token_.  An access token is a dictionary with the
+        following entries:
+
+        - token: a string
+        - expires_at: a string
+        - permissions: a dictionary
+        - repository_selection: a string
+        - repository_ids: a list of integers
+        """
+        ensure_instance('installation_id', int)
+
+        data = {}
+        add_if_specified(data, 'repositories', repositories)
+        add_if_specified(data, 'permissions', permissions)
+
+        return self._post(
+            f'app/installations/{installation_id}/access_tokens', json=data
+        )
 
     ####################################################################
     # GitHub teams
@@ -2958,10 +3157,13 @@ class GitHub:
         self,
         api: str,
         json: Optional[Mapping[str, Any]] = None,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
         headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().post(api_url, json=json, headers=headers)
+        return self.session().post(
+            api_url, json=json, params=params, headers=headers
+        )
 
     def _put(
         self,
