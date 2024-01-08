@@ -3790,7 +3790,7 @@ class Jira:
 
         """
         ensure_instance('project_id', int)
-        payload = [{project_id}]
+        payload = list({project_id})
         result = requests.post(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             data=json.dumps(payload),
