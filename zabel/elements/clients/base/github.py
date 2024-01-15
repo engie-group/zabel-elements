@@ -475,7 +475,7 @@ class GitHub:
         return (result.status_code // 100) == 2
 
     @api_call
-    def list_organization_failed_invitations(
+    def list_organization_failedinvitations(
         self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return list of failed invitations.
