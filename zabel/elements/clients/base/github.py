@@ -280,8 +280,8 @@ class GitHub:
     # list_organization_teams
     # send_organization_invitation
     # cancel_organization_invitation
-    # list_failed_invitations
-    # list_pending_invitations
+    # list_organization_failedinvitations
+    # list_organization_invitations
     #
     # Part of enterprise administration
     # create_organization
@@ -423,7 +423,7 @@ class GitHub:
         return (result.status_code // 100) == 2
 
     @api_call
-    def list_failed_invitations(
+    def list_organization_failed_invitations(
         self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return list of failed invitations.
@@ -454,7 +454,7 @@ class GitHub:
         )
 
     @api_call
-    def list_pending_invitations(
+    def list_organization_invitations(
         self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return list of pending invitations.
