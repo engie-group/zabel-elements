@@ -95,7 +95,7 @@ class GitHub(Base):
         # Returned value
 
         A list of lists, one entry per line in the report. All items in
-        the sublists are strings.
+        the sub-lists are strings.
         """
         ensure_nonemptystring('report')
         if self.management_url is None:
