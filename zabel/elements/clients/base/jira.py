@@ -657,6 +657,7 @@ class Jira:
     # delete_workflow
     # list_workflowschemes+
     # delete_workflowscheme
+    # create_workflowscheme
     # list_screens+
     # delete_screen
     # list_screenschemes+
@@ -785,7 +786,7 @@ class Jira:
         )
 
         if not atl_token:
-            raise ApiError('Scheme %s is active.' % str(scheme_id_or_name))
+            raise ApiError(f'Scheme {str(scheme_id_or_name)} is active.')
 
         self._do_form_step(
             'secure/admin/DeleteIssueTypeScreenScheme.jspa',
@@ -893,8 +894,8 @@ class Jira:
             scheme_id_or_name, self.list_screenschemes()
         )
 
-        uri = 'secure/admin/ViewDeleteFieldScreenScheme.jspa?id=%s'
-        form = self._get(uri % scheme_id)
+        uri = f'secure/admin/ViewDeleteFieldScreenScheme.jspa?id={scheme_id}'
+        form = self._get(uri)
         self._do_form_step(
             'secure/admin/DeleteFieldScreenScheme.jspa',
             data={
@@ -1376,6 +1377,38 @@ class Jira:
             timeout=10
         )
 
+    @api_call
+    def create_workflowscheme(self, workflowscheme: Dict[str, Any]) -> Dict[str, Any]:
+        """Create new workflow scheme.
+
+        # Required parameters
+
+        - workflowscheme: a dictionary.Each workflowscheme is a
+        dictionary with the following entries:
+
+        - name: a string
+        - description: an string
+        - defaultWorkflow: a string
+        - issueTypeMappings: a dictionary
+
+        The `issueTypeMappings` dictionary has one entry:
+         - IsueTypeId: a string
+
+        # Returned value
+
+        A dictionary.  See #get_workflowschemes() for details on its
+
+        # Raised exceptions
+
+        _ApiError_ if the operation failed.
+        """
+        ensure_instance('workflowscheme', dict)
+
+        result = self.session().post(
+            self._get_url('workflowscheme'),
+            data=json.dumps(workflowscheme),
+        )
+        return result
     ####################################################################
     # JIRA project
     #
@@ -3767,14 +3800,14 @@ class Jira:
         max_projects = self._get_max_xray_projects()
 
         params = {'iDisplayStart': 0, 'iDisplayLength': max_projects}
-        result = requests.get(
+        response = requests.get(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
             timeout=10
         ).json()
 
-        return result['entries']
+        return response['entries']
     
     @api_call
     def enable_xray_to_project(self, project_id:int) -> bool:
@@ -3790,15 +3823,14 @@ class Jira:
 
         """
         ensure_instance('project_id', int)
-        payload = list({project_id})
-        result = requests.post(
+        response = requests.post(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
-            data=json.dumps(payload),
+            json=[project_id],
             auth=self.auth,
             timeout=10
         ).json()
 
-        return result[0] == project_id
+        return str(project_id) in response
     
     @api_call
     def disable_xray_to_project(self, project_id:int) -> bool:
@@ -3814,14 +3846,14 @@ class Jira:
         """
         ensure_instance('project_id', int)
         params = {'projectKeys': project_id}
-        result = requests.delete(
+        response = requests.delete(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
             timeout=10
         ).json()
 
-        return result[0] == project_id
+        return str(project_id) in response
 
     ####################################################################
     # JIRA Service Desk
