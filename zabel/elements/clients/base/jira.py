@@ -2654,6 +2654,88 @@ class Jira:
         return self._client().delete_user(user_name)
 
     ####################################################################
+    # JIRA users anonymization
+    #
+    # validate_user_anonymization
+    # schedule_anonymization
+
+    @api_call
+    def validate_user_anonymization(
+        self, user_key: str, expand: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Validate user anonymization.
+
+        # Required parameters
+
+        - user_key: a non-empty string
+
+        # Optional parameters
+
+        - expand: a string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - expand: a string
+        - userKey: a string
+        - userName: a string
+        - displayName: a string
+        - deleted: a boolean
+        - email: a dictionary
+        - success: a boolean
+        - operations: a dictionary
+        - businessLogicValidationFailed: a boolean
+        """
+
+        ensure_nonemptystring('user_key')
+        ensure_noneorinstance('expand', str)
+
+        params = {'userKey': user_key}
+        add_if_specified(params, 'expand', expand)
+
+        return self._get_json('user/anonymization', params=params)
+
+    @api_call
+    def schedule_user_anonymization(
+        self, user_key: str, new_owner_key: str
+    ) -> Dict[str, Any]:
+        """Schedule user anonymization.
+
+        # Required parameters
+
+        - user_key: a non-empty string
+        - new_owner_key: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - userKey: a string
+        - userName: a string
+        - fullName: a string
+        - progressUrl: a string
+        - currentProgress: an integer
+        - submittedTime: a string (an ISO8601 timestamp)
+        - operations: a list
+        - status: a string
+        - executingNode: a string
+        - isRerun: a boolean
+        - rerun: a boolean
+        """
+
+        ensure_nonemptystring('user_key')
+        ensure_nonemptystring('new_owner_key')
+
+        data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
+
+        return self._post('user/anonymization', json=data)
+
+    ####################################################################
     # JIRA agile
     #
     # list_boards
