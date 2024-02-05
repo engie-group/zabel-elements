@@ -17,6 +17,7 @@ libraries.  It also depends on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 
+from tkinter import N
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import json
@@ -57,8 +58,10 @@ NOTIFICATIONSCHEME_EXPAND = (
 )
 PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
+ISSUETYPESCHEMES_EXPAND = 'schemes.issueTypes,schemes.defaultIssueType'
 
 MAX_RESULTS = 1000
+TIMEOUT = 20
 
 # Helpers
 
@@ -641,7 +644,11 @@ class Jira:
     # values.
     #
     # list_issuetypeschemes+
-    # delete_issuetypescheme (for pre-8 JIRA versions)
+    # get_issuetypescheme
+    # create_issuetypescheme
+    # update_issuetypescheme
+    # delete_issuetypescheme 
+
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
@@ -666,37 +673,110 @@ class Jira:
     # issuetypeschemes
 
     @api_call
-    def list_issuetypeschemes(self) -> List[Dict[str, Any]]:
+    def list_issuetypeschemes(self, expand: str = ISSUETYPESCHEMES_EXPAND) -> List[Dict[str, Any]]:
         """Return the list of issue type schemes.
 
         # Returned value
 
         A list of _issuetypeschemes_.  Each issuetypeschemes is a
         dictionary with the following entries:
-
-        - name: a string
+        
         - id: an integer or a string
-        - active: a boolean
+        - name: a string
+        - description: a string
+        - defaultIssueType : a dictionary 
+        - issueTypes: a list of dictionaries
+        - self: a string
+
+        defaultIssueType and  issueTypes are dictionaries with the following entries:
+        - id: an integer
+        - name: a string
+        - description: a string
+        - subtask: a boolean
+        - avatarId: an integer
+        - iconUrl: a string
+        - self: a string
         """
-        uri = 'secure/admin/ManageIssueTypeSchemes!default.jspa'
-        pat_name = r'data-scheme-field="name">([^<]+)<'
-        pat_id = r'&schemeId=(\d+)">Edit</a>'
-        pat_inactive = (
-            r'<span class="errorText">No projects</span>\s+'
-            r'</td>\s+<td class="cell-type-collapsed">\s+'
-            r'<ul class="operations-list">\s+<li><a id="edit_%s"'
-        )
-        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+       
+        return self._get_json('issuetypescheme', params={'expand': expand})
 
     @api_call
-    def delete_issuetypescheme(
-        self, scheme_id_or_name: Union[int, str]
-    ) -> None:
-        """Delete issuetypescheme.
+    def get_issuetypescheme(self,
+                            scheme_id: int, 
+                            expand: str = ISSUETYPESCHEMES_EXPAND
+                            ) -> Dict[str, Any]:
+        """Return issue type scheme details.
 
         # Required parameters
 
-        - scheme_id_or_name: a integer or a non-empty string
+        - scheme_id: an integer
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes() for details on its
+        structure.
+        """
+        ensure_instance('scheme_id', int)
+
+        return self._get_json(f'issuetypescheme/{scheme_id}', params={'expand': expand})
+        
+    @api_call
+    def create_issuetypescheme(
+        self, issuetypescheme: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Create new issue type scheme.
+
+        # Required parameters
+
+        - issuetypescheme: a dictionary with the following entries:
+
+        - name: a string
+        - description: a string
+        - defaultIssueTypeId : a integer (id of the default issue type)
+        - issueTypeIds: a list of integers (ids of the issue types)
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes() for details on its"""
+
+        return self._post('issuetypescheme', json=issuetypescheme) # type: ignore
+       
+    @api_call
+    def update_issuetypescheme(
+        self, scheme_id: int, issuetypescheme: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update issuetypescheme.
+
+        # Required parameters
+
+        - issuetypescheme: a dictionary with the following entries:
+
+        - id: a integer
+        - name: a string
+        - description: a string
+        - defaultIssueTypeId : a integer
+        - issueTypeIds: a list of integers
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes() for details on its"""
+
+        ensure_instance('scheme_id', int)
+        return self._put(f'issuetypescheme/{scheme_id}', json=issuetypescheme) # type: ignore
+     
+    @api_call
+    def delete_issuetypescheme(
+        self, scheme_id: int
+    ) -> bool:
+        """
+        Delete the given issuetypescheme. 
+        Each projects associated with this issuetypescheme 
+        will be automatically associated with the global 
+        default issuetypescheme. 
+
+        # Required parameters
+
+        - scheme_id: a integer 
 
         # Returned value
 
@@ -704,27 +784,13 @@ class Jira:
 
         # Raised exceptions
 
-        _ApiError_ if `scheme_id_or_name` is invalid or something wrong
+        _ApiError_ if `scheme_id` is invalid or something wrong
         occured.
         """
-        ensure_instance('scheme_id_or_name', (int, str))
+        ensure_instance('scheme_id', int)
+        result = self._delete(f'issuetypescheme/{scheme_id}') # type: ignore
+        return result.status_code == 204
 
-        scheme_id = _get_scheme_id(
-            scheme_id_or_name, self.list_issuetypeschemes()
-        )
-
-        uri = (
-            'secure/admin/DeleteOptionScheme!default.jspa?fieldId=&schemeId=%s'
-        )
-        form = self._get(uri % scheme_id)
-        self._do_form_step(
-            'secure/admin/DeleteOptionScheme.jspa',
-            data={
-                'atl_token': _get_atl_token(form.text),
-                'schemeId': scheme_id,
-            },
-            cookies=form.cookies,
-        )
 
     # issuetypescreenschemes
 
@@ -1356,7 +1422,7 @@ class Jira:
         # Raised exceptions
 
         _ApiError_ if `scheme_id_or_name` is invalid or something wrong
-        occurred.
+        occurred. timeout=TIMEOUT
         """
         ensure_instance('scheme_id_or_name', (int, str))
 
@@ -1374,7 +1440,7 @@ class Jira:
             self._get_url(f'workflowscheme/{scheme_id}'),
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
 
     @api_call
@@ -1407,8 +1473,8 @@ class Jira:
         result = self.session().post(
             self._get_url('workflowscheme'),
             data=json.dumps(workflowscheme),
-        )
-        return result
+        ).json()
+        return result.json()  # Extract JSON response and return as dictionary
     ####################################################################
     # JIRA project
     #
@@ -1515,7 +1581,7 @@ class Jira:
             join_url(self.url, '/secure/project/BrowseProjects.jspa'),
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         upd = result.text.split(
             'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
@@ -1950,7 +2016,7 @@ class Jira:
                     self._get_url('priorityschemes'),
                     auth=self.auth,
                     verify=self.verify,
-                    timeout=10
+                    timeout=TIMEOUT
                 ).json()['schemes']
                 if ps['name'] == scheme_id_or_name
             ]
@@ -2248,7 +2314,7 @@ class Jira:
             json={'url': url, 'name': description, 'icon': ''},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -2907,7 +2973,7 @@ class Jira:
             json=data,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -2934,7 +3000,7 @@ class Jira:
             join_url(self.AGILE_BASE_URL, f'board/{board_id}'),
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -2983,7 +3049,7 @@ class Jira:
             params={'rapidViewId': board_id},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -3033,7 +3099,7 @@ class Jira:
             json={'id': board_id, 'boardAdmins': board_admins},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -3127,7 +3193,7 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -3161,7 +3227,7 @@ class Jira:
             json={'rapidViewId': board_id, 'showDaysInColumn': days_in_column},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
         return result  # type: ignore
 
@@ -3804,13 +3870,13 @@ class Jira:
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
-            timeout=10
+            timeout=TIMEOUT
         ).json()
 
         return response['entries']
     
     @api_call
-    def enable_xray_to_project(self, project_id:int) -> bool:
+    def enable_xray(self, project_id:int) -> bool:
         """Enable Xray to the given jira project.
 
         # Required parameters
@@ -3827,13 +3893,13 @@ class Jira:
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             json=[project_id],
             auth=self.auth,
-            timeout=10
+            timeout=TIMEOUT
         ).json()
 
         return str(project_id) in response
     
     @api_call
-    def disable_xray_to_project(self, project_id:int) -> bool:
+    def disable_xray(self, project_id:int) -> bool:
         """Disable Xray to the given jira project.
 
         # Required parameters
@@ -3850,7 +3916,7 @@ class Jira:
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
-            timeout=10
+            timeout=TIMEOUT
         ).json()
 
         return str(project_id) in response
@@ -3895,7 +3961,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
-        # ensure_instance('fields', list)
+        ensure_instance('fields', list)
 
         result = requests.post(
             join_url(self.SERVICEDESK_BASE_URL, 'request'),
@@ -3906,9 +3972,9 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
-            timeout=10
-        )
-        return result  # type: ignore
+            timeout=TIMEOUT
+        ).json()
+        return result
 
     @api_call
     def get_request(
@@ -3956,9 +4022,9 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
-        )
-        return response  # type: ignore
+            timeout=TIMEOUT
+        ).json()
+        return response  
 
     @api_call
     def add_request_comment(
@@ -4015,9 +4081,9 @@ class Jira:
             json={'body': body, 'public': public},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
-        )
-        return result  # type: ignore
+            timeout=TIMEOUT
+        ).json()
+        return result 
 
     @api_call
     def get_bundledfield_definition(
@@ -4042,9 +4108,9 @@ class Jira:
             params={'contextId': context_id, 'customFieldId': customfield_id},
             auth=self.auth,
             verify=self.verify,
-            timeout=10
-        )
-        return result  # type: ignore
+            timeout=TIMEOUT
+        ).json()
+        return result  
 
     @api_call
     def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
@@ -4092,7 +4158,7 @@ class Jira:
     def list_requesttypes(self, servicedesk_id: str) -> List[Dict[str, Any]]:
         """Return a list of service desk request types.
 
-        # Required parameters
+        # Required parametersself._get_url
 
         - servicedesk_id: a non-empty string
 
@@ -4106,7 +4172,7 @@ class Jira:
             f'servicedesk/{servicedesk_id}/requesttype'
         )
 
-    @api_call
+    
     ####################################################################
     # JIRA misc. operation
     #
@@ -4161,7 +4227,7 @@ class Jira:
             self.UPM_BASE_URL,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         ).json()['plugins']
 
     @api_call
@@ -4206,8 +4272,8 @@ class Jira:
 
         result = self._get_json(
             'serverInfo', params={'doHealthCheck': str(do_health_check)}
-        )
-        return result  # type: ignore
+        ).json()    
+        return result  
 
     @api_call
     def reindex(
@@ -4265,8 +4331,8 @@ class Jira:
                 'indexChangeHistory': index_change_history,
                 'indexWorklogs': index_worklogs,
             },
-        )
-        return result  # type: ignore
+        ).json()
+        return result  
 
     ####################################################################
     # JIRA helpers
@@ -4287,7 +4353,7 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
 
     def _post(
@@ -4299,7 +4365,7 @@ class Jira:
             json=json,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
     
     def _delete(
@@ -4312,16 +4378,20 @@ class Jira:
     ) -> requests.Response:
         api_url = self._get_url(api)
         return requests.delete(
-            api_url, json=json_data, params=params, auth=self.auth, verify=self.verify, timeout=10
+            api_url, json=json_data, params=params, auth=self.auth, verify=self.verify, timeout=TIMEOUT
         )
 
     def _put(
-        self, api: str, json_data: Optional[Mapping[str, Any]] = None
+        self, api: str, json: Optional[Mapping[str, Any]] = None
     ) -> requests.Response:
         api_url = self._get_url(api)
         return requests.put(
-            api_url, json=json_data, auth=self.auth, verify=self.verify, timeout=10
-        )    
+            api_url, 
+            json=json, 
+            auth=self.auth, 
+            verify=self.verify, 
+            timeout=TIMEOUT
+        )  
 
     def _collect_data(
         self,
@@ -4419,7 +4489,7 @@ class Jira:
             cookies=cookies,
             auth=self.auth,
             verify=self.verify,
-            timeout=10
+            timeout=TIMEOUT
         )
 
     def _get_projectconfig_scheme(
@@ -4458,6 +4528,6 @@ class Jira:
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
-            timeout=10.
+            timeout=TIMEOUT
         ).json()
         return result['iTotalRecords']
