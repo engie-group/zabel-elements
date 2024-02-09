@@ -22,6 +22,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import json
 import re
+from urllib import response
 
 from urllib.parse import urlencode
 
@@ -59,6 +60,7 @@ NOTIFICATIONSCHEME_EXPAND = (
 PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
 ISSUETYPESCHEMES_EXPAND = 'schemes.issueTypes,schemes.defaultIssueType'
+PRIORITYSCHEMES_EXPAND = 'schemes.projectKeys.'
 
 MAX_RESULTS = 1000
 TIMEOUT = 20
@@ -648,13 +650,13 @@ class Jira:
     # create_issuetypescheme
     # update_issuetypescheme
     # delete_issuetypescheme 
-
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
     # list_inactivenotificationschemes
     # delete_notificationscheme
     # list_priorityschemes+
+    # get_priorityscheme
     # delete_priorityscheme
     # list_fieldconfigurationschemes+
     # delete_fieldconfigurationscheme
@@ -697,8 +699,8 @@ class Jira:
         - iconUrl: a string
         - self: a string
         """
-       
-        return self._get_json('issuetypescheme', params={'expand': expand})
+        res = self._get_json('issuetypescheme', params={'expand': expand})
+        return res['schemes']
 
     @api_call
     def get_issuetypescheme(self,
@@ -1099,7 +1101,7 @@ class Jira:
     # priority schemes
 
     @api_call
-    def list_priorityschemes(self) -> List[Dict[str, Any]]:
+    def list_priorityschemes(self, expand: str = PRIORITYSCHEMES_EXPAND) -> List[Dict[str, Any]]:
         """Return the list of priorityschemes.
 
         # Returned value
@@ -1109,21 +1111,58 @@ class Jira:
 
         - id: an integer
         - name: a string
-        - active: a boolean
-
-        `active` is true if the priority scheme is used in any project.
+        - defaultScheme: a boolean
+        - defaultOptionId: a integer
+        - optionIds: a list of integers
+        - projectKeys: a list of strings
+        - expand: a string
+        - self: a string
         """
-        uri = 'secure/admin/ViewPrioritySchemes.jspa'
-        pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
-        pat_id = r'<tr data-id="(\d+)"'
-        pat_inactive = (
-            r'<span class="errorText">No projects</span>'
-            r'</td><td class="cell-type-collapsed">'
-            r'<ul class="operations-list"><li><a id="\w+_%s"'
-        )
+        res = self._get_json('priorityschemes', params={'expand': expand})
+        return res['schemes'] # type: ignore
 
-        return self._parse_data(uri, pat_name, pat_id, pat_inactive)
+       
+    @api_call
+    def get_priorityscheme(self, scheme_id: int, expand: str = PRIORITYSCHEMES_EXPAND) -> Dict[str, Any]:
+        """Return priority scheme details.
 
+        # Required parameters
+
+        - scheme_id: an integer
+
+        # Optional parameters
+
+        - expand: a string (`PRIORITYSCHEMES_EXPAND` by default)
+
+        # Returned value
+
+        A dictionary. See #list_priorityschemes() for details on its
+        """
+        ensure_instance('scheme_id', int)
+
+        return self._get_json(f'priorityschemes/{scheme_id}', params={'expand': expand})
+        
+    def create_priorityscheme(
+        self, priorityscheme: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Create new priority scheme.
+
+        # Required parameters
+
+        - priorityscheme: a dictionary with the following entries:
+
+        - name: a string
+        - description: a string
+        - defaultOptionId : a integer 
+        - optionsIds: a list of integers 
+
+        # Returned value
+
+        A dictionary. See #list_priorityschemes() for details on its"""
+        ensure_instance('priorityscheme', dict)
+        res = self._post('priorityschemes', json=priorityscheme)
+        return eval(str(res.content))  # type: ignore
+    
     @api_call
     def delete_priorityscheme(self, scheme_id: Union[int, str]) -> None:
         """Delete priority scheme.
