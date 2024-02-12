@@ -61,12 +61,14 @@ class Confluence:
     # Reference URL
 
     <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
     <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    <https://docs.atlassian.com/atlassian-confluence/REST/latest-server/>
     <https://developer.atlassian.com/server/confluence/remote-confluence
         -methods>
-    <https://docs.atlassian.com/ConfluenceServer/rest/8.3.1/>
 
+    WADLs are also available on a given instance:
+
+    <https://{instance}/rest/api/application.wadl>
     <https://{instance}/rest/mobile/1.0/application.wadl>
 
     A non-admin interface (no API for user&group admin features) to
