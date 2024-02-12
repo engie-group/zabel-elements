@@ -40,15 +40,6 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 
-# Helpers
-
-
-def _get_atl_token(html: str) -> str:
-    atl_token = html[html.find('"atl_token"') :]
-    atl_token = atl_token[atl_token.find('value="') + 7 :]
-    return atl_token[: atl_token.find('"')]
-
-
 # Confluence Jenkins low-level api
 
 CONTENT_TYPES = ['page', 'blogpost', 'comment', 'attachment']
