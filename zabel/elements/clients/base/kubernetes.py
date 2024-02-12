@@ -51,26 +51,26 @@ class Kubernetes:
     configuration file:
 
     ```python
-    >>> from zabel.elements.clients import Kubernetes
-    >>>
-    >>> k8s = Kubernetes()
-    >>> namespaces = k8s.list_namespaces()
+    from zabel.elements.clients import Kubernetes
+
+    k8s = Kubernetes()
+    namespaces = k8s.list_namespaces()
     ```
 
     Using explicit configuration:
 
     ```python
-    >>> from zabel.elements.clients import Kubernetes
-    >>>
-    >>> K8S_URL = 'https://kubernetes.example.com'
-    >>> k8s = Kubernetes(
-    >>>     config={
-    >>>         'url': K8S_URL,
-    >>>         'api_key': '...',
-    >>>         'verify': False,
-    >>>     }
-    >>> )
-    >>> namespaces = k8s.list_namespaces()
+    from zabel.elements.clients import Kubernetes
+
+    K8S_URL = 'https://kubernetes.example.com'
+    k8s = Kubernetes(
+        config={
+            'url': K8S_URL,
+            'api_key': '...',
+            'verify': False,
+        }
+    )
+    namespaces = k8s.list_namespaces()
     ```
     """
 
@@ -105,7 +105,7 @@ class Kubernetes:
         following entries:
 
         - url: a non-empty string
-        - api_key: a non-empty string (a JWT)
+        - api_key: a non-empty string (a JWT token)
 
         If may also contain the following entries:
 
@@ -162,6 +162,7 @@ class Kubernetes:
     ####################################################################
     # create_namespace
     # delete_namespace
+    # read_namespace
     # list_namespaces
     #
     # list_resourcequotas
@@ -198,6 +199,28 @@ class Kubernetes:
         _namespace.metadata = metadata
 
         return self._get_v1_client().create_namespace(_namespace).to_dict()  # type: ignore
+
+    @api_call
+    def read_namespace(self, namespace: str) -> Dict[str, Any]:
+        """Read namespace.
+
+        # Required parameters
+
+        - namespace: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - api_version: a string
+        - kind: a string
+        - metadata: a dictionary
+        - spec: a dictionary
+        - status: a dictionary
+        """
+        ensure_nonemptystring('namespace')
+
+        return self._get_v1_client().read_namespace(namespace).to_dict()  # type: ignore
 
     @api_call
     def delete_namespace(self, namespace: str) -> Dict[str, Any]:
