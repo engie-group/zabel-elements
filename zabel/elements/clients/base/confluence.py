@@ -62,11 +62,7 @@ class Confluence:
     <https://{instance}/rest/api/application.wadl>
     <https://{instance}/rest/mobile/1.0/application.wadl>
 
-    A non-admin interface (no API for user&group admin features) to
-    Confluence.
-
-    Groups and users are defined on Jira or Crowd.  Changes can take up
-    to one hour to propagate.
+    An interface to Confluence, including users and groups management.
 
     # Implemented features
 
@@ -83,11 +79,11 @@ class Confluence:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Confluence
-    >>>
-    >>> url = 'https://confluence.example.com'
-    >>> confluence = Confluence(url, basic_auth=(user, token))
-    >>> confluence.get_users()
+    from zabel.elements.clients import Confluence
+
+    url = 'https://confluence.example.com'
+    confluence = Confluence(url, basic_auth=(user, token))
+    confluence.get_users()
     ```
     """
 
