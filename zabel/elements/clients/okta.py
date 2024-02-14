@@ -12,7 +12,9 @@ A class wrapping Okta APIs.
 
 There can be as many Okta instances as needed.
 
-This module depends on the #:tooling.base.okta module.
+This module depends on the public **asyncio** and **okta.client**
+libraries.  It also depend on two **zabel-commons** modules,
+#::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 
 from typing import Iterable, List, Dict, Any
@@ -33,27 +35,29 @@ class Okta(Base):
 
     # Implemented features
 
-    - #add_users_to_group
-    - #remove_users_from_group
+    - add_users_to_group
+    - remove_users_from_group
+    - list_group_users
+    - list_user_groups
 
-    - #get_user_info
-    - #get_group_by_name
-    - #add_user_to_group
-    - #remove_user_from_group
+    - get_user_info
+    - get_group_by_name
+    - add_user_to_group
+    - remove_user_from_group
 
     # Sample use
 
-    (assuming an `okta` entry in your credentials that contains the
-    token api `token`)
+    (assuming a token api `token`)
 
-    ```
-    >>> from zabel.elements.clients import Okta
-    >>> url = 'https://okta.example.com'
-    >>> okta = Okta(
-    >>>     url,
-    >>>     token
-    >>> )
-    >>> user = okta.get_user_info('JP5300')
+    ```python
+    from zabel.elements.clients import Okta
+
+    url = 'https://okta.example.com'
+    okta = Okta(
+        url,
+        token,
+    )
+    user = okta.get_user_info('JP5300')
     ```
 
     """

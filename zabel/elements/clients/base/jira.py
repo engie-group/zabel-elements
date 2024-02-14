@@ -2654,6 +2654,88 @@ class Jira:
         return self._client().delete_user(user_name)
 
     ####################################################################
+    # JIRA users anonymization
+    #
+    # validate_user_anonymization
+    # schedule_anonymization
+
+    @api_call
+    def validate_user_anonymization(
+        self, user_key: str, expand: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Validate user anonymization.
+
+        # Required parameters
+
+        - user_key: a non-empty string
+
+        # Optional parameters
+
+        - expand: a string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - expand: a string
+        - userKey: a string
+        - userName: a string
+        - displayName: a string
+        - deleted: a boolean
+        - email: a dictionary
+        - success: a boolean
+        - operations: a dictionary
+        - businessLogicValidationFailed: a boolean
+        """
+
+        ensure_nonemptystring('user_key')
+        ensure_noneorinstance('expand', str)
+
+        params = {'userKey': user_key}
+        add_if_specified(params, 'expand', expand)
+
+        return self._get_json('user/anonymization', params=params)
+
+    @api_call
+    def schedule_user_anonymization(
+        self, user_key: str, new_owner_key: str
+    ) -> Dict[str, Any]:
+        """Schedule user anonymization.
+
+        # Required parameters
+
+        - user_key: a non-empty string
+        - new_owner_key: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - userKey: a string
+        - userName: a string
+        - fullName: a string
+        - progressUrl: a string
+        - currentProgress: an integer
+        - submittedTime: a string (an ISO8601 timestamp)
+        - operations: a list
+        - status: a string
+        - executingNode: a string
+        - isRerun: a boolean
+        - rerun: a boolean
+        """
+
+        ensure_nonemptystring('user_key')
+        ensure_nonemptystring('new_owner_key')
+
+        data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
+
+        return self._post('user/anonymization', json=data)
+
+    ####################################################################
     # JIRA agile
     #
     # list_boards
@@ -3645,6 +3727,7 @@ class Jira:
     #
     # create_request
     # get_request
+    # list_request_comments
     # add_request_comment
     # get_bundledfield_definition
     # list_queues
@@ -3744,6 +3827,31 @@ class Jira:
         return response  # type: ignore
 
     @api_call
+    def list_request_comments(
+        self, request_id_or_key: str
+    ) -> List[Dict[str, Any]]:
+        """Return the available comments for request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+
+        # Returned value
+
+        A list of _request comments_.  Each comment is a dictionary with
+        the following entries:
+
+        - id: a string
+        - author: a dictionary
+        - body: a string
+        - created: a string (a timestamp)
+        - public: a boolean
+        _ _links: a dictionary
+        """
+        ensure_nonemptystring('request_id_or_key')
+        return self._collect_sd_data(f'request/{request_id_or_key}/comment')
+
+    @api_call
     def add_request_comment(
         self, request_id_or_key: str, body: str, public: bool = False
     ) -> Dict[str, Any]:
@@ -3760,14 +3868,15 @@ class Jira:
 
         # Returned value
 
-        A dictionary with the following entries:
+        A _request comment_.  A request comment is a dictionary with the
+        following entries:
 
         - id: a string
-        - body: a string
-        - public: a boolean
-        - author: a dictionary
-        - created: a dictionary
         - _links: a dictionary
+        - author: a dictionary
+        - body: a string
+        - created: a dictionary
+        - public: a boolean
 
         The `author` dictionary has the following entries:
 

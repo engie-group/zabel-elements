@@ -38,15 +38,18 @@ class Confluence(Base):
 
     # Reference URL
 
-    - <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    - <https://docs.atlassian.com/atlassian-confluence/REST/latest-server/>
-    - <https://developer.atlassian.com/server/confluence/remote-confluence-methods>
+    <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
+    <https://developer.atlassian.com/confdev/confluence-server-rest-api>
+    <https://developer.atlassian.com/server/confluence/remote-confluence
+        -methods>
 
-    A non-admin interface (no API for user&group admin features) to
-    Confluence.
+    WADLs are also available on a given instance:
 
-    Groups and users are defined on Jira or Crowd.  Changes can take up
-    to one hour to propagate.
+    <https://{instance}/rest/api/application.wadl>
+    <https://{instance}/rest/mobile/1.0/application.wadl>
+
+    An interface to Confluence, including users and groups management.
 
     # Implemented features
 
@@ -63,11 +66,11 @@ class Confluence(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Confluence
-    >>>
-    >>> url = 'https://confluence.example.com'
-    >>> confluence = Confluence(url, user, token)
-    >>> confluence.list_users()
+    from zabel.elements.clients import Confluence
+
+    url = 'https://confluence.example.com'
+    confluence = Confluence(url, user, token)
+    confluence.list_users()
     ```
     """
 

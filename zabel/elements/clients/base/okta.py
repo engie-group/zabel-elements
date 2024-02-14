@@ -10,8 +10,9 @@
 
 There can be as many _OKTA_ instances as needed.
 
-This module depends on the public **asyncio** and **okta.client** libraries.  It also depend
-on one **commons** module, #::commons.utils.
+This module depends on the public **asyncio** and **okta.client**
+libraries.  It also depend on two **zabel-commons** modules,
+#::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 
 from typing import Any, Dict, List

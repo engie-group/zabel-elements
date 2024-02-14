@@ -143,11 +143,11 @@ class Artifactory:
 
         `xray_url`, if specified, is the top-level jfrog-xray API
         endpoint.  If not specified, will be as `url` with the
-        'artifactory/api' ending replaced by `xray/api`
+        `'artifactory/api'` ending replaced by `'xray/api'`
 
         `verify` can be set to False if disabling certificate checks for
         Artifactory communication is required.  Tons of warnings will
-        occur if this is set to False.
+        occur if this is set to `False`.
         """
         ensure_nonemptystring('url')
         ensure_onlyone('basic_auth', 'bearer_auth')
@@ -176,7 +176,11 @@ class Artifactory:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}: {self.url!r}, {self.auth[0]!r}>'
+        if isinstance(self.auth, tuple):
+            auth = self.auth[0]
+        else:
+            auth = self.auth.pat[:10] + '...' + self.auth.pat[-10:]
+        return f'<{self.__class__.__name__}: {self.url!r}, {auth!r}>'
 
     ####################################################################
     # artifactory builds

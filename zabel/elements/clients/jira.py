@@ -151,7 +151,7 @@ class Jira(Base):
 
         def _user_id(
             users: List[Dict[str, Any]], cnt: int
-        ) -> Union[str, None, Ellipsis]:
+        ) -> Union[str, None, ellipsis]:
             return users[0]['name'] if cnt == 1 else None if cnt == 0 else ...
 
         return {

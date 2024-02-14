@@ -47,26 +47,26 @@ class Kubernetes(Base):
     configuration file:
 
     ```python
-    >>> from zabel.elements.clients import Kubernetes
-    >>>
-    >>> k8s = Kubernetes()
-    >>> namespaces = k8s.list_namespaces()
+    from zabel.elements.clients import Kubernetes
+
+    k8s = Kubernetes()
+    namespaces = k8s.list_namespaces()
     ```
 
     Using explicit configuration:
 
     ```python
-    >>> from zabel.elements.clients import Kubernetes
-    >>>
-    >>> K8S_URL = 'https://kubernetes.example.com'
-    >>> k8s = Kubernetes(
-    >>>     config={
-    >>>         'url': K8S_URL,
-    >>>         'api_key': '...',
-    >>>         'verify': False,
-    >>>     }
-    >>> )
-    >>> namespaces = k8s.list_namespaces()
+    from zabel.elements.clients import Kubernetes
+
+    K8S_URL = 'https://kubernetes.example.com'
+    k8s = Kubernetes(
+        config={
+            'url': K8S_URL,
+            'api_key': '...',
+            'verify': False,
+        }
+    )
+    namespaces = k8s.list_namespaces()
     ```
     """
 
@@ -88,7 +88,7 @@ class Kubernetes(Base):
 
         # Optional parameters
 
-        - namespace: a non-empty string (`'default'` by default)
+        - namespace: a non-empty string (`default` by default)
         - ...
 
         Other keywords parameters can be specified.  They will be passed
@@ -132,7 +132,7 @@ class Kubernetes(Base):
 
         # Optional parameters
 
-        - namespace: a non-empty string (`'default'` by default)
+        - namespace: a non-empty string (`default` by default)
         - ...
 
         Other keywords parameters can be specified.  They will be passed
