@@ -3376,6 +3376,7 @@ class Jira:
     # list_issue_transitions
     # list_issue_comments
     # add_issue_comment
+    # update_issue_comment
     # delete_issue_comment
     # add_issue_link
     # get_issue_link
@@ -3387,7 +3388,9 @@ class Jira:
     # delete_issue
     # update_issue
     # assign_issue
-    # TEST add_issue_attachment
+    # add_issue_attachment
+    # delete_issue_attachment
+    # get_attachment_meta
 
     @api_call
     def get_issue(
@@ -3474,6 +3477,25 @@ class Jira:
         url = self._get_url(f'issue/{issue_id_or_key}/comment')
         result = self.session().post(url, data=json.dumps(fields))
         return result  # type: ignore
+    
+    @api_call
+    def update_issue_comment(self, issue_id_or_key: str, comment_id: str, fields: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a comment.
+
+        # Required parameters
+
+        - issue_id_or_key: a non-empty string
+        - comment_id: a non-empty string
+        - fields: a dictionary
+
+        # Returned value
+
+        A _comment_.  Comments are dictionaries.  Refer to
+        #list_issue_comments() for more information.
+        """
+        url = self._get_url(f'issue/{issue_id_or_key}/comment/{comment_id}')
+        result = self.session().put(url, data=json.dumps(fields))
+        return result # type: ignore
 
     @api_call
     def delete_issue_comment(
@@ -3809,6 +3831,42 @@ class Jira:
             )
             .raw
         )
+    
+    @api_call
+    def delete_issue_attachment(self, attachment_id: str) -> bool:
+        """Delete attachment from issue.
+
+        # Required parameters
+
+        - attachment_id: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+       
+        ensure_nonemptystring('attachment_id')
+
+        result = self._delete(
+            f'attachment/{attachment_id}'
+        )
+        return result.status_code in [200, 201, 204]
+    
+    @api_call
+    def get_attachment_meta(self) -> Dict[str, Any]:
+
+        """Get attachment metadata.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - enabled: a string
+        - uploadLimit: a string
+        """
+
+        result = self._get_json('attachment/meta')
+        return result
 
     ####################################################################
     # JIRA issue linktypes
