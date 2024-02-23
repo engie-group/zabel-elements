@@ -3477,9 +3477,11 @@ class Jira:
         url = self._get_url(f'issue/{issue_id_or_key}/comment')
         result = self.session().post(url, data=json.dumps(fields))
         return result  # type: ignore
-    
+
     @api_call
-    def update_issue_comment(self, issue_id_or_key: str, comment_id: str, fields: Dict[str, Any]) -> Dict[str, Any]:
+    def update_issue_comment(
+        self, issue_id_or_key: str, comment_id: str, fields: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Update a comment.
 
         # Required parameters
@@ -3495,7 +3497,7 @@ class Jira:
         """
         url = self._get_url(f'issue/{issue_id_or_key}/comment/{comment_id}')
         result = self.session().put(url, data=json.dumps(fields))
-        return result # type: ignore
+        return result  # type: ignore
 
     @api_call
     def delete_issue_comment(
@@ -3831,7 +3833,7 @@ class Jira:
             )
             .raw
         )
-    
+
     @api_call
     def delete_issue_attachment(self, attachment_id: str) -> bool:
         """Delete attachment from issue.
@@ -3844,17 +3846,14 @@ class Jira:
 
         A boolean.  True if successful, False otherwise.
         """
-       
+
         ensure_nonemptystring('attachment_id')
 
-        result = self._delete(
-            f'attachment/{attachment_id}'
-        )
+        result = self._delete(f'attachment/{attachment_id}')
         return result.status_code in [200, 201, 204]
-    
+
     @api_call
     def get_attachment_meta(self) -> Dict[str, Any]:
-
         """Get attachment metadata.
 
         # Returned value
@@ -4178,7 +4177,7 @@ class Jira:
             params=params,
             auth=self.auth,
             timeout=TIMEOUT,
-        ).json()
+        )
 
         return response.status_code in [200, 201, 204]
 
@@ -4193,6 +4192,10 @@ class Jira:
     # list_queues
     # list_queue_issues
     # list_requesttypes
+    # list_organizations
+    # get_organization
+    # create_organization
+    # delete_organization
 
     @api_call
     def create_request(
@@ -4454,6 +4457,205 @@ class Jira:
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/requesttype'
         )
+
+    @api_call
+    def list_organizations(self) -> List[Dict[str, Any]]:
+        """Return a list of service desk organization.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        organizations = self._collect_sd_data(
+            'organization',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+       
+        return  sorted(organizations, key=lambda x: int(x['id']))
+
+    @api_call
+    def get_organization(self, organization_id: int) -> Dict[str, Any]:
+        """Return request details.
+
+        # Required parameters:
+
+        - organization_id: a integer
+
+        # Returned value:
+
+        The _organization_ details, a dictionary, with the following entries:
+
+        - id: a string
+        - name: a string
+        - _links: a dictionary
+        """
+
+        ensure_instance('organization_id', int)
+
+        response = requests.get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
+            headers={'X-ExperimentalApi': 'opt-in'},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        ).json()
+        return response
+
+    @api_call
+    def create_organization(
+        self,
+        organization_name: str,
+    ) -> Dict[str, Any]:
+        """Create a new customer request on specified service desk.
+
+        # Required parameters:
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        The created _organization_ details.  Please refer to #get_organization()
+        for more information.
+        """
+        ensure_nonemptystring('organization_name')
+
+        result = requests.post(
+            join_url(self.SERVICEDESK_BASE_URL, 'organization'),
+            json={
+                'name': organization_name,
+            },
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        ).json()
+        return result
+
+    @api_call
+    def delete_organization(
+        self,
+        organization_id: int,
+    ) -> bool:
+        """Create a new customer request on specified service desk.
+
+        # Required parameters:
+
+        - organization_id: a integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+
+        result = requests.delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+        
+        return result.status_code in [200, 201, 204]
+
+    @api_call
+    def list_organization_users(
+        self, organization_id: int
+    ) -> List[Dict[str, Any]]:
+        """Return a list of user for a given organization.
+
+        # Required parameters
+
+        - organization_id: a integer
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+        ensure_instance('organization_id', int)
+        return self._collect_sd_data(
+            f'organization/{organization_id}/user',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+    @api_call
+    def add_organization_users(
+        self,
+        organization_id: int,
+        usernames: List[str],
+    ) -> bool:
+        """Add user to organization.
+
+        # Required parameters
+
+        - organization_id: a integer
+        - usernames: a list of strings
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+
+        """
+
+        ensure_instance('organization_id', int)
+        ensure_instance('usernames', list)
+        users = {'usernames': usernames}
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'organization/{organization_id}/user',
+            ),
+            json=users,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code in [200, 201, 204]
+
+    @api_call
+    def remove_organization_users(
+        self, organization_id: int, usernames: List[str]
+    ) -> bool:
+        """Remove user from organization.
+
+        # Required parameters
+
+        - organization_id: a integer
+        - usernames: a list of strings
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+
+        """
+        ensure_instance('organization_id', int)
+        ensure_instance('usernames', list)
+        users = {'usernames': usernames}
+
+        result = requests.delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'organization/{organization_id}/user',
+            ),
+            json=users,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code in [200, 201, 204]
 
     ####################################################################
     # JIRA misc. operation
