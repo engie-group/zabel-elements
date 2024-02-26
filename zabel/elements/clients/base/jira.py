@@ -4470,7 +4470,7 @@ class Jira:
         requesttype_id: str,
         fields: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Create a new customer request on specified service desk.
+        """Create a new request on specified service desk.
 
         # Required parameters
 
@@ -4484,6 +4484,8 @@ class Jira:
 
         - summary: a string
         - description: a string
+
+        Refer to #list_requesttypes() for more information.
 
         # Returned value
 
@@ -4693,7 +4695,7 @@ class Jira:
     def list_queue_issues(
         self, servicedesk_id: str, queue_id: str
     ) -> List[Dict[str, Any]]:
-        """Return a list of issues that are in a given queue.
+        """Return a list of issues in a given queue.
 
         # Required parameters
 
@@ -4722,7 +4724,17 @@ class Jira:
 
         # Returned value
 
-        A list of dictionaries.
+        A list _request types_.  Each request type is a dictionary with
+        the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - helpText: a string
+        - serviceDeskId: a string
+        - groupIds: a list of strings
+        - icon: a dictionary
+        - _links: a dictionary
         """
         ensure_nonemptystring('servicedesk_id')
 
@@ -4732,7 +4744,7 @@ class Jira:
 
     @api_call
     def list_organizations(self) -> List[Dict[str, Any]]:
-        """Return a list of service desk organization.
+        """Return a list of service desk organizations.
 
         # Returned value
 
@@ -4749,7 +4761,7 @@ class Jira:
 
     @api_call
     def get_organization(self, organization_id: int) -> Dict[str, Any]:
-        """Return organization details.
+        """Return service desk organization details.
 
         # Required parameters
 
@@ -4779,7 +4791,7 @@ class Jira:
 
     @api_call
     def create_organization(self, organization_name: str) -> Dict[str, Any]:
-        """Create a new organization.
+        """Create a new service desk organization.
 
         # Required parameters
 
@@ -4804,7 +4816,7 @@ class Jira:
 
     @api_call
     def delete_organization(self, organization_id: int) -> bool:
-        """Create a new customer request on specified service desk.
+        """Delete a service desk organization.
 
         # Required parameters
 
@@ -4832,7 +4844,7 @@ class Jira:
     def list_organization_users(
         self, organization_id: int
     ) -> List[Dict[str, Any]]:
-        """Return a list of user for a given organization.
+        """Return a list of user in organization.
 
         # Required parameters
 
