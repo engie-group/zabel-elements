@@ -330,8 +330,8 @@ class Jira:
     # list_groups
     # delete_group
     # create_group
-    # add_group_user
     # list_group_users
+    # add_group_user
     # remove_group_user
 
     @api_call
@@ -4154,7 +4154,7 @@ class Jira:
             json=[project_id],
             auth=self.auth,
             timeout=TIMEOUT,
-        ).json()
+        )
 
         return response.status_code in [200, 201, 204]
 
