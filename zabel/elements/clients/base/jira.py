@@ -154,7 +154,7 @@ class Jira:
         bearer_auth: Optional[str] = None,
         verify: bool = True,
     ) -> None:
-        """Create a Jira instance object.
+        """Create Jira instance object.
 
         You can only specify either `basic_auth`, `oauth`, or
         `bearer_auth`.
@@ -333,8 +333,8 @@ class Jira:
     # JIRA groups
     #
     # list_groups
-    # delete_group
     # create_group
+    # delete_group
     #
     # list_group_users
     # add_group_user
@@ -342,7 +342,7 @@ class Jira:
 
     @api_call
     def list_groups(self) -> List[str]:
-        """Return the list of groups.
+        """Return the list of all groups.
 
         # Returned value
 
@@ -352,7 +352,7 @@ class Jira:
 
     @api_call
     def create_group(self, group_name: str) -> bool:
-        """Create a new group.
+        """Create new group.
 
         # Required parameters
 
@@ -384,7 +384,7 @@ class Jira:
 
     @api_call
     def list_group_users(self, group_name: str) -> Dict[str, Any]:
-        """Return the group users.
+        """Return group users.
 
         # Required parameters
 
@@ -456,7 +456,7 @@ class Jira:
     def list_permissionschemes(
         self, expand: str = PERMISSIONSCHEME_EXPAND
     ) -> List[Dict[str, Any]]:
-        """Return the list of permissionschemes.
+        """Return the list of all permission schemes.
 
         # Optional parameters
 
@@ -464,7 +464,7 @@ class Jira:
 
         # Returned value
 
-        A list of _permissionschemes_.  Each permissionscheme is a
+        A list of _permission schemes_.  Each permission scheme is a
         dictionary with the following entries (assuming the default for
         `expand`):
 
@@ -515,7 +515,7 @@ class Jira:
 
         # Returned value
 
-        A dictionary.  See #get_permissionschemes() for details
+        A dictionary.  See #list_permissionschemes() for details
         on its structure.
         """
         ensure_instance('scheme_id', int)
@@ -574,7 +574,7 @@ class Jira:
     def update_permissionscheme(
         self, scheme_id: int, scheme: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Update permission scheme scheme_id.
+        """Update permission scheme.
 
         # Required parameters
 
@@ -583,7 +583,7 @@ class Jira:
 
         # Returned value
 
-        A dictionary.  See #get_permissionschemes() for details on its
+        A dictionary.  See #list_permissionschemes() for details on its
         structure.
         """
         ensure_instance('scheme_id', int)
@@ -596,7 +596,7 @@ class Jira:
 
     @api_call
     def delete_permissionscheme(self, scheme_id: int) -> Dict[str, Any]:
-        """Delete permission scheme scheme_id.
+        """Delete permission scheme.
 
         # Required parameters
 
@@ -617,7 +617,7 @@ class Jira:
     def list_permissionscheme_grants(
         self, scheme_id: int
     ) -> List[Dict[str, Any]]:
-        """Return list of permission grants.
+        """Return the list of grants attached to permission scheme.
 
         # Required parameters
 
@@ -625,8 +625,8 @@ class Jira:
 
         # Returned value
 
-        A list of _permission grants_.  Each permission grant is a
-        dictionary with the following entries:
+        A list of _grants_.  Each grant is a dictionary with the
+        following entries:
 
         - id: an integer
         - holder: a dictionary
@@ -691,18 +691,18 @@ class Jira:
     # list_screenschemes+
     # delete_screenscheme
 
-    # issuetypeschemes
+    # issue type schemes
 
     @api_call
     def list_issuetypeschemes(self) -> List[Dict[str, Any]]:
-        """Return the list of issue type schemes.
+        """Return the list of all issue type schemes.
 
         !!! note
             Legacy method, use #list_issuetypeschemes2() instead.
 
         # Returned value
 
-        A list of _issuetypeschemes_.  Each issuetypeschemes is a
+        A list of _issue type schemes_.  Each issue type scheme is a
         dictionary with the following entries:
 
         - name: a string
@@ -723,7 +723,7 @@ class Jira:
     def list_issuetypeschemes2(
         self, expand: str = ISSUETYPESCHEMES_EXPAND
     ) -> List[Dict[str, Any]]:
-        """Return the list of issue type schemes.
+        """Return the list of all issue type schemes.
 
         # Optional parameters
 
@@ -731,7 +731,7 @@ class Jira:
 
         # Returned value
 
-        A list of _issuetypeschemes_.  Each issuetypeschemes is a
+        A list of _issue type schemes_.  Each issue type scheme is a
         dictionary with the following entries:
 
         - id: a string
@@ -854,7 +854,7 @@ class Jira:
     def delete_issuetypescheme(
         self, scheme_id_or_name: Union[int, str]
     ) -> None:
-        """Delete issuetypescheme.
+        """Delete issue type scheme.
 
         !!! note
             Legacy method, use #delete_issuetypescheme2() instead.
@@ -893,11 +893,11 @@ class Jira:
 
     @api_call
     def delete_issuetypescheme2(self, scheme_id: Union[int, str]) -> bool:
-        """Delete issuetypescheme.
+        """Delete issue type scheme.
 
-        Each projects associated with this issuetypescheme will be
+        Each projects associated with this issue type scheme will be
         automatically associated with the global default
-        issuetypescheme.
+        issue type scheme.
 
         # Required parameters
 
@@ -910,23 +910,23 @@ class Jira:
         # Raised exceptions
 
         _ApiError_ if `scheme_id` is invalid or something wrong
-        occured.
+        occurred.
         """
         ensure_instance('scheme_id', (int, str))
 
         result = self._delete(f'issuetypescheme/{scheme_id}')
         return result.status_code in [200, 201, 204]
 
-    # issuetypescreenschemes
+    # issue type screen schemes
 
     @api_call
     def list_issuetypescreenschemes(self) -> List[Dict[str, Any]]:
-        """Return the list of issuetypescreenschemes.
+        """Return the list of all issue type screen schemes.
 
         # Returned value
 
-        A list of _issuetypescreenschemes_.  Each issuetypescreenscheme
-        is a dictionary with the following entries:
+        A list of _issue type screen schemes_.  Each issue type screen
+        scheme is a dictionary with the following entries:
 
         - id: an integer or a string
         - name: a string
@@ -947,7 +947,7 @@ class Jira:
     def delete_issuetypescreenscheme(
         self, scheme_id_or_name: Union[int, str]
     ) -> None:
-        """Delete issuetypescreenscheme.
+        """Delete issue type screen scheme.
 
         # Required parameters
 
@@ -993,7 +993,7 @@ class Jira:
 
     @api_call
     def list_screens(self, expand: str = 'deletable') -> List[Dict[str, Any]]:
-        """Return the list of screens.
+        """Return the list of all screens.
 
         # Optional parameters
 
@@ -1043,23 +1043,23 @@ class Jira:
             cookies=form.cookies,
         )
 
-    # screenschemes
+    # screen schemes
 
     @api_call
     def list_screenschemes(self) -> List[Dict[str, Any]]:
-        """Return the list of screenschemes.
+        """Return the list of all screen schemes.
 
         # Returned value
 
-        A list of _screenschemes_.  Each screenscheme is a dictionary
+        A list of _screen schemes_.  Each screen scheme is a dictionary
         with the following entries:
 
         - id: an integer or a string
         - name: a string
         - active: a boolean
 
-        `active` is true if the screen scheme is used in an Issue Type
-        Screen Scheme.
+        `active` is true if the screen scheme is used in an _issue type
+        screen scheme_.
         """
         uri = 'secure/admin/ViewFieldScreenSchemes.jspa'
         pat_name = r'class="field-screen-scheme-name">([^<]+)</strong>'
@@ -1069,7 +1069,7 @@ class Jira:
 
     @api_call
     def delete_screenscheme(self, scheme_id_or_name: Union[int, str]) -> None:
-        """Delete screenscheme.
+        """Delete screen scheme.
 
         # Required parameters
 
@@ -1097,13 +1097,13 @@ class Jira:
             cookies=form.cookies,
         )
 
-    # notificationschemes
+    # notification schemes
 
     @api_call
     def list_notificationschemes(
         self, expand: str = NOTIFICATIONSCHEME_EXPAND
     ) -> List[Dict[str, Any]]:
-        """Return the list of notificationschemes.
+        """Return the list of all notification schemes.
 
         # Optional parameters
 
@@ -1111,7 +1111,7 @@ class Jira:
 
         # Returned value
 
-        A list of _notificationschemes_.  Each notificationscheme is a
+        A list of _notification schemes_.  Each notification scheme is a
         dictionary with the following entries (assuming the default for
         `expand`):
 
@@ -1150,15 +1150,15 @@ class Jira:
 
     @api_call
     def list_inactivenotificationschemes(self) -> List[Dict[str, Any]]:
-        """Returns the id of inactive notification schemes.
+        """Return the ID of inactive notification schemes.
 
         A notification scheme is said to be inactive if it is not used
         by any project.
 
         # Returned value
 
-        A list of inactive _notificationschemes_.  Each
-        notificationschemes is a dictionary with the following entries:
+        A list of inactive _notification schemes_.  Each notification
+        schemes is a dictionary with the following entries:
 
         - id: an integer
         - name: a string
@@ -1225,11 +1225,11 @@ class Jira:
 
     @api_call
     def list_priorityschemes(self) -> List[Dict[str, Any]]:
-        """Return the list of priorityschemes.
+        """Return the list of all priority schemes.
 
         # Returned value
 
-        A list of _priorityschemes_.  Each priorityscheme is a
+        A list of _priority schemes_.  Each priority scheme is a
         dictionary with the following entries:
 
         - id: an integer
@@ -1253,7 +1253,7 @@ class Jira:
     def list_priorityschemes2(
         self, expand: str = PRIORITYSCHEMES_EXPAND
     ) -> List[Dict[str, Any]]:
-        """Return the list of priorityschemes.
+        """Return the list of all priority schemes.
 
         # Optional parameters
 
@@ -1261,7 +1261,7 @@ class Jira:
 
         # Returned value
 
-        A list of _priorityschemes_.  Each priorityscheme is a
+        A list of _priority schemes_.  Each priority scheme is a
         dictionary with the following entries:
 
         - id: an integer
@@ -1380,10 +1380,11 @@ class Jira:
 
     @api_call
     def delete_priorityscheme2(self, scheme_id: Union[int, str]) -> bool:
-        """Delete the given priorityscheme by jira api.
+        """Delete priority scheme.
 
-        Each projects associated with this priorityscheme will be
-        automatically associated with the global default priorityscheme.
+        Each projects associated with this priority scheme will be
+        automatically associated with the global default priority
+        scheme.
 
         # Required parameters
 
@@ -1396,7 +1397,7 @@ class Jira:
         # Raised exceptions
 
         _ApiError_ if `scheme_id` is invalid or something wrong
-        occured.
+        occurred.
         """
         ensure_instance('scheme_id', (int, str))
 
@@ -1407,13 +1408,12 @@ class Jira:
 
     @api_call
     def list_fieldconfigurationschemes(self) -> List[Dict[str, Any]]:
-        """Return the list of field configuration schemes.
+        """Return the list of all field configuration schemes.
 
         # Returned value
 
-        A list of _fieldconfigurationschemes_.  Each
-        fieldconfigurationschemes is a dictionary with the following
-        entries:
+        A list of _field configuration schemes_.  Each field
+        configuration scheme is a dictionary with the following entries:
 
         - id: an integer
         - name: a string
@@ -1481,11 +1481,11 @@ class Jira:
 
     @api_call
     def list_fieldconfigurations(self) -> List[Dict[str, Any]]:
-        """Return the list of field configurations.
+        """Return the list of all field configurations.
 
         # Returned value
 
-        A list of _fieldconfigurations_.  Each fieldconfigurations is a
+        A list of _field configurations_.  Each field configuration is a
         dictionary with the following entries:
 
         - id: an integer
@@ -1551,7 +1551,7 @@ class Jira:
 
     @api_call
     def list_workflows(self) -> List[Dict[str, Any]]:
-        """Return the list of workflows.
+        """Return the list of all workflows.
 
         # Returned value
 
@@ -1569,7 +1569,7 @@ class Jira:
 
     @api_call
     def list_inactiveworkflows(self) -> List[str]:
-        """Return the list of inactive workflows.
+        """Return the list of all inactive workflows.
 
         # Returned value
 
@@ -1583,7 +1583,7 @@ class Jira:
 
     @api_call
     def delete_workflow(self, workflow_name: str) -> None:
-        """Delete worflow.
+        """Delete workflow.
 
         # Required parameters
 
@@ -1624,15 +1624,15 @@ class Jira:
             cookies=page.cookies,
         )
 
-    # workflowschemes
+    # workflow schemes
 
     @api_call
     def list_workflowschemes(self) -> List[Dict[str, Any]]:
-        """Return list of workflow schemes.
+        """Return the list of all workflow schemes.
 
         # Returned value
 
-        A list of _workflowschemes_.  Each workflowscheme is a
+        A list of _workflow schemes_.  Each workflow scheme is a
         dictionary with the following entries:
 
         - name: a string
@@ -1649,7 +1649,7 @@ class Jira:
     def delete_workflowscheme(
         self, scheme_id_or_name: Union[int, str]
     ) -> None:
-        """Delete workflowscheme.
+        """Delete workflow scheme.
 
         # Required parameters
 
@@ -1662,7 +1662,7 @@ class Jira:
         # Raised exceptions
 
         _ApiError_ if `scheme_id_or_name` is invalid or something wrong
-        occurred. timeout=TIMEOUT
+        occurred.
         """
         ensure_instance('scheme_id_or_name', (int, str))
 
@@ -1699,7 +1699,7 @@ class Jira:
 
         # Returned value
 
-        A _workflowscheme_.  A workflow scheme is a dictionary with the
+        A _workflow scheme_.  A workflow scheme is a dictionary with the
         following entries:
 
         - id: an integer
@@ -1745,7 +1745,7 @@ class Jira:
 
         # Returned value
 
-        A _workflowscheme_.  Refer to #get_workflowscheme() for details
+        A _workflow scheme_.  Refer to #get_workflowscheme() for details
         on its structure.
         """
         ensure_nonemptystring('name')
@@ -1763,10 +1763,11 @@ class Jira:
 
     @api_call
     def delete_workflowscheme2(self, scheme_id: int) -> bool:
-        """Delete the given workflowscheme by jira api.
+        """Delete workflow scheme.
 
-        Each projects associated with this workflowscheme will be
-        automatically associated with the global default workflowscheme.
+        Each projects associated with this workflow scheme will be
+        automatically associated with the global default workflow
+        scheme.
 
         # Required parameters
 
@@ -1825,7 +1826,7 @@ class Jira:
     def list_projects(
         self, expand: str = PROJECT_EXPAND
     ) -> List[Dict[str, Any]]:
-        """Return list of expanded projects.
+        """Return the list of all projects.
 
         # Optional parameters
 
@@ -1868,7 +1869,7 @@ class Jira:
 
     @api_call
     def list_projectoverviews(self):
-        """Return list of project overviews.
+        """Return the list of all project overviews.
 
         # Returned value
 
@@ -1908,7 +1909,7 @@ class Jira:
     def get_project(
         self, project_id_or_key: Union[int, str], expand: str = PROJECT_EXPAND
     ) -> Dict[str, Any]:
-        """Returned expanded project details.
+        """Returned project details.
 
         # Required parameters
 
@@ -2004,7 +2005,7 @@ class Jira:
     def update_project(
         self, project_id_or_key: Union[int, str], project: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Update project project.
+        """Update project.
 
         # Required parameters
 
@@ -2048,7 +2049,7 @@ class Jira:
     def delete_project(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Delete project project.
+        """Delete project.
 
         # Required parameters
 
@@ -2102,7 +2103,7 @@ class Jira:
     def get_project_notificationscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Optional[Dict[str, Any]]:
-        """Get notificationscheme assigned to project.
+        """Get notification scheme assigned to project.
 
         # Required parameters
 
@@ -2118,7 +2119,7 @@ class Jira:
         - description: a string
         - notificationSchemeEvents: a list of dictionaries
 
-        Returns None if no notificationscheme assigned.
+        Returns None if no notification scheme assigned.
         """
         ensure_instance('project_id_or_key', (str, int))
 
@@ -2135,7 +2136,7 @@ class Jira:
         project_id_or_key: Union[int, str],
         scheme_id_or_name: Union[int, str],
     ) -> Dict[str, Any]:
-        """Set notificationscheme associated to project.
+        """Set notification scheme associated to project.
 
         # Required parameters
 
@@ -2178,7 +2179,7 @@ class Jira:
     def get_project_permissionscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Get permissionscheme assigned to project.
+        """Get permission scheme assigned to project.
 
         # Required parameters
 
@@ -2206,7 +2207,7 @@ class Jira:
         project_id_or_key: Union[int, str],
         scheme_id_or_name: Union[int, str],
     ) -> Dict[str, Any]:
-        """Set permissionscheme associated to project.
+        """Set permission scheme associated to project.
 
         # Required parameters
 
@@ -2260,7 +2261,7 @@ class Jira:
     def get_project_priorityscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Get priorityscheme associated to project.
+        """Get priority scheme associated to project.
 
         # Required parameters
 
@@ -2287,7 +2288,7 @@ class Jira:
         project_id_or_key: Union[int, str],
         scheme_id_or_name: Union[int, str],
     ) -> Dict[str, Any]:
-        """Set priorityscheme associated to project.
+        """Set priority scheme associated to project.
 
         # Required parameters
 
@@ -2351,7 +2352,7 @@ class Jira:
     def get_project_workflowscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Get workflowscheme assigned to project.
+        """Get workflow scheme assigned to project.
 
         # Required parameters
 
@@ -2378,7 +2379,7 @@ class Jira:
     def set_project_workflowscheme(
         self, project_id_or_key: Union[int, str], workflowscheme: str
     ) -> None:
-        """Set project workflowscheme.
+        """Set workflow scheme associated to project.
 
         # Required parameters
 
@@ -2433,7 +2434,7 @@ class Jira:
     def get_project_issuetypescheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, str]:
-        """Return the current issuetypescheme name.
+        """Get issue type scheme name assigned to project.
 
         # Required parameters
 
@@ -2459,7 +2460,7 @@ class Jira:
     def set_project_issuetypescheme(
         self, project_id_or_key: Union[int, str], scheme: str
     ) -> None:
-        """Set project issuetypescheme.
+        """Set issue type scheme associated to project.
 
         # Required parameters
 
@@ -2499,7 +2500,7 @@ class Jira:
     def get_project_issuetypescreenscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, str]:
-        """Return the current issuetypescreenscheme name.
+        """Get issue type screen scheme name assigned to project.
 
         # Required parameters
 
@@ -2525,7 +2526,7 @@ class Jira:
     def set_project_issuetypescreenscheme(
         self, project_id_or_key: Union[int, str], scheme: str
     ) -> None:
-        """Set project issuetypescreenscheme.
+        """Set issue type screen scheme associated to project.
 
         # Required parameters
 
@@ -2564,7 +2565,7 @@ class Jira:
     def list_project_shortcuts(
         self, project_id_or_key: Union[int, str]
     ) -> List[Dict[str, str]]:
-        """Return the list of project shortcuts.
+        """Return the list of shortcuts in project.
 
         # Required parameters
 
@@ -2633,7 +2634,7 @@ class Jira:
     def create_project_board(
         self, project_id_or_key: Union[int, str], name: str, preset: str
     ) -> Dict[str, Any]:
-        """Create a new board associated to project.
+        """Create new board associated to project.
 
         # Required parameters
 
@@ -2798,7 +2799,7 @@ class Jira:
 
     @api_call
     def list_roles(self) -> List[Dict[str, Any]]:
-        """Return list of roles available in JIRA.
+        """Return the list of all roles.
 
         # Returned value
 
@@ -2828,21 +2829,14 @@ class Jira:
     # list_users
     # get_user
     # get_currentuser
+    # search_user
     # create_user
     # update_user
     # delete_user
-    # search_user
 
     @api_call
     def list_users(self, include_inactive: bool = True) -> List[str]:
-        """Return users list.
-
-        # Returned value
-
-        A list of _users_.  Each user is a string (the user 'name').
-
-        All known users are returned, including inactive ones if
-        `include_inactive` is true.
+        """Return a list of users.
 
         # Optional parameters
 
@@ -2850,7 +2844,11 @@ class Jira:
 
         # Returned value
 
-        A list of _user names_ (strings).
+        A list of _usernames_.  Each username is a string (the user
+        'name').
+
+        All known users are returned, including inactive ones if
+        `include_inactive` is true.
         """
         users = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
@@ -2892,8 +2890,8 @@ class Jira:
 
         # Returned value
 
-        A dictionary with the followin entries (assuming the default for
-        `expand`):
+        A dictionary with the following entries (assuming the default
+        for `expand`):
 
         - active: a boolean
         - applicationRoles: a dictionary
@@ -2909,8 +2907,8 @@ class Jira:
         - timeZone: a string
 
         The `applicationRoles` has two entries, `size` and `items`.
-        `size` is the number of entries in item, `items` is a list of
-        dictionaries.
+        `size` is the number of entries in `items`, and `items` is a
+        list of dictionaries.
 
         Each entry (if any) in the items list has the following entries:
 
@@ -2960,7 +2958,7 @@ class Jira:
         inactive: bool = True,
         max_results: int = MAX_RESULTS,
     ) -> List[Dict[str, Any]]:
-        """Return list of user details for users matching name.
+        """Return the list of user details for users matching name.
 
         Return at most `MAX_RESULTS` entries.
 
@@ -3002,7 +3000,7 @@ class Jira:
         email_address: str,
         display_name: str,
     ) -> bool:
-        """Create a new user.
+        """Create new user.
 
         # Required parameters
 
@@ -3629,7 +3627,6 @@ class Jira:
     # JIRA issues
     #
     # get_issue
-    # list_issue_transitions
     # list_issue_comments
     # add_issue_comment
     # update_issue_comment
@@ -3637,13 +3634,14 @@ class Jira:
     # add_issue_link
     # get_issue_link
     # delete_issue_link
+    # list_issue_transitions
     # transition_issue
     # get_issue_fields
     # create_issue
     # create_issues
     # delete_issue
-    # update_issue
     # assign_issue
+    # update_issue
     # add_issue_attachment
     # delete_issue_attachment
     # get_attachment_meta
@@ -3664,7 +3662,8 @@ class Jira:
 
         # Returned value
 
-        A dictionary with the following entries:
+        An _issue_.  An issue is a  dictionary with the following
+        entries:
 
         - fields: a dictionary
         - self: a string
@@ -3796,6 +3795,7 @@ class Jira:
         to #list_issuelinktypes() for details.
 
         # Required parameters
+
         - inward_issue_id_or_key: a non-empty string
         - type: a non-empty string
         - outward_issue_id_or_key: a non-empty string
@@ -3825,8 +3825,8 @@ class Jira:
 
         # Returned value
 
-        An _issuelink_.  An issuelink is a dictionary with the following
-        entries:
+        An _issue link_.  An issue link is a dictionary with the
+        following entries:
 
         - id: a string
         - type: a dictionary
@@ -3841,7 +3841,7 @@ class Jira:
 
     @api_call
     def delete_issue_link(self, issue_link_id: str) -> bool:
-        """Delete a issue link by id.
+        """Delete issue link by id.
 
         # Required parameters
 
@@ -3934,7 +3934,7 @@ class Jira:
 
     @api_call
     def create_issue(self, fields: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new issue.
+        """Create new issue.
 
         # Required parameters
 
@@ -3988,7 +3988,7 @@ class Jira:
     def delete_issue(
         self, issue_id_or_key: str, delete_subtasks: bool = True
     ) -> bool:
-        """Delete an issue.
+        """Delete issue.
 
         # Required parameters
 
@@ -4129,18 +4129,18 @@ class Jira:
         return result
 
     ####################################################################
-    # JIRA issue linktypes
+    # JIRA issue link types
     #
     # list_issuelinktypes
 
     @api_call
     def list_issuelinktypes(self) -> List[Dict[str, str]]:
-        """List issue link types.
+        """Return the list of all issue link types.
 
         # Returned value
 
-        A list of _issuelinktypes_.  Each issuelinktype is a dictionary
-        with the following entries:
+        A list of _issue link types_.  Each issue link type is a
+        dictionary with the following entries:
 
         - id: a string
         - name: a string
@@ -4158,8 +4158,8 @@ class Jira:
     #
     # get_sprint
     # create_sprint
-    # delete_sprint
     # update_sprint
+    # delete_sprint
     # add_sprint_issues
     # list_sprint_issues
 
@@ -4204,7 +4204,7 @@ class Jira:
         start_date: Optional[Any] = None,
         end_date: Optional[Any] = None,
     ) -> Dict[str, Any]:
-        """Create a new sprint.
+        """Create new sprint.
 
         # Required parameters
 
@@ -4228,26 +4228,6 @@ class Jira:
             .create_sprint(name, board_id, start_date, end_date)
             .raw
         )
-
-    @api_call
-    def delete_sprint(self, sprint_id: int) -> bool:
-        """Delete existing sprint, only future sprints can be deleted.
-
-        # Required parameters
-
-        - sprint_id: an integer
-
-        # Returned value
-
-        None.
-        """
-        ensure_instance('sprint_id', int)
-
-        result = self.session().delete(
-            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
-        )
-
-        return result.status_code in [200, 201, 204]
 
     @api_call
     def update_sprint(
@@ -4304,6 +4284,29 @@ class Jira:
         )
 
     @api_call
+    def delete_sprint(self, sprint_id: int) -> bool:
+        """Delete sprint.
+
+        !!! important
+            Only future sprints can be deleted.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Returned value
+
+        None.
+        """
+        ensure_instance('sprint_id', int)
+
+        result = self.session().delete(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
+        )
+
+        return result.status_code in [200, 201, 204]
+
+    @api_call
     def add_sprint_issues(self, sprint_id: int, issue_keys: List[str]) -> None:
         """Add issues to sprint.
 
@@ -4325,7 +4328,7 @@ class Jira:
     def list_sprint_issues(
         self, sprint_id: int, params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        """Returns all issues in a sprint.
+        """Returns the list of all issues in sprint.
 
         # Required parameters
 
@@ -4470,7 +4473,7 @@ class Jira:
         requesttype_id: str,
         fields: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Create a new request on specified service desk.
+        """Create new request on specified service desk.
 
         # Required parameters
 
@@ -4525,7 +4528,7 @@ class Jira:
 
         # Returned value
 
-        The _request_ details, a dictionary, with the following entries:
+        The _request_ details, a dictionary with the following entries:
 
         - issueId: a string
         - issueKey: a string
@@ -4571,8 +4574,8 @@ class Jira:
 
         # Returned value
 
-        A list of _request comments_.  Each comment is a dictionary with
-        the following entries:
+        A list of _request comments_.  Each request comment is a
+        dictionary with the following entries:
 
         - id: a string
         - author: a dictionary
@@ -4589,7 +4592,7 @@ class Jira:
     def add_request_comment(
         self, request_id_or_key: str, body: str, public: bool = False
     ) -> Dict[str, Any]:
-        """Create a public or private comment on request.
+        """Create public or private comment on request.
 
         # Required parameters
 
@@ -4674,7 +4677,7 @@ class Jira:
 
     @api_call
     def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
-        """Return a list of queues for a given service desk.
+        """Return the list of all queues for a given service desk.
 
         # Required parameters
 
@@ -4695,7 +4698,7 @@ class Jira:
     def list_queue_issues(
         self, servicedesk_id: str, queue_id: str
     ) -> List[Dict[str, Any]]:
-        """Return a list of issues in a given queue.
+        """Return the list of all issues in a given queue.
 
         # Required parameters
 
@@ -4716,7 +4719,7 @@ class Jira:
 
     @api_call
     def list_requesttypes(self, servicedesk_id: str) -> List[Dict[str, Any]]:
-        """Return a list of service desk request types.
+        """Return the list of all request types for a given service desk.
 
         # Required parameters
 
@@ -4744,7 +4747,7 @@ class Jira:
 
     @api_call
     def list_organizations(self) -> List[Dict[str, Any]]:
-        """Return a list of service desk organizations.
+        """Return the list of all service desk organizations.
 
         # Returned value
 
@@ -4791,7 +4794,7 @@ class Jira:
 
     @api_call
     def create_organization(self, organization_name: str) -> Dict[str, Any]:
-        """Create a new service desk organization.
+        """Create new service desk organization.
 
         # Required parameters
 
@@ -4816,7 +4819,7 @@ class Jira:
 
     @api_call
     def delete_organization(self, organization_id: int) -> bool:
-        """Delete a service desk organization.
+        """Delete service desk organization.
 
         # Required parameters
 
@@ -4844,7 +4847,7 @@ class Jira:
     def list_organization_users(
         self, organization_id: int
     ) -> List[Dict[str, Any]]:
-        """Return a list of user in organization.
+        """Return the list of all users in organization.
 
         # Required parameters
 
@@ -4875,7 +4878,7 @@ class Jira:
         organization_id: int,
         usernames: List[str],
     ) -> bool:
-        """Add user to organization.
+        """Add user(s) to organization.
 
         # Required parameters
 
@@ -4908,7 +4911,7 @@ class Jira:
     def remove_organization_users(
         self, organization_id: int, usernames: List[str]
     ) -> bool:
-        """Remove user from organization.
+        """Remove user(s) from organization.
 
         # Required parameters
 
@@ -4946,12 +4949,12 @@ class Jira:
 
     @api_call
     def list_plugins(self) -> List[Dict[str, Any]]:
-        """Return a list of installed plugins.
+        """Return the list of all installed plugins.
 
         # Returned value
 
-        A list of _plugins_.  A plugin is represented by a dictionary
-        with the following entries:
+        A list of _plugins_.  A plugin is a dictionary with the
+        following entries:
 
         - applicationKey: a string
         - applicationPluginType: a string (one of `'APPLICATION'`,
