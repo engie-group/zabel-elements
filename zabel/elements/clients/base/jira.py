@@ -16,13 +16,13 @@ This module depends on the public **requests** and **jira.JIRA**
 libraries.  It also depends on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
-
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import json
 import re
 
 from urllib.parse import urlencode
+
 
 import requests
 
@@ -56,8 +56,11 @@ NOTIFICATIONSCHEME_EXPAND = (
 )
 PROJECT_EXPAND = 'description,lead,url,projectKeys'
 USER_EXPAND = 'groups,applicationRoles'
+ISSUETYPESCHEMES_EXPAND = 'schemes.issueTypes,schemes.defaultIssueType'
+PRIORITYSCHEMES_EXPAND = 'schemes.projectKeys'
 
 MAX_RESULTS = 1000
+TIMEOUT = 60
 
 # Helpers
 
@@ -74,10 +77,10 @@ def _get_scheme_id(
     if isinstance(name_or_id, str):
         matches = [s['id'] for s in schemes if s['name'] == name_or_id]
         if len(matches) != 1:
-            raise ApiError('Scheme %s not found.' % name_or_id)
+            raise ApiError(f'Scheme {name_or_id} not found.')
         return str(matches.pop())
     if not any(str(s['id']) == str(name_or_id) for s in schemes):
-        raise ApiError('Scheme ID %s not found.' % str(name_or_id))
+        raise ApiError(f'Scheme ID {str(name_or_id)} not found.')
     return str(name_or_id)
 
 
@@ -90,12 +93,12 @@ class Jira:
     Reference URL:
 
     <https://docs.atlassian.com/jira/REST/server/>
-    <https://docs.atlassian.com/software/jira/docs/api/REST/8.7.1>
+    <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
     <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
     Agile reference:
 
-    <https://docs.atlassian.com/jira-software/REST/8.7.1/>
+    <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
     Using the python library:
 
@@ -327,8 +330,8 @@ class Jira:
     # list_groups
     # delete_group
     # create_group
-    # add_group_user
     # list_group_users
+    # add_group_user
     # remove_group_user
 
     @api_call
@@ -374,6 +377,27 @@ class Jira:
         return self._client().remove_group(group_name)
 
     @api_call
+    def list_group_users(self, group_name: str) -> Dict[str, Any]:
+        """Return the group users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A dictionary.  Keys are the user names, and values are
+        dictionaries with the following entries:
+
+        - active: a boolean
+        - fullname: a string
+        - email: a string
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._client().group_members(group_name)
+
+    @api_call
     def add_group_user(
         self, group_name: str, user_name: str
     ) -> Union[bool, Dict[str, Any]]:
@@ -410,27 +434,6 @@ class Jira:
         ensure_nonemptystring('user_name')
 
         return self._client().remove_user_from_group(user_name, group_name)
-
-    @api_call
-    def list_group_users(self, group_name: str) -> Dict[str, Any]:
-        """Return the group users.
-
-        # Required parameters
-
-        - group_name: a non-empty string
-
-        # Returned value
-
-        A dictionary.  Keys are the user names, and values are
-        dictionaries with the following entries:
-
-        - active: a boolean
-        - fullname: a string
-        - email: a string
-        """
-        ensure_nonemptystring('group_name')
-
-        return self._client().group_members(group_name)
 
     ####################################################################
     # JIRA permission scheme
@@ -640,13 +643,20 @@ class Jira:
     # values.
     #
     # list_issuetypeschemes+
+    # list_issuetypeschemes2
+    # get_issuetypescheme
+    # create_issuetypescheme
+    # update_issuetypescheme
     # delete_issuetypescheme (for pre-8 JIRA versions)
+    # delete_issuetypescheme2
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
     # list_notificationschemes
     # list_inactivenotificationschemes
     # delete_notificationscheme
     # list_priorityschemes+
+    # list_priorityschemes2
+    # get_priorityscheme
     # delete_priorityscheme
     # list_fieldconfigurationschemes+
     # delete_fieldconfigurationscheme
@@ -656,6 +666,7 @@ class Jira:
     # delete_workflow
     # list_workflowschemes+
     # delete_workflowscheme
+    # create_workflowscheme
     # list_screens+
     # delete_screen
     # list_screenschemes+
@@ -666,6 +677,9 @@ class Jira:
     @api_call
     def list_issuetypeschemes(self) -> List[Dict[str, Any]]:
         """Return the list of issue type schemes.
+
+        !!! note
+            Legacy method, use #list_issuetypeschemes2() instead.
 
         # Returned value
 
@@ -687,14 +701,148 @@ class Jira:
         return self._parse_data(uri, pat_name, pat_id, pat_inactive)
 
     @api_call
+    def list_issuetypeschemes2(
+        self, expand: str = ISSUETYPESCHEMES_EXPAND
+    ) -> List[Dict[str, Any]]:
+        """Return the list of issue type schemes.
+
+        # Optional parameters
+
+        - expand: a string (`ISSUETYPESCHEMES_EXPAND` by default)
+
+        # Returned value
+
+        A list of _issuetypeschemes_.  Each issuetypeschemes is a
+        dictionary with the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - defaultIssueType : a dictionary
+        - issueTypes: a list of dictionaries
+        - self: a string
+
+        `defaultIssueType` and `issueTypes` items are dictionaries with
+        the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - subtask: a boolean
+        - avatarId: an integer
+        - iconUrl: a string
+        - self: a string
+        """
+        ensure_instance('expand', str)
+
+        res = self._get_json('issuetypescheme', params={'expand': expand})
+        return res['schemes']
+
+    @api_call
+    def get_issuetypescheme(
+        self,
+        scheme_id: Union[int, str],
+        expand: str = '',
+    ) -> Dict[str, Any]:
+        """Return issue type scheme details.
+
+        # Required parameters
+
+        - scheme_id: an integer or a non-empty string
+
+        # Optional parameters
+
+        - expand: a string (an empty string by default)
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes2() for details on its
+        structure.
+        """
+        ensure_instance('scheme_id', (int, str))
+        ensure_instance('expand', str)
+
+        return self._get_json(
+            f'issuetypescheme/{scheme_id}', params={'expand': expand}
+        )
+
+    @api_call
+    def create_issuetypescheme(
+        self,
+        name: str,
+        description: str,
+        default_issue_type_id: int,
+        issue_type_ids: List[int],
+    ) -> Dict[str, Any]:
+        """Create new issue type scheme.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - description: a string
+        - default_issue_type_id : an integer
+        - issue_type_ids: a list of integers
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes2() for details on its
+        structure.
+        """
+        ensure_nonemptystring('name')
+        ensure_instance('description', str)
+        ensure_instance('default_issue_type_id', int)
+        ensure_instance('issue_type_ids', list)
+
+        data = {
+            'name': name,
+            'description': description,
+            'defaultIssueTypeId': default_issue_type_id,
+            'issueTypeIds': issue_type_ids,
+        }
+        return self._post('issuetypescheme', json=data)  # type: ignore
+
+    @api_call
+    def update_issuetypescheme(
+        self,
+        scheme_id: Union[int, str],
+        issuetypescheme: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Update an issue type scheme.
+
+        # Required parameters
+
+        - scheme_id: an integer or a non-empty string
+        - issuetypescheme: a dictionary.
+
+        `issuetypescheme` is a dictionary with the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - defaultIssueTypeId : an integer
+        - issueTypeIds: a list of integers
+
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes2() for details on its
+        structure
+        """
+        ensure_instance('scheme_id', (int, str))
+
+        return self._put(f'issuetypescheme/{scheme_id}', json=issuetypescheme)  # type: ignore
+
+    @api_call
     def delete_issuetypescheme(
         self, scheme_id_or_name: Union[int, str]
     ) -> None:
         """Delete issuetypescheme.
 
+        !!! note
+            Legacy method, use #delete_issuetypescheme2() instead.
+
         # Required parameters
 
-        - scheme_id_or_name: a integer or a non-empty string
+        - scheme_id_or_name: an integer or a non-empty string
 
         # Returned value
 
@@ -723,6 +871,32 @@ class Jira:
             },
             cookies=form.cookies,
         )
+
+    @api_call
+    def delete_issuetypescheme2(self, scheme_id: Union[int, str]) -> bool:
+        """Delete issuetypescheme.
+
+        Each projects associated with this issuetypescheme will be
+        automatically associated with the global default
+        issuetypescheme.
+
+        # Required parameters
+
+        - scheme_id: an integer or a non-empty string
+
+        # Returned value
+
+        A boolean.
+
+        # Raised exceptions
+
+        _ApiError_ if `scheme_id` is invalid or something wrong
+        occured.
+        """
+        ensure_instance('scheme_id', (int, str))
+
+        result = self._delete(f'issuetypescheme/{scheme_id}')
+        return result.status_code in [200, 201, 204]
 
     # issuetypescreenschemes
 
@@ -784,7 +958,7 @@ class Jira:
         )
 
         if not atl_token:
-            raise ApiError('Scheme %s is active.' % str(scheme_id_or_name))
+            raise ApiError(f'Scheme {str(scheme_id_or_name)} is active.')
 
         self._do_form_step(
             'secure/admin/DeleteIssueTypeScreenScheme.jspa',
@@ -892,8 +1066,8 @@ class Jira:
             scheme_id_or_name, self.list_screenschemes()
         )
 
-        uri = 'secure/admin/ViewDeleteFieldScreenScheme.jspa?id=%s'
-        form = self._get(uri % scheme_id)
+        uri = f'secure/admin/ViewDeleteFieldScreenScheme.jspa?id={scheme_id}'
+        form = self._get(uri)
         self._do_form_step(
             'secure/admin/DeleteFieldScreenScheme.jspa',
             data={
@@ -1014,7 +1188,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Notification Scheme %s could not be found.' % scheme_id
+                f'Notification Scheme {scheme_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1057,6 +1231,98 @@ class Jira:
         return self._parse_data(uri, pat_name, pat_id, pat_inactive)
 
     @api_call
+    def list_priorityschemes2(
+        self, expand: str = PRIORITYSCHEMES_EXPAND
+    ) -> List[Dict[str, Any]]:
+        """Return the list of priorityschemes.
+
+        # Optional parameters
+
+        - expand: a string (`PRIORITYSCHEMES_EXPAND` by default)
+
+        # Returned value
+
+        A list of _priorityschemes_.  Each priorityscheme is a
+        dictionary with the following entries:
+
+        - id: an integer
+        - name: a string
+        - defaultScheme: a boolean
+        - defaultOptionId: a string
+        - optionIds: a list of strings
+        - projectKeys: a list of strings
+        - expand: a string
+        - self: a string
+        """
+        ensure_instance('expand', str)
+
+        return self._collect_data(
+            'priorityschemes', params={'expand': expand}, key='schemes'
+        )
+
+    @api_call
+    def get_priorityscheme(
+        self, scheme_id: int, expand: str = ''
+    ) -> Dict[str, Any]:
+        """Return priority scheme details.
+
+        # Required parameters
+
+        - scheme_id: an integer
+
+        # Optional parameters
+
+        - expand: a string (an empty string by default)
+
+        # Returned value
+
+        A dictionary. See #list_priorityschemes2() for details on its
+        structure.
+        """
+        ensure_instance('scheme_id', int)
+        ensure_instance('expand', str)
+
+        return self._get_json(
+            f'priorityschemes/{scheme_id}', params={'expand': expand}
+        )
+
+    @api_call
+    def create_priorityscheme(
+        self,
+        name: str,
+        description: str,
+        default_option_id: int,
+        option_ids: List[int],
+    ) -> Dict[str, Any]:
+        """Create new priority scheme.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - description: a non-empty string
+        - default_option_id: an integer
+        - option_ids: a list of integers
+
+        # Returned value
+
+        A dictionary. See #list_priorityschemes2() for details on its
+        structure.
+        """
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('description')
+        ensure_instance('default_option_id', int)
+        ensure_instance('option_ids', list)
+
+        data = {
+            'name': name,
+            'description': description,
+            'defaultOptionId': default_option_id,
+            'optionIds': option_ids,
+        }
+
+        return self._post('priorityschemes', json=data)  # type: ignore
+
+    @api_call
     def delete_priorityscheme(self, scheme_id: Union[int, str]) -> None:
         """Delete priority scheme.
 
@@ -1080,9 +1346,7 @@ class Jira:
         atl_token = re.search(r'/logout\?atl_token=([^"]+)"', page.text)
 
         if not atl_token:
-            raise ApiError(
-                'Priority Scheme %s could not be found.' % scheme_id
-            )
+            raise ApiError(f'Priority Scheme {scheme_id} could not be found.')
 
         self._do_form_step(
             'secure/admin/DeletePriorityScheme.jspa',
@@ -1094,6 +1358,31 @@ class Jira:
             },
             cookies=page.cookies,
         )
+
+    @api_call
+    def delete_priorityscheme2(self, scheme_id: Union[int, str]) -> bool:
+        """Delete the given priorityscheme by jira api.
+
+        Each projects associated with this priorityscheme will be
+        automatically associated with the global default priorityscheme.
+
+        # Required parameters
+
+        - scheme_id: an integer or a non-empty string
+
+        # Returned value
+
+        A boolean.
+
+        # Raised exceptions
+
+        _ApiError_ if `scheme_id` is invalid or something wrong
+        occured.
+        """
+        ensure_instance('scheme_id', (int, str))
+
+        result = self._delete(f'priorityschemes/{scheme_id}')
+        return result.status_code in [200, 201, 204]
 
     # field configuration fields
 
@@ -1155,7 +1444,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Field Configuration Scheme %s could not be found.' % scheme_id
+                f'Field Configuration Scheme {scheme_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1225,7 +1514,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Field Configuration %s could not be found.' % conf_id
+                f'Field Configuration {conf_id} could not be found.'
             )
 
         self._do_form_step(
@@ -1302,8 +1591,7 @@ class Jira:
 
         if not atl_token:
             raise ApiError(
-                'Workflow %s not found or attached to project(s).'
-                % workflow_name
+                f'Workflow {workflow_name} not found or attached to project(s).'
             )
 
         self._do_form_step(
@@ -1355,7 +1643,7 @@ class Jira:
         # Raised exceptions
 
         _ApiError_ if `scheme_id_or_name` is invalid or something wrong
-        occurred.
+        occurred. timeout=TIMEOUT
         """
         ensure_instance('scheme_id_or_name', (int, str))
 
@@ -1365,7 +1653,7 @@ class Jira:
             )
             scheme = self._get_json(f'workflowscheme/{scheme_id}')
             if scheme['name'] != scheme_id_or_name:
-                raise ApiError('Scheme %s not found.' % scheme_id_or_name)
+                raise ApiError(f'Scheme {scheme_id_or_name} not found.')
         else:
             scheme_id = str(scheme_id_or_name)
 
@@ -1373,7 +1661,111 @@ class Jira:
             self._get_url(f'workflowscheme/{scheme_id}'),
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
+
+    @api_call
+    def get_workflowscheme(
+        self, scheme_id: int, draft: bool = False
+    ) -> Dict[str, Any]:
+        """Return workflow scheme details.
+
+        # Required parameters
+
+        - scheme_id: an integer
+
+        # Optional parameters
+
+        - draft: a boolean (False by default)
+
+        # Returned value
+
+        A _workflowscheme_.  A workflow scheme is a dictionary with the
+        following entries:
+
+        - id: an integer
+        - name: a string
+        - description: a string
+        - defaultWorkflow: a string
+        - issueTypeMappings: a dictionary
+        - self: a string
+        - draft: a boolean
+        - issueTypes: a dictionary
+
+        `issueTypes` has one entry per issue type.  The key is the
+        issue type ID (a string) and the value is a dictionary.
+
+        `issueTypeMappings` has one entry per issue type.  The key is
+        the issue type ID (a string) and the value is a string (a
+        workflow name).
+        """
+        ensure_instance('scheme_id', int)
+        ensure_instance('draft', bool)
+
+        return self._get_json(
+            f'workflowscheme/{scheme_id}',
+            params={'returnDraftIfExists': draft},
+        )
+
+    @api_call
+    def create_workflowscheme(
+        self,
+        name: str,
+        description: str,
+        default_workflow: str,
+        issue_type_mappings: Dict[str, str],
+    ) -> Dict[str, Any]:
+        """Create new workflow scheme.
+
+        # Required parameters
+
+        - name: a string
+        - description: a string
+        - default_workflow: a string
+        - issue_type_mappings: a dictionary
+
+        # Returned value
+
+        A _workflowscheme_.  Refer to #get_workflowscheme() for details
+        on its structure.
+        """
+        ensure_nonemptystring('name')
+        ensure_instance('description', str)
+        ensure_instance('default_workflow', str)
+        ensure_instance('issue_type_mappings', dict)
+
+        data = {
+            'name': name,
+            'description': description,
+            'defaultWorkflow': default_workflow,
+            'issueTypeMappings': issue_type_mappings,
+        }
+        return self._post('workflowscheme', json=data)  # type: ignore
+
+    @api_call
+    def delete_workflowscheme2(self, scheme_id: int) -> bool:
+        """Delete the given workflowscheme by jira api.
+
+        Each projects associated with this workflowscheme will be
+        automatically associated with the global default workflowscheme.
+
+        # Required parameters
+
+        - scheme_id: an integer
+
+        # Returned value
+
+        A boolean.
+
+        # Raised exceptions
+
+        _ApiError_ if `scheme_id` is invalid or something wrong
+        occurred.
+        """
+        ensure_instance('scheme_id', int)
+
+        result = self._delete(f'workflowscheme/{scheme_id}')
+        return result.status_code in [200, 201, 204]
 
     ####################################################################
     # JIRA project
@@ -1481,6 +1873,7 @@ class Jira:
             join_url(self.url, '/secure/project/BrowseProjects.jspa'),
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         upd = result.text.split(
             'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
@@ -1714,7 +2107,7 @@ class Jira:
             return self._get_json(
                 f'project/{project_id_or_key}/notificationscheme'
             )
-        except:
+        except ApiError:
             return None
 
     @api_call
@@ -1750,12 +2143,11 @@ class Jira:
             ]
             if len(nss) > 1:
                 raise ApiError(
-                    'More than one notificationscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one notificationscheme with name {scheme_id_or_name}.'
                 )
             if not nss:
                 raise ApiError(
-                    'No notificationscheme with name %s.' % scheme_id_or_name
+                    f'No notificationscheme with name {scheme_id_or_name}.'
                 )
             scheme_id = nss[0]
 
@@ -1831,12 +2223,11 @@ class Jira:
             ]
             if len(pss) > 1:
                 raise ApiError(
-                    'More than one permissionscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one permissionscheme with name {scheme_id_or_name}.'
                 )
             if not pss:
                 raise ApiError(
-                    'No permissionscheme with name %s.' % scheme_id_or_name
+                    f'No permissionscheme with name {scheme_id_or_name}.'
                 )
             data = {'id': pss[0]}
 
@@ -1917,17 +2308,17 @@ class Jira:
                     self._get_url('priorityschemes'),
                     auth=self.auth,
                     verify=self.verify,
+                    timeout=TIMEOUT,
                 ).json()['schemes']
                 if ps['name'] == scheme_id_or_name
             ]
             if len(pss) > 1:
                 raise ApiError(
-                    'More than one priorityscheme with name %s.'
-                    % scheme_id_or_name
+                    f'More than one priorityscheme with name {scheme_id_or_name}.'
                 )
             if not pss:
                 raise ApiError(
-                    'No priorityscheme with name %s.' % scheme_id_or_name
+                    f'No priorityscheme with name {scheme_id_or_name}.'
                 )
             data = {'id': pss[0]}
 
@@ -2215,6 +2606,7 @@ class Jira:
             json={'url': url, 'name': description, 'icon': ''},
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -2955,6 +3347,7 @@ class Jira:
             json=data,
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -2981,6 +3374,7 @@ class Jira:
             join_url(self.AGILE_BASE_URL, f'board/{board_id}'),
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3029,6 +3423,7 @@ class Jira:
             params={'rapidViewId': board_id},
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3078,6 +3473,7 @@ class Jira:
             json={'id': board_id, 'boardAdmins': board_admins},
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3137,7 +3533,7 @@ class Jira:
         if statistics_field not in [
             sf['id'] for sf in model['rapidListConfig']['statisticsFields']
         ]:
-            raise ApiError('Unknown statistics_field %s.' % statistics_field)
+            raise ApiError(f'Unknown statistics_field {statistics_field}.')
 
         # collecting known statuses
         statuses = list(model['rapidListConfig']['unmappedStatuses'])
@@ -3151,9 +3547,9 @@ class Jira:
             col_statuses = []
             for name in col['mappedStatuses']:
                 if name in mapped_names:
-                    raise ApiError('Status %s mapped more than once.' % name)
+                    raise ApiError(f'Status {name} mapped more than once.')
                 if name not in statuses_names:
-                    raise ApiError('Unknown status %s.' % name)
+                    raise ApiError(f'Unknown status {name}.')
                 mapped_names.append(name)
                 col_statuses.append(name)
             column_definition = col.copy()
@@ -3171,6 +3567,7 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3204,6 +3601,7 @@ class Jira:
             json={'rapidViewId': board_id, 'showDaysInColumn': days_in_column},
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3214,15 +3612,21 @@ class Jira:
     # list_issue_transitions
     # list_issue_comments
     # add_issue_comment
+    # update_issue_comment
+    # delete_issue_comment
     # add_issue_link
+    # get_issue_link
+    # delete_issue_link
     # transition_issue
     # get_issue_fields
     # create_issue
     # create_issues
-    # TODO delete_issue
+    # delete_issue
     # update_issue
     # assign_issue
-    # TEST add_issue_attachment
+    # add_issue_attachment
+    # delete_issue_attachment
+    # get_attachment_meta
 
     @api_call
     def get_issue(
@@ -3306,9 +3710,58 @@ class Jira:
         A _comment_.  Comments are dictionaries.  Refer to
         #list_issue_comments() for more information.
         """
-        url = self._get_url(f'issue/{issue_id_or_key}/comment')
-        result = self.session().post(url, data=json.dumps(fields))
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_instance('fields', dict)
+
+        result = self._post(f'issue/{issue_id_or_key}/comment', json=fields)
         return result  # type: ignore
+
+    @api_call
+    def update_issue_comment(
+        self, issue_id_or_key: str, comment_id: str, fields: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update a comment.
+
+        # Required parameters
+
+        - issue_id_or_key: a non-empty string
+        - comment_id: a non-empty string
+        - fields: a dictionary
+
+        # Returned value
+
+        A _comment_.  Comments are dictionaries.  Refer to
+        #list_issue_comments() for more information.
+        """
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_nonemptystring('comment_id')
+        ensure_instance('fields', dict)
+
+        result = self._put(
+            f'issue/{issue_id_or_key}/comment/{comment_id}', json=fields
+        )
+        return result  # type: ignore
+
+    @api_call
+    def delete_issue_comment(
+        self, issue_id_or_key: str, comment_id: str
+    ) -> bool:
+        """Add a comment.
+
+        # Required parameters
+
+        - issue_id_or_key: a non-empty string
+        - comment_id: a non-empty string
+
+        # Returned value
+
+        A boolean.
+        """
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_nonemptystring('comment_id')
+
+        result = self._delete(f'issue/{issue_id_or_key}/comment/{comment_id}')
+        return result.status_code in [200, 201, 204]
 
     @api_call
     def add_issue_link(
@@ -3316,7 +3769,7 @@ class Jira:
         inward_issue_id_or_key: str,
         type_: str,
         outward_issue_id_or_key: str,
-    ) -> Dict[str, Any]:
+    ) -> None:
         """Add an issue link between two issues.
 
         The `type_` value must be a valid _issue link type_ name.  Refer
@@ -3329,16 +3782,59 @@ class Jira:
 
         # Returned value
 
-
+        None.
         """
-        url = self._get_url('issueLink')
+        ensure_nonemptystring('inward_issue_id_or_key')
+        ensure_nonemptystring('type_')
+        ensure_nonemptystring('outward_issue_id_or_key')
+
         data = {
             'type': {'name': type_},
             'inwardIssue': {'key': inward_issue_id_or_key},
             'outwardIssue': {'key': outward_issue_id_or_key},
         }
-        result = self.session().post(url, data=json.dumps(data))
-        return result  # type: ignore
+        return self._post('issueLink', json=data)  # type: ignore
+
+    @api_call
+    def get_issue_link(self, issue_link_id: str) -> Dict[str, Any]:
+        """Get a issue link by id.
+
+        # Required parameters
+
+        - issue_link_id: a non-empty string
+
+        # Returned value
+
+        An _issuelink_.  An issuelink is a dictionary with the following
+        entries:
+
+        - id: a string
+        - type: a dictionary
+        - inwardIssue: a dictionary
+        - outwardIssue: a dictionary
+        - self: a string
+        - fields: a dictionary
+        """
+        ensure_nonemptystring('issue_link_id')
+
+        return self._get_json(f'issueLink/{issue_link_id}')  # type: ignore
+
+    @api_call
+    def delete_issue_link(self, issue_link_id: str) -> bool:
+        """Delete a issue link by id.
+
+        # Required parameters
+
+        - issue_link_id: a non-empty string
+
+        # Returned value
+
+        A boolean. True if successful, False otherwise.
+        """
+        ensure_nonemptystring('issue_link_id')
+
+        result = self._delete(f'issueLink/{issue_link_id}')
+        return result.status_code in [200, 201, 204]
 
     @api_call
     def list_issue_transitions(
@@ -3392,8 +3888,7 @@ class Jira:
             ]
             if len(transitions) != 1:
                 raise ApiError(
-                    'Got %d transitions to %s, was expecting one.'
-                    % (len(transitions), name)
+                    f'Got {len(transitions)} transitions to {name}, was expecting one.'
                 )
             self._client().transition_issue(issue_id_or_key, transitions[0])
 
@@ -3468,6 +3963,33 @@ class Jira:
         ensure_instance('issue_list', list)
 
         return self._client().create_issues(field_list=issue_list)
+
+    @api_call
+    def delete_issue(
+        self, issue_id_or_key: str, delete_subtasks: bool = True
+    ) -> bool:
+        """Delete an issue.
+
+        # Required parameters
+
+         - issue_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - delete_subtasks: a boolean (True by default)
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_instance('delete_subtasks', bool)
+
+        result = self._delete(
+            f'issue/{issue_id_or_key}',
+            json_data={'deleteSubtasks': str(delete_subtasks)},
+        )
+        return result.status_code in [200, 201, 204]
 
     @api_call
     def assign_issue(self, issue_id_or_key: str, assignee: str) -> bool:
@@ -3554,6 +4076,38 @@ class Jira:
             .raw
         )
 
+    @api_call
+    def delete_issue_attachment(self, attachment_id: str) -> bool:
+        """Delete attachment from issue.
+
+        # Required parameters
+
+        - attachment_id: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('attachment_id')
+
+        result = self._delete(f'attachment/{attachment_id}')
+        return result.status_code in [200, 201, 204]
+
+    @api_call
+    def get_attachment_meta(self) -> Dict[str, Any]:
+        """Get attachment metadata.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - enabled: a a boolean
+        - uploadLimit: an integer
+        """
+
+        result = self._get_json('attachment/meta')
+        return result
+
     ####################################################################
     # JIRA issue linktypes
     #
@@ -3582,12 +4136,45 @@ class Jira:
     ####################################################################
     # JIRA sprints
     #
+    # get_sprint
     # create_sprint
-    # TODO delete_sprint
+    # delete_sprint
     # update_sprint
-    # TODO get_sprint
     # add_sprint_issues
-    # TODO get_sprint_issues
+    # list_sprint_issues
+
+    @api_call
+    def get_sprint(self, sprint_id: int) -> Dict[str, Any]:
+        """Get a sprint by id.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Returned value
+
+        A _sprint_.  A sprint is a dictionary with the following
+        entries:
+
+        - id: a string
+        - name: a string
+        - self : a string
+        - activatedDate: a string
+        - autoStartStop: a boolean
+        - endDate: a string
+        - goal: a string
+        - originBoardId: an integer
+        - startDate: a string
+        - state: a string
+        - synced: a boolean
+        """
+        ensure_instance('sprint_id', int)
+
+        result = self.session().get(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
+        )
+
+        return result  # type: ignore
 
     @api_call
     def create_sprint(
@@ -3613,11 +4200,34 @@ class Jira:
 
         A dictionary.
         """
+        ensure_nonemptystring('name')
+        ensure_instance('board_id', int)
+
         return (
             self._client()
             .create_sprint(name, board_id, start_date, end_date)
             .raw
         )
+
+    @api_call
+    def delete_sprint(self, sprint_id: int) -> bool:
+        """Delete existing sprint, only future sprints can be deleted.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Returned value
+
+        None.
+        """
+        ensure_instance('sprint_id', int)
+
+        result = self.session().delete(
+            join_url(self.AGILE_BASE_URL, f'sprint/{sprint_id}')
+        )
+
+        return result.status_code in [200, 201, 204]
 
     @api_call
     def update_sprint(
@@ -3686,12 +4296,59 @@ class Jira:
 
         None.
         """
+        ensure_instance('sprint_id', int)
+        ensure_instance('issue_keys', list)
+
         return self._client().add_issues_to_sprint(sprint_id, issue_keys)
+
+    @api_call
+    def list_sprint_issues(
+        self, sprint_id: int, params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Returns all issues in a sprint.
+
+        # Required parameters
+
+        - sprint_id: an integer
+
+        # Optional parameters
+
+        - params: a dictionary or None (None by default)
+
+        `params`, if provided, is a dictionary with at least one of the
+        following entries:
+
+        - startAt: an integer
+        - maxResults: an integer
+        - jql: a string
+        - validateQuery: a boolean
+        - fields: a list of strings
+        - expand: a string
+
+        # Returned value
+
+        A list of _issues_.  Each issue is a dictionary with the
+        following entries:
+
+        - status: a string (`'Success'` or `'Error'`)
+        - error: a string or None (in case of success)
+        - issue: a dictionary or None
+        - input_fields: a dictionary, the corresponding entry in
+          `issue_list
+        """
+        ensure_instance('sprint_id', int)
+        ensure_noneorinstance('params', dict)
+
+        return self._collect_agile_data(
+            f'sprint/{sprint_id}/issue', params=params, key='issues'
+        )
 
     ####################################################################
     # Xray for JIRA
     #
     # list_xray_projects
+    # enable_xray_to_project
+    # disable_xray_to_project
 
     @api_call
     def list_xray_projects(self) -> List[Dict[str, Any]]:
@@ -3710,17 +4367,65 @@ class Jira:
         - avatarId: an integer
         - type: a string (the project type)
 
-        TODO: support more than 100 projects.
         """
-        params = {'iDisplayStart': 0, 'iDisplayLength': 100}
+        max_projects = self._get_max_xray_projects()
 
-        result = requests.get(
+        params = {'iDisplayStart': 0, 'iDisplayLength': max_projects}
+        response = requests.get(
             join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
             params=params,
             auth=self.auth,
+            timeout=TIMEOUT,
         ).json()
 
-        return result['entries']
+        return response['entries']
+
+    @api_call
+    def enable_xray(self, project_id: int) -> bool:
+        """Enable Xray for the given project.
+
+        # Required parameters
+
+        - project_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, false otherwise.
+        """
+        ensure_instance('project_id', int)
+
+        response = requests.post(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            json=[project_id],
+            auth=self.auth,
+            timeout=TIMEOUT,
+        )
+
+        return response.status_code in [200, 201, 204]
+
+    @api_call
+    def disable_xray(self, project_id: int) -> bool:
+        """Disable Xray from the given project.
+
+        # Required parameters
+
+        - project_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, false otherwise.
+        """
+        ensure_instance('project_id', int)
+
+        params = {'projectKeys': project_id}
+        response = requests.delete(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            params=params,
+            auth=self.auth,
+            timeout=TIMEOUT,
+        )
+
+        return response.status_code in [200, 201, 204]
 
     ####################################################################
     # JIRA Service Desk
@@ -3733,6 +4438,10 @@ class Jira:
     # list_queues
     # list_queue_issues
     # list_requesttypes
+    # list_organizations
+    # get_organization
+    # create_organization
+    # delete_organization
 
     @api_call
     def create_request(
@@ -3743,7 +4452,7 @@ class Jira:
     ) -> Dict[str, Any]:
         """Create a new customer request on specified service desk.
 
-        # Required parameters:
+        # Required parameters
 
         - servicedesk_id: a non-empty string
         - requesttype_id: a non-empty string
@@ -3763,7 +4472,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
-        # ensure_instance('fields', list)
+        ensure_instance('fields', list)
 
         result = requests.post(
             join_url(self.SERVICEDESK_BASE_URL, 'request'),
@@ -3774,6 +4483,7 @@ class Jira:
             },
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3783,7 +4493,7 @@ class Jira:
     ) -> Dict[str, Any]:
         """Return request details.
 
-        # Required parameters:
+        # Required parameters
 
         - request_id_or_key: a non-empty string
 
@@ -3791,7 +4501,7 @@ class Jira:
 
         - expand: a string or None (None by default)
 
-        # Returned value:
+        # Returned value
 
         The _request_ details, a dictionary, with the following entries:
 
@@ -3823,8 +4533,9 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
-        )
-        return response  # type: ignore
+            timeout=TIMEOUT,
+        ).json()
+        return response
 
     @api_call
     def list_request_comments(
@@ -3846,9 +4557,10 @@ class Jira:
         - body: a string
         - created: a string (a timestamp)
         - public: a boolean
-        _ _links: a dictionary
+        - _links: a dictionary
         """
         ensure_nonemptystring('request_id_or_key')
+
         return self._collect_sd_data(f'request/{request_id_or_key}/comment')
 
     @api_call
@@ -3907,6 +4619,7 @@ class Jira:
             json={'body': body, 'public': public},
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
         return result  # type: ignore
 
@@ -3932,8 +4645,10 @@ class Jira:
             join_url(self.SDBUNDLE_BASE_URL, 'jsdbundled/getBundledFields'),
             params={'contextId': context_id, 'customFieldId': customfield_id},
             auth=self.auth,
-        )
-        return result  # type: ignore
+            verify=self.verify,
+            timeout=TIMEOUT,
+        ).json()
+        return result
 
     @api_call
     def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
@@ -3996,6 +4711,200 @@ class Jira:
         )
 
     @api_call
+    def list_organizations(self) -> List[Dict[str, Any]]:
+        """Return a list of service desk organization.
+
+        # Returned value
+
+        A list of _organizations_.  An organization is a dictionary.
+
+        Refer to #get_organization() for details on its structure.
+        """
+        organizations = self._collect_sd_data(
+            'organization',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return organizations
+
+    @api_call
+    def get_organization(self, organization_id: int) -> Dict[str, Any]:
+        """Return organization details.
+
+        # Required parameters
+
+        - organization_id: an integer
+
+        # Returned value
+
+        The _organization_ details, a dictionary, with the following
+        entries:
+
+        - id: a string
+        - name: a string
+        - _links: a dictionary
+        """
+        ensure_instance('organization_id', int)
+
+        result = requests.get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
+            headers={'X-ExperimentalApi': 'opt-in'},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def create_organization(self, organization_name: str) -> Dict[str, Any]:
+        """Create a new organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        The created _organization_ details.  Please refer to
+        #get_organization() for more information.
+        """
+        ensure_nonemptystring('organization_name')
+
+        result = requests.post(
+            join_url(self.SERVICEDESK_BASE_URL, 'organization'),
+            json={'name': organization_name},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+        return result  # type: ignore
+
+    @api_call
+    def delete_organization(self, organization_id: int) -> bool:
+        """Create a new customer request on specified service desk.
+
+        # Required parameters
+
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+
+        result = requests.delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code in [200, 201, 204]
+
+    @api_call
+    def list_organization_users(
+        self, organization_id: int
+    ) -> List[Dict[str, Any]]:
+        """Return a list of user for a given organization.
+
+        # Required parameters
+
+        - organization_id: an integer
+
+        # Returned value
+
+        A list of _users_.  A user is a dictionary with the following
+        entries:
+
+        - active: a boolean
+        - displayName: a string
+        - emailAddress: a string
+        - key: a string
+        - name: a string
+        - timeZone: a string
+        - _links: a dictionary
+        """
+        ensure_instance('organization_id', int)
+        return self._collect_sd_data(
+            f'organization/{organization_id}/user',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+    @api_call
+    def add_organization_users(
+        self,
+        organization_id: int,
+        usernames: List[str],
+    ) -> bool:
+        """Add user to organization.
+
+        # Required parameters
+
+        - organization_id: an integer
+        - usernames: a list of strings
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+        ensure_instance('usernames', list)
+
+        users = {'usernames': usernames}
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'organization/{organization_id}/user',
+            ),
+            json=users,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code in [200, 201, 204]
+
+    @api_call
+    def remove_organization_users(
+        self, organization_id: int, usernames: List[str]
+    ) -> bool:
+        """Remove user from organization.
+
+        # Required parameters
+
+        - organization_id: an integer
+        - usernames: a list of strings
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+        ensure_instance('usernames', list)
+
+        users = {'usernames': usernames}
+        result = requests.delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'organization/{organization_id}/user',
+            ),
+            json=users,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code in [200, 201, 204]
+
     ####################################################################
     # JIRA misc. operation
     #
@@ -4047,7 +4956,10 @@ class Jira:
         Not all entries are present for all plugins.
         """
         return requests.get(
-            self.UPM_BASE_URL, auth=self.auth, verify=self.verify
+            self.UPM_BASE_URL,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
         ).json()['plugins']
 
     @api_call
@@ -4092,8 +5004,8 @@ class Jira:
 
         result = self._get_json(
             'serverInfo', params={'doHealthCheck': str(do_health_check)}
-        )
-        return result  # type: ignore
+        ).json()
+        return result
 
     @api_call
     def reindex(
@@ -4151,8 +5063,8 @@ class Jira:
                 'indexChangeHistory': index_change_history,
                 'indexWorklogs': index_worklogs,
             },
-        )
-        return result  # type: ignore
+        ).json()
+        return result
 
     ####################################################################
     # JIRA helpers
@@ -4173,6 +5085,7 @@ class Jira:
             params=params,
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
 
     def _post(
@@ -4180,7 +5093,41 @@ class Jira:
     ) -> requests.Response:
         api_url = self._get_url(api)
         return requests.post(
-            api_url, json=json, auth=self.auth, verify=self.verify
+            api_url,
+            json=json,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+
+    def _delete(
+        self,
+        api: str,
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+    ) -> requests.Response:
+        api_url = self._get_url(api)
+        return requests.delete(
+            api_url,
+            json=json_data,
+            params=params,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+
+    def _put(
+        self, api: str, json: Optional[Mapping[str, Any]] = None
+    ) -> requests.Response:
+        api_url = self._get_url(api)
+        return requests.put(
+            api_url,
+            json=json,
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
         )
 
     def _collect_data(
@@ -4191,6 +5138,7 @@ class Jira:
         headers: Optional[Mapping[str, str]] = None,
         start_at: str = 'startAt',
         is_last: str = 'isLast',
+        key: str = 'values',
     ) -> List[Any]:
         api_url = self._get_url(api) if base is None else join_url(base, api)
         collected: List[Any] = []
@@ -4206,11 +5154,15 @@ class Jira:
                     raise ApiError(response.text)
                 try:
                     workload = response.json()
-                    values = workload['values']
+                    values = workload[key]
                     collected += values
                 except Exception as exception:
                     raise ApiError(exception)
-                more = not workload[is_last]
+                # Some APIs do not provide an 'isLast' field :(
+                if is_last in workload:
+                    more = not workload[is_last]
+                else:
+                    more = workload[start_at] + len(values) < workload['total']
                 if more:
                     _params[start_at] = workload[start_at] + len(values)
 
@@ -4235,8 +5187,11 @@ class Jira:
         self,
         api: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        key: str = 'values',
     ) -> List[Any]:
-        return self._collect_data(api, params=params, base=self.AGILE_BASE_URL)
+        return self._collect_data(
+            api, params=params, base=self.AGILE_BASE_URL, key=key
+        )
 
     def _get_url(self, api: str) -> str:
         return self._client()._get_url(api)  # type: ignore
@@ -4279,6 +5234,7 @@ class Jira:
             cookies=cookies,
             auth=self.auth,
             verify=self.verify,
+            timeout=TIMEOUT,
         )
 
     def _get_projectconfig_scheme(
@@ -4295,7 +5251,7 @@ class Jira:
             r'class="project-config-scheme-name"[^>]+>([^<]+)<', page.text
         )
         if match is None:
-            raise ApiError('Scheme %s not found' % scheme)
+            raise ApiError(f'Scheme {scheme} not found')
         return match.group(1)
 
     def _get_projectconfig_option(
@@ -4306,5 +5262,17 @@ class Jira:
             r'<option value="(\d+)"[^>]*>\s*%s\s*</option>' % scheme, page.text
         )
         if option is None:
-            raise ApiError('Scheme %s not found.' % scheme)
+            raise ApiError(f'Scheme {scheme} not found.')
         return page, option.group(1)
+
+    def _get_max_xray_projects(self) -> int:
+        """Return the maximum number of Xray projects."""
+
+        params = {'iDisplayStart': 0, 'iDisplayLength': 1}
+        result = requests.get(
+            join_url(self.XRAY_BASE_URL, 'preferences/requirementProjects'),
+            params=params,
+            auth=self.auth,
+            timeout=TIMEOUT,
+        ).json()
+        return result['iTotalRecords']
