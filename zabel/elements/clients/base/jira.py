@@ -2107,7 +2107,7 @@ class Jira:
             return self._get_json(
                 f'project/{project_id_or_key}/notificationscheme'
             )
-        except ApiError:
+        except Exception:
             return None
 
     @api_call
