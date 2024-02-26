@@ -4564,31 +4564,6 @@ class Jira:
         return self._collect_sd_data(f'request/{request_id_or_key}/comment')
 
     @api_call
-    def list_request_comments(
-        self, request_id_or_key: str
-    ) -> List[Dict[str, Any]]:
-        """Return the available comments for request.
-
-        # Required parameters
-
-        - request_id_or_key: a non-empty string
-
-        # Returned value
-
-        A list of _request comments_.  Each comment is a dictionary with
-        the following entries:
-
-        - id: a string
-        - author: a dictionary
-        - body: a string
-        - created: a string (a timestamp)
-        - public: a boolean
-        _ _links: a dictionary
-        """
-        ensure_nonemptystring('request_id_or_key')
-        return self._collect_sd_data(f'request/{request_id_or_key}/comment')
-
-    @api_call
     def add_request_comment(
         self, request_id_or_key: str, body: str, public: bool = False
     ) -> Dict[str, Any]:
