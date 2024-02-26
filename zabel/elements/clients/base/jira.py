@@ -377,6 +377,27 @@ class Jira:
         return self._client().remove_group(group_name)
 
     @api_call
+    def list_group_users(self, group_name: str) -> Dict[str, Any]:
+        """Return the group users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A dictionary.  Keys are the user names, and values are
+        dictionaries with the following entries:
+
+        - active: a boolean
+        - fullname: a string
+        - email: a string
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._client().group_members(group_name)
+
+    @api_call
     def add_group_user(
         self, group_name: str, user_name: str
     ) -> Union[bool, Dict[str, Any]]:
@@ -413,27 +434,6 @@ class Jira:
         ensure_nonemptystring('user_name')
 
         return self._client().remove_user_from_group(user_name, group_name)
-
-    @api_call
-    def list_group_users(self, group_name: str) -> Dict[str, Any]:
-        """Return the group users.
-
-        # Required parameters
-
-        - group_name: a non-empty string
-
-        # Returned value
-
-        A dictionary.  Keys are the user names, and values are
-        dictionaries with the following entries:
-
-        - active: a boolean
-        - fullname: a string
-        - email: a string
-        """
-        ensure_nonemptystring('group_name')
-
-        return self._client().group_members(group_name)
 
     ####################################################################
     # JIRA permission scheme
@@ -4474,8 +4474,8 @@ class Jira:
             'organization',
             headers={'X-ExperimentalApi': 'opt-in'},
         )
-       
-        return  sorted(organizations, key=lambda x: int(x['id']))
+
+        return sorted(organizations, key=lambda x: int(x['id']))
 
     @api_call
     def get_organization(self, organization_id: int) -> Dict[str, Any]:
@@ -4563,7 +4563,7 @@ class Jira:
             timeout=TIMEOUT,
             headers={'X-ExperimentalApi': 'opt-in'},
         )
-        
+
         return result.status_code in [200, 201, 204]
 
     @api_call
