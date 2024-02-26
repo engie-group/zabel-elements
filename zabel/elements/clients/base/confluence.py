@@ -40,15 +40,6 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 
-# Helpers
-
-
-def _get_atl_token(html: str) -> str:
-    atl_token = html[html.find('"atl_token"') :]
-    atl_token = atl_token[atl_token.find('value="') + 7 :]
-    return atl_token[: atl_token.find('"')]
-
-
 # Confluence Jenkins low-level api
 
 CONTENT_TYPES = ['page', 'blogpost', 'comment', 'attachment']
@@ -61,17 +52,17 @@ class Confluence:
     # Reference URL
 
     <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
     <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    <https://docs.atlassian.com/atlassian-confluence/REST/latest-server/>
     <https://developer.atlassian.com/server/confluence/remote-confluence
         -methods>
-    <https://docs.atlassian.com/ConfluenceServer/rest/8.3.1/>
 
-    A non-admin interface (no API for user&group admin features) to
-    Confluence.
+    WADLs are also available on a given instance:
 
-    Groups and users are defined on Jira or Crowd.  Changes can take up
-    to one hour to propagate.
+    <https://{instance}/rest/api/application.wadl>
+    <https://{instance}/rest/mobile/1.0/application.wadl>
+
+    An interface to Confluence, including users and groups management.
 
     # Implemented features
 
@@ -88,11 +79,11 @@ class Confluence:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Confluence
-    >>>
-    >>> url = 'https://confluence.example.com'
-    >>> confluence = Confluence(url, basic_auth=(user, token))
-    >>> confluence.get_users()
+    from zabel.elements.clients import Confluence
+
+    url = 'https://confluence.example.com'
+    confluence = Confluence(url, basic_auth=(user, token))
+    confluence.get_users()
     ```
     """
 
@@ -250,6 +241,7 @@ class Confluence:
     # remove_group_user2
     # list_group_members
     # get_user
+    # get_user_profile
     # create_user*
     # delete_user*
     # delete_user2
@@ -583,6 +575,39 @@ class Confluence:
         add_if_specified(params, 'expand', expand)
 
         result = self._get('user', params=params)
+        return result  # type: ignore
+
+    @api_call
+    def get_user_profile(self, user_name: str) -> Dict[str, Any]:
+        """Return confluence user profile.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A _user profile.  A user profile is a dictionary with the
+        following entries:
+
+        - userName: a string
+        - fullName: a string
+        - avatarUrl: a string
+        - url: a string
+        - email: a string
+        - department: a string
+        - userPreferences: a dictionary
+        - unknownUser: a boolean
+        - about: a string
+        - anonymous: a boolean
+
+        Some fields may be missing.
+        """
+        ensure_nonemptystring('user_name')
+
+        result = self.session().get(
+            join_url(self.url, f'/rest/mobile/1.0/profile/{user_name}')
+        )
         return result  # type: ignore
 
     @api_call
@@ -1186,7 +1211,7 @@ class Confluence:
             'space' if public else 'space/_private', definition
         )
         return result  # type: ignore
-    
+
     @api_call
     def delete_space(self, space_key: str) -> Dict[str, Any]:
         """Delete a space.
@@ -1198,7 +1223,7 @@ class Confluence:
         # Returned value
 
         A dictionary with the following entries:
-        
+
         - id: a string
         - links: a dictionary
         """
@@ -1206,7 +1231,7 @@ class Confluence:
 
         response = self._delete(f'/space/{space_key}')
         return response
-    
+
     @api_call
     def add_space_label(self, space_key: str, label: str) -> bool:
         """Add label to space.
@@ -2020,47 +2045,54 @@ class Confluence:
     # get_longtask
 
     @api_call
-    def list_longtasks(self, expand: Optional[str] = None, start: Optional[int] = None, limit: int=100) -> List[Dict[str, Any]]:
+    def list_longtasks(
+        self,
+        expand: Optional[str] = None,
+        start: Optional[int] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """Return a list of long tasks.
-        
+
         # Optional parameters
-        
+
         - expand: a string or None (None by default)
         - start: an integer or None (None by default)
         - limit: an integer (`100` by default)
-        
+
         # Returned value
-        
+
         A possibly empty list of items.  Items are dictionaries.
         """
-        
+
         ensure_noneornonemptystring('expand')
         ensure_noneorinstance('start', int)
         ensure_instance('limit', int)
-        
+
         params = {'limit': str(limit)}
         add_if_specified(params, 'expand', expand)
         add_if_specified(params, 'start', start)
-        
+
         return self._collect_data('longtask', params=params)
-    
+
     @api_call
-    def get_longtask(self, task_id: Union[str, int], expand: Optional[str] = None) -> Dict[str, Any]:
+    def get_longtask(
+        self, task_id: Union[str, int], expand: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Return the definition of a long task.
-        
+
         # Required parameters
-        
+
         - task_id: an integer or a string
-        
+
         # Optional parameters
-        
+
         - expand: a string or None (None by default)
-        
+
         # Returned value
-        
+
         A dictionary with the following entries (assuming the default
         for `expand`):
-        
+
         - id: a string
         - name: a dictionary
         - elapsedTime: an integer
@@ -2069,15 +2101,15 @@ class Confluence:
         - messages: a list of dictionaries
         - _links: a dictionary
         """
-        
+
         ensure_instance('task_id', (str, int))
         ensure_noneornonemptystring('expand')
-        
+
         params = {}
         add_if_specified(params, 'expand', expand)
         result = self._get(f'longtask/{task_id}', params=params)
         return result
-        
+
     ####################################################################
     # confluence helpers
 
