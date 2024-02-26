@@ -39,41 +39,47 @@ class Jira(Base):
     # Reference URLs
 
     - <https://docs.atlassian.com/jira/REST/server/>
-    - <https://docs.atlassian.com/software/jira/docs/api/REST/8.7.1/>
+    - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
+    - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
     # Agile references
 
-    - <https://docs.atlassian.com/jira-software/REST/8.7.1/>
+    - <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
     # Using the jira.JIRA python library
 
-    <http://jira.readthedocs.io/en/latest/>
+    - <http://jira.readthedocs.io/en/latest/>
 
     # Other interesting links
 
-    The various WADLS, such as:
+    The various WADLs, such as:
 
-    - <https://jira.tools.digital.engie.com/rest/greenhopper/1.0/application.wadl>
-    - <https://jira.tools.digital.engie.com/rest/bitbucket/1.0/application.wadl>
+    - <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
+    - <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
 
     # Implemented features
 
     - boards
+    - fieldconfigurationschemes
     - groups
     - issues
     - issuetypeschemes
     - issuetypescreenschemes
     - notificationschemes
     - permissionschemes
+    - priorityschemes
     - projects
+    - screens
     - screenschemes
     - search
     - sprints
     - users
+    - workflows
     - workflowschemes
-    - misc. features (reindexing, plugins & server info)
+    - misc. features (reindexing, plugins, xray, server info, ...)
 
-    Works with basic authentication as well as OAuth authentication.
+    Works with basic authentication, bearer token authentication, as
+    well as OAuth authentication.
 
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
@@ -91,10 +97,13 @@ class Jira(Base):
 
     | Entity                    | Default value                        |
     | ------------------------- | ------------------------------------ |
-    | PERMISSIONSCHEME_EXPAND   | permissions, user, group,
-                                  projectRole, field, all              |
+    | ISSUETYPESCHEMES_EXPAND   | schemes.issueTypes,
+                                  schemes.defaultIssueType             |
     | NOTIFICATIONSCHEME_EXPAND | notificationSchemeEvents,
                                   user, group, projectRole, field, all |
+    | PERMISSIONSCHEME_EXPAND   | permissions, user, group,
+                                  projectRole, field, all              |
+    | PRIORITYSCHEMES_EXPAND    | schemes.projectKeys                  |
     | PROJECT_EXPAND            | description, lead, url, projectKeys  |
     | USER_EXPAND               | groups, applicationRoles             |
 
@@ -104,7 +113,7 @@ class Jira(Base):
 
     ```json
     {
-       "expand": "widgets",
+        "expand": "widgets",
         "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
         "widgets": {
             "widgets": [],
@@ -121,11 +130,11 @@ class Jira(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Jira
-    >>>
-    >>> url = 'https://jira.example.com'
-    >>> jc = Jira(url, basic_auth=(user, token))
-    >>> jc.get_users()
+    from zabel.elements.clients import Jira
+
+    url = 'https://jira.example.com'
+    jc = Jira(url, basic_auth=(user, token))
+    jc.get_users()
     ```
 
     !!! note
@@ -229,7 +238,7 @@ class Jira(Base):
     ) -> List[Dict[str, Any]]:
         """Return list of users matching query hint.
 
-        Simulates /rest/servicedesk/{n}/customer/user-search.
+        Simulates `/rest/servicedesk/{n}/customer/user-search`.
 
         # Required parameters
 

@@ -16,6 +16,7 @@ This module depends on the public **requests** and **jira.JIRA**
 libraries.  It also depends on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
+
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import json
@@ -84,32 +85,34 @@ def _get_scheme_id(
     return str(name_or_id)
 
 
-# JIRA low-level api
+# JIRA low-level API
 
 
 class Jira:
     """JIRA Low-Level Wrapper.
 
-    Reference URL:
+    # Reference URLs
 
-    <https://docs.atlassian.com/jira/REST/server/>
-    <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
-    <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
+    - <https://docs.atlassian.com/jira/REST/server/>
+    - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
+    - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
-    Agile reference:
+    # Agile references
 
-    <https://docs.atlassian.com/jira-software/REST/9.4.8/>
+    - <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
-    Using the python library:
+    # Using the jira.JIRA python library
 
-    <http://jira.readthedocs.io/en/latest/>
+    - <http://jira.readthedocs.io/en/latest/>
 
-    Plus the various WADLS, such as:
+    # Other interesting links
 
-    <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
-    <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
+    The various WADLs, such as:
 
-    Implemented features:
+    - <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
+    - <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
+
+    # Implemented features
 
     - search
     - groups
@@ -122,7 +125,8 @@ class Jira:
     - servicedesk
     - misc. features (reindexing, plugins, xray, & server info)
 
-    Works with basic authentication as well as OAuth authentication.
+    Works with basic authentication, bearer token authentication, as
+    well as OAuth authentication.
 
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
@@ -130,11 +134,11 @@ class Jira:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Jira
-    >>>
-    >>> url = 'https://jira.example.com'
-    >>> jc = Jira(url, basic_auth=(user, token))
-    >>> jc.list_users()
+    from zabel.elements.clients import Jira
+
+    url = 'https://jira.example.com'
+    jc = Jira(url, basic_auth=(user, token))
+    jc.list_users()
     ```
 
     !!! note
@@ -152,7 +156,8 @@ class Jira:
     ) -> None:
         """Create a Jira instance object.
 
-        You can only specify either `basic_auth`, `oauth`, or 'bearer_auth`.
+        You can only specify either `basic_auth`, `oauth`, or
+        `bearer_auth`.
 
         # Required parameters
 
@@ -330,6 +335,7 @@ class Jira:
     # list_groups
     # delete_group
     # create_group
+    #
     # list_group_users
     # add_group_user
     # remove_group_user
@@ -340,7 +346,7 @@ class Jira:
 
         # Returned value
 
-        A list of strings, each string being a group name.
+        A list of _group names_.  A group name is a string.
         """
         return self._client().groups()
 
@@ -443,6 +449,7 @@ class Jira:
     # create_permissionscheme
     # update_permissionscheme
     # delete_permissionscheme
+    #
     # list_permissionscheme_grants
 
     @api_call
@@ -559,7 +566,7 @@ class Jira:
         add_if_specified(scheme, 'description', description)
 
         result = self.session().post(
-            self._get_url('permissionscheme'), data=json.dumps(scheme)
+            self._get_url('permissionscheme'), json=scheme
         )
         return result  # type: ignore
 
@@ -583,8 +590,7 @@ class Jira:
         ensure_instance('scheme', dict)
 
         result = self.session().put(
-            self._get_url(f'permissionscheme/{scheme_id}'),
-            data=json.dumps(scheme),
+            self._get_url(f'permissionscheme/{scheme_id}'), json=scheme
         )
         return result  # type: ignore
 
@@ -639,7 +645,7 @@ class Jira:
     ####################################################################
     # JIRA misc. schemes
     #
-    # getters suffixed with a '+' add a `active` entry in their returned
+    # Getters suffixed with a '+' add a `active` entry in their returned
     # values.
     #
     # list_issuetypeschemes+
@@ -649,26 +655,39 @@ class Jira:
     # update_issuetypescheme
     # delete_issuetypescheme (for pre-8 JIRA versions)
     # delete_issuetypescheme2
+    #
     # list_issuetypescreenschemes+
     # delete_issuetypescreenscheme
+    #
     # list_notificationschemes
     # list_inactivenotificationschemes
     # delete_notificationscheme
+    #
     # list_priorityschemes+
     # list_priorityschemes2
     # get_priorityscheme
+    # create_priorityscheme
     # delete_priorityscheme
-    # list_fieldconfigurationschemes+
-    # delete_fieldconfigurationscheme
+    # delete_priorityscheme2
+    #
     # list_fieldconfigurations+
     # delete_fieldconfiguration
+    #
+    # list_fieldconfigurationschemes+
+    # delete_fieldconfigurationscheme
+    #
     # list_workflows
+    # list_inactiveworkflows
     # delete_workflow
+    #
     # list_workflowschemes+
-    # delete_workflowscheme
     # create_workflowscheme
+    # delete_workflowscheme
+    # delete_workflowscheme2
+    #
     # list_screens+
     # delete_screen
+    #
     # list_screenschemes+
     # delete_screenscheme
 
@@ -1773,9 +1792,8 @@ class Jira:
     # list_projects
     # get_project
     # create_project
-    # delete_project
     # update_project
-    # list_project_boards
+    # delete_project
     #
     # get_project_issuetypescheme
     # set_project_issuetypescheme
@@ -1792,12 +1810,16 @@ class Jira:
     #
     # list_project_shortcuts
     # add_project_shortcut
+    #
+    # list_project_boards
     # create_project_board
     #
     # list_project_roles
     # get_project_role
     # add_project_role_actors
     # remove_project_role_actor
+    #
+    # list_projectoverviews
 
     @api_call
     def list_projects(
@@ -1975,9 +1997,7 @@ class Jira:
         add_if_specified(project, 'notificationScheme', notification_scheme)
         add_if_specified(project, 'categoryId', category_id)
 
-        result = self.session().post(
-            self._get_url('project'), data=json.dumps(project)
-        )
+        result = self.session().post(self._get_url('project'), json=project)
         return result  # type: ignore
 
     @api_call
@@ -2020,8 +2040,7 @@ class Jira:
         ensure_instance('project_id_or_key', (str, int))
 
         result = self.session().put(
-            self._get_url(f'project/{project_id_or_key}'),
-            data=json.dumps(project),
+            self._get_url(f'project/{project_id_or_key}'), json=project
         )
         return result  # type: ignore
 
@@ -2121,7 +2140,7 @@ class Jira:
         # Required parameters
 
         - project_id_or_key: an integer or a string
-        - scheme_id_or_name! an integer or a string
+        - scheme_id_or_name: an integer or a string
 
         `scheme_id_or_name` is either the scheme ID or the scheme name.
 
@@ -2233,7 +2252,7 @@ class Jira:
 
         result = self.session().put(
             self._get_url(f'project/{project_id_or_key}/permissionscheme'),
-            data=json.dumps(data),
+            json=data,
         )
         return result  # type: ignore
 
@@ -2324,7 +2343,7 @@ class Jira:
 
         result = self.session().put(
             self._get_url(f'project/{project_id_or_key}/priorityscheme'),
-            data=json.dumps(data),
+            json=data,
         )
         return result  # type: ignore
 
@@ -2673,7 +2692,8 @@ class Jira:
 
         # Returned value
 
-        A dictionary with the following entries:
+        A project _role_.  Project roles are dictionaries with the
+        following entries:
 
         - self: a string (an URL)
         - name: a string
@@ -2715,7 +2735,7 @@ class Jira:
 
         # Returned value
 
-        A project role.  Refer to #get_project_role() for details.
+        A project _role_.  Refer to #get_project_role() for details.
         """
         ensure_instance('project_id_or_key', (str, int))
         ensure_instance('role_id', (str, int))
@@ -2729,7 +2749,7 @@ class Jira:
             data = {'user': users}  # type: ignore
         result = self.session().post(
             self._get_url(f'project/{project_id_or_key}/role/{role_id}'),
-            data=json.dumps(data),
+            json=data,
         )
         return result  # type: ignore
 
@@ -2751,6 +2771,10 @@ class Jira:
         - role_id: an integer or a string
         - group: a string
         - user: a string
+
+        # Returned value
+
+        None.
         """
         ensure_instance('project_id_or_key', (str, int))
         ensure_instance('role_id', (str, int))
@@ -3023,9 +3047,7 @@ class Jira:
         ensure_instance('user', dict)
 
         result = self.session().put(
-            self._get_url('user'),
-            params={'username': user_name},
-            data=json.dumps(user),
+            self._get_url('user'), params={'username': user_name}, json=user
         )
         return result  # type: ignore
 
@@ -3081,7 +3103,6 @@ class Jira:
         - operations: a dictionary
         - businessLogicValidationFailed: a boolean
         """
-
         ensure_nonemptystring('user_key')
         ensure_noneorinstance('expand', str)
 
@@ -3119,13 +3140,12 @@ class Jira:
         - isRerun: a boolean
         - rerun: a boolean
         """
-
         ensure_nonemptystring('user_key')
         ensure_nonemptystring('new_owner_key')
 
         data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
 
-        return self._post('user/anonymization', json=data)
+        return self._post('user/anonymization', json=data)  # type: ignore
 
     ####################################################################
     # JIRA agile
@@ -4129,7 +4149,7 @@ class Jira:
         - self: a string (an URL)
 
         The `name` entry can be used to create a link between two
-        issues.
+        issues.  Refer to #add_issue_link() for more information.
         """
         return self._get_json('issueLinkType')['issueLinkTypes']
 
@@ -4347,8 +4367,8 @@ class Jira:
     # Xray for JIRA
     #
     # list_xray_projects
-    # enable_xray_to_project
-    # disable_xray_to_project
+    # enable_xray
+    # disable_xray
 
     @api_call
     def list_xray_projects(self) -> List[Dict[str, Any]]:
@@ -4491,7 +4511,7 @@ class Jira:
     def get_request(
         self, request_id_or_key: str, expand: Optional['str'] = None
     ) -> Dict[str, Any]:
-        """Return request details.
+        """Return service desk request details.
 
         # Required parameters
 
@@ -4534,8 +4554,8 @@ class Jira:
             auth=self.auth,
             verify=self.verify,
             timeout=TIMEOUT,
-        ).json()
-        return response
+        )
+        return response  # type: ignore
 
     @api_call
     def list_request_comments(
@@ -4647,8 +4667,8 @@ class Jira:
             auth=self.auth,
             verify=self.verify,
             timeout=TIMEOUT,
-        ).json()
-        return result
+        )
+        return result  # type: ignore
 
     @api_call
     def list_queues(self, servicedesk_id: str) -> List[Dict[str, Any]]:
@@ -5002,10 +5022,9 @@ class Jira:
         """
         ensure_instance('do_health_check', bool)
 
-        result = self._get_json(
+        return self._get_json(
             'serverInfo', params={'doHealthCheck': str(do_health_check)}
-        ).json()
-        return result
+        )
 
     @api_call
     def reindex(
@@ -5063,8 +5082,8 @@ class Jira:
                 'indexChangeHistory': index_change_history,
                 'indexWorklogs': index_worklogs,
             },
-        ).json()
-        return result
+        )
+        return result  # type: ignore
 
     ####################################################################
     # JIRA helpers
