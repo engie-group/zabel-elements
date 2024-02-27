@@ -171,6 +171,9 @@ class Kubernetes:
     # ? create_role
     # ? create_role_binding
     # ? create_service_account
+    #
+    # list_configmaps
+    # read_configmap
 
     @api_call
     def create_namespace(self, namespace: str) -> Dict[str, Any]:
@@ -326,6 +329,57 @@ class Kubernetes:
             .to_dict()
         )
         return result  # type: ignore
+
+    @api_call
+    def list_configmaps(
+        self, namespace: str = DEFAULT_NAMESPACE
+    ) -> List[Dict[str, Any]]:
+        """Return a list of configmaps in namespace.
+
+        # Optional parameters
+
+        - namespace: a string
+
+        # Returned value
+
+        A list of _configmaps_.  Each configmap is a dictionary with the
+        following entries:
+
+        - api_version: a string
+        - data: a dictionary
+        - kind: a string
+        - metadata: a dictionary
+        """
+        return [
+            item.to_dict()
+            for item in self._get_v1_client()
+            .list_namespaced_config_map(namespace)
+            .items
+        ]
+    
+    @api_call
+    def read_configmap(
+        self, name: str, namespace: str = DEFAULT_NAMESPACE
+    ) -> Dict[str, Any]:
+        """Read a configmap in a namespace.
+
+        # Required parameters
+
+        - name: a string
+
+        # Optional parameters
+
+        - namespace: a string
+
+        # Returned value
+
+        A dictionary.
+        """
+        return (
+            self._get_v1_client()
+            .read_namespaced_config_map(name, namespace)
+            .to_dict()
+        )
 
     ####################################################################
     # kubernetes clients
