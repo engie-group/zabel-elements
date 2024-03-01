@@ -386,3 +386,49 @@ class GitHub(Base):
                     attempts += 1
                     continue
                 raise
+
+    ####################################################################
+    # GitHub license (Enterprise cloud)
+    #
+    # get_consumed_licenses
+
+    @api_call
+    def get_consumed_licenses(self, enterprise_name: str) -> Dict[str, Any]:
+        """Return consumed licenses.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - total_seats_consumed: an integer
+        - total_seats_purchased: an integer
+        - users: a list of dictionaries
+
+        """
+        api_url = join_url(
+            self.url, f'enterprises/{enterprise_name}/consumed-licenses'
+        )
+        collected: List[Dict[str, Any]] = []
+        while True:
+            response = self.session().get(api_url)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                data = response.json()
+                collected += data['users']
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return {
+            'total_seats_consumed': data['total_seats_consumed'],
+            'total_seats_purchased': data['total_seats_purchased'],
+            'users': collected,
+        }
