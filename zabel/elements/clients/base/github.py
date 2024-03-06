@@ -3031,6 +3031,39 @@ class GitHub:
         return result.status_code == 204
 
     ####################################################################
+    # GitHub license (Enterprise cloud)
+    #
+    # get_consumed_licenses
+    
+    @api_call
+    def get_consumed_licenses(self, enterprise_name: str) -> Dict[str, Any]:
+        """Return consumed licenses.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - total_seats_consumed: an integer
+        - total_seats_purchased: an integer
+        """
+        response = self.session().get(
+            join_url(
+                self.url,
+                f'enterprises/{enterprise_name}/consumed-licenses',
+            )
+        )
+
+        data = response.json()
+        return {
+            'total_seats_consumed': data['total_seats_consumed'],
+            'total_seats_purchased': data['total_seats_purchased'],
+        }
+
+    ####################################################################
     # GitHub copilot (Enterprise cloud)
     #
     # get_copilot_billing

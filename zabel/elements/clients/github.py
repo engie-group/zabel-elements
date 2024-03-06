@@ -386,3 +386,63 @@ class GitHub(Base):
                     attempts += 1
                     continue
                 raise
+
+    ####################################################################
+    # GitHub license (Enterprise cloud)
+    #
+    # list_consumed_licenses_users
+
+    @api_call
+    def list_consumed_licenses_users(
+        self, enterprise_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return consumed licenses.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries, one per user.  Each dictionary has the
+        following entries:
+
+        - github_com_login: a string
+        - github_com_name: a string
+        - enterprise_server_user_ids: a list of strings
+        - github_com_user: a boolean
+        - enterprise_server_user: a boolean
+        - visual_studio_subscription_user: a boolean
+        - license_type: a string
+        - github_com_profile: a string
+        - github_com_member_roles: a list of strings
+        - github_com_enterprise_roles: a list of strings
+        - github_com_verified_domain_emails: a list of strings
+        - github_com_saml_name_id: a string
+        - github_com_orgs_with_pending_invites: a list of strings
+        - github_com_two_factor_auth: a boolean
+        - github_com_two_factor_auth_required_by_date: a datetime as a string
+        - enterprise_server_primary_emails: a list of stringsF
+        - visual_studio_license_status: a string
+        - visual_studio_subscription_email: a string
+        - total_user_accounts: an integer
+        """
+        api_url = join_url(
+            self.url, f'enterprises/{enterprise_name}/consumed-licenses'
+        )
+        collected: List[Dict[str, Any]] = []
+        while True:
+            response = self.session().get(api_url)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                data = response.json()
+                collected += data['users']
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return collected
