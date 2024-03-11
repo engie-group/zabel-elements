@@ -109,11 +109,11 @@ class Artifactory:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Artifactory
-    >>>
-    >>> url = 'https://artifactory.example.com/artifactory/api/'
-    >>> af = Artifactory(url, user, token)
-    >>> af.list_users()
+    from zabel.elements.clients import Artifactory
+
+    url = 'https://artifactory.example.com/artifactory/api/'
+    af = Artifactory(url, user, token)
+    af.list_users()
     ```
     """
 
