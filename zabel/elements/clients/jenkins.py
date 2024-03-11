@@ -156,11 +156,11 @@ class CloudBeesJenkins(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Jenkins
-    >>>
-    >>> url = 'https://pse.example.com'
-    >>> jenkins = Jenkins(url, user, token)
-    >>> jenkins.list_oc_managedmasters()
+    from zabel.elements.clients import CloudBeesJenkins
+
+    url = 'https://pse.example.com'
+    jenkins = CloudBeesJenkins(url, user, token)
+    jenkins.list_oc_managedmasters()
     ```
 
     # Attributes

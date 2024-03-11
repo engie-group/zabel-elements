@@ -56,7 +56,7 @@ class SonarQube(Base):
     as they are not used directly, the library can be used with the
     Community edition too.
 
-    Tested on SonarQube v7.9.1.
+    Tested on SonarQube v9.9.
 
     # Conventions
 
@@ -72,10 +72,10 @@ class SonarQube(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import SonarQube
-    >>>
-    >>> url = 'https://sonar.example.com/sonar/api/'
-    >>> sq = SonarQube(url, token)
-    >>> sq.search_users()
+    from zabel.elements.clients import SonarQube
+
+    url = 'https://sonar.example.com/sonar/api/'
+    sq = SonarQube(url, token)
+    sq.search_users()
     ```
     """
