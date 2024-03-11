@@ -3794,6 +3794,8 @@ class Jira:
         The `type_` value must be a valid _issue link type_ name.  Refer
         to #list_issuelinktypes() for details.
 
+        IDs are only digits, Keys are not only digits.
+
         # Required parameters
 
         - inward_issue_id_or_key: a non-empty string
@@ -3808,10 +3810,12 @@ class Jira:
         ensure_nonemptystring('type_')
         ensure_nonemptystring('outward_issue_id_or_key')
 
+        iik = 'id' if re.match(r'^\d+$', inward_issue_id_or_key) else 'key'
+        oik = 'id' if re.match(r'^\d+$', outward_issue_id_or_key) else 'key'
         data = {
             'type': {'name': type_},
-            'inwardIssue': {'key': inward_issue_id_or_key},
-            'outwardIssue': {'key': outward_issue_id_or_key},
+            'inwardIssue': {iik: inward_issue_id_or_key},
+            'outwardIssue': {oik: outward_issue_id_or_key},
         }
         return self._post('issueLink', json=data)  # type: ignore
 
@@ -4031,7 +4035,12 @@ class Jira:
         ensure_nonemptystring('issue_id_or_key')
         ensure_nonemptystring('assignee')
 
-        return self._client().assign_issue(issue_id_or_key, assignee)
+        return (
+            self._put(
+                f'issue/{issue_id_or_key}/assignee', json={'name': assignee}
+            ).status_code
+            == 204
+        )
 
     @api_call
     def update_issue(
@@ -4471,7 +4480,7 @@ class Jira:
         self,
         servicedesk_id: str,
         requesttype_id: str,
-        fields: List[Dict[str, Any]],
+        fields: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Create new request on specified service desk.
 
@@ -4497,7 +4506,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
-        ensure_instance('fields', list)
+        ensure_instance('fields', Dict[str, Any])
 
         result = requests.post(
             join_url(self.SERVICEDESK_BASE_URL, 'request'),
