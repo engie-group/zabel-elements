@@ -532,9 +532,7 @@ class GitHub:
         """
         ensure_nonemptystring('organization_name')
 
-        return self._collect_data(
-            f'orgs/{organization_name}/invitations'
-        )
+        return self._collect_data(f'orgs/{organization_name}/invitations')
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -3034,7 +3032,7 @@ class GitHub:
     # GitHub license (Enterprise cloud)
     #
     # get_consumed_licenses
-    
+
     @api_call
     def get_consumed_licenses(self, enterprise_name: str) -> Dict[str, Any]:
         """Return consumed licenses.

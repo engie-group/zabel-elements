@@ -33,6 +33,7 @@ class Artifactory(Base):
     # Reference URL
 
     - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
+    - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
     # Implemented features
 
@@ -47,11 +48,11 @@ class Artifactory(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import Artifactory
-    >>>
-    >>> url = 'https://artifactory.example.com/artifactory/api/'
-    >>> af = Artifactory(url, user, token)
-    >>> af.get_users()
+    from zabel.elements.clients import Artifactory
+
+    url = 'https://artifactory.example.com/artifactory/api/'
+    af = Artifactory(url, user, token)
+    af.get_users()
     ```
     """
 

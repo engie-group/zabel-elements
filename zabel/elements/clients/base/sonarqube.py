@@ -87,8 +87,20 @@ EVENT_CATEGORIES = [
 class SonarQube:
     """SonarQube Base-Level API Wrapper.
 
-    - Reference URL: https://docs.sonarqube.org/display/DEV/Web+API
-    - Web API URL: https://sonar.example.com/sonar/web_api
+    There can be as many SonarQube instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    # Reference URL
+
+    - <https://docs.sonarqube.org/display/DEV/Web+API>
+
+    # Web API URL
+
+    - <https://sonar.example.com/sonar/web_api>
 
     # Implemented features
 
@@ -110,7 +122,7 @@ class SonarQube:
     as they are not used directly, the library can be used with the
     Community edition too.
 
-    Tested on SonarQube v7.9.1.
+    Tested on SonarQube v9.9.
 
     # Conventions
 
@@ -126,11 +138,11 @@ class SonarQube:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import SonarQube
-    >>>
-    >>> url = 'https://sonar.example.com/sonar/api/'
-    >>> sq = SonarQube(url, token)
-    >>> sq.search_users()
+    from zabel.elements.clients import SonarQube
+
+    url = 'https://sonar.example.com/sonar/api/'
+    sq = SonarQube(url, token)
+    sq.search_users()
     ```
     """
 
@@ -242,30 +254,30 @@ class SonarQube:
 
         ```python
         {
-            "application": {
+          "application": {
+            "key": a string,
+            "name": a string,
+            "branch": a string,
+            "isMain": a boolean,
+            "projects": [
+              {
                 "key": a string,
                 "name": a string,
                 "branch": a string,
                 "isMain": a boolean,
-                "projects": [
-                    {
-                        "key": a string,
-                        "name": a string,
-                        "branch": a string,
-                        "isMain": a boolean,
-                        "enabled": a boolean,
-                        "selected": a boolean
-                    },
-                    ...
-                ],
-                "branches": [
-                    {
-                        "name": a string,
-                        "isMain": a boolean
-                    },
-                    ...
-                ]
-            }
+                "enabled": a boolean,
+                "selected": a boolean
+              },
+              ...
+            ],
+            "branches": [
+              {
+                "name": a string,
+                "isMain": a boolean
+              },
+              ...
+            ]
+          }
         }
         ```
         """

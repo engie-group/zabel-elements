@@ -46,11 +46,29 @@ pages:
 sort: name
 theme:
   name: 'material'
+  features:
+    - navigation.indexes # https://squidfunk.github.io/mkdocs-material/setup/setting-up-navigation/#section-index-pages
+    - navigation.instant
+    - navigation.tabs
+    - content.tabs.link
+    - content.code.copy
+
 markdown_extensions:
-  - admonition
-  - codehilite
+  - admonition            # https://squidfunk.github.io/mkdocs-material/reference/admonitions/
+  - meta                  # https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data
+  - tables                # https://www.mkdocs.org/user-guide/writing-your-docs/#tables
+  - codehilite            # https://yakworks.github.io/docmark/extensions/codehilite/
+  - attr_list             # https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/#admonition
+  - md_in_html
+  - smarty
+  - meta
+  - def_list
+  - pymdownx.superfences:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
   - toc:
       permalink: true
-  - smarty
+      toc_depth: "1-4"
 
 headers: markdown

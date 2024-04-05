@@ -356,7 +356,7 @@ class Kubernetes:
             .list_namespaced_config_map(namespace)
             .items
         ]
-    
+
     @api_call
     def read_configmap(
         self, name: str, namespace: str = DEFAULT_NAMESPACE

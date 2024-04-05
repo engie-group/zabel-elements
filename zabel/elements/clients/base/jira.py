@@ -1795,6 +1795,8 @@ class Jira:
     # create_project
     # update_project
     # delete_project
+    # archive_project
+    # restore_project
     #
     # get_project_issuetypescheme
     # set_project_issuetypescheme
@@ -1824,13 +1826,20 @@ class Jira:
 
     @api_call
     def list_projects(
-        self, expand: str = PROJECT_EXPAND
+        self,
+        expand: str = PROJECT_EXPAND,
+        include_archived: Optional[bool] = None,
+        browse_archive: Optional[bool] = None,
+        recent: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Return the list of all projects.
 
         # Optional parameters
 
         - expand: a string (`PROJECT_EXPAND` by default)
+        - include_archived: a boolean or None (None by default)
+        - browse_archive: a boolean or None (None by default)
+        - recent: an integer or None (None by default)
 
         # Returned value
 
@@ -1847,6 +1856,7 @@ class Jira:
         - description: a string
         - lead: a dictionary
         - key: a string
+        - archived: a boolean
 
         The `avatarUrls` dictionary has string keys (of the form 'nnxnn'
         for each avatar size) and string values (an URL referring the
@@ -1863,8 +1873,16 @@ class Jira:
         - key: a string
         """
         ensure_instance('expand', str)
+        ensure_noneorinstance('include_archived', bool)
+        ensure_noneorinstance('browse_archive', bool)
+        ensure_noneorinstance('recent', int)
 
-        result = self._get_json('project', params={'expand': expand})
+        params = {'expand': expand}
+        add_if_specified(params, 'includeArchived', include_archived)
+        add_if_specified(params, 'browseArchive', browse_archive)
+        add_if_specified(params, 'recent', recent)
+
+        result = self._get_json('project', params=params)
         return result  # type: ignore
 
     @api_call
@@ -2069,6 +2087,44 @@ class Jira:
             self._get_url(f'project/{project_id_or_key}')
         )
         return result  # type: ignore
+
+    @api_call
+    def archive_project(self, project_id_or_key: Union[int, str]) -> bool:
+        """Archive project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+
+        # Returned value
+
+        True if successful.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+
+        result = self.session().put(
+            self._get_url(f'project/{project_id_or_key}/archive')
+        )
+        return result.status_code == 204
+
+    @api_call
+    def restore_project(self, project_id_or_key: Union[int, str]) -> bool:
+        """Restore project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+
+        # Returned value
+
+        True if successful.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+
+        result = self.session().put(
+            self._get_url(f'project/{project_id_or_key}/restore')
+        )
+        return result.status_code == 202
 
     @api_call
     def list_project_boards(
@@ -3794,6 +3850,8 @@ class Jira:
         The `type_` value must be a valid _issue link type_ name.  Refer
         to #list_issuelinktypes() for details.
 
+        IDs are only digits, Keys are not only digits.
+
         # Required parameters
 
         - inward_issue_id_or_key: a non-empty string
@@ -3808,10 +3866,12 @@ class Jira:
         ensure_nonemptystring('type_')
         ensure_nonemptystring('outward_issue_id_or_key')
 
+        iik = 'id' if re.match(r'^\d+$', inward_issue_id_or_key) else 'key'
+        oik = 'id' if re.match(r'^\d+$', outward_issue_id_or_key) else 'key'
         data = {
             'type': {'name': type_},
-            'inwardIssue': {'key': inward_issue_id_or_key},
-            'outwardIssue': {'key': outward_issue_id_or_key},
+            'inwardIssue': {iik: inward_issue_id_or_key},
+            'outwardIssue': {oik: outward_issue_id_or_key},
         }
         return self._post('issueLink', json=data)  # type: ignore
 
@@ -4031,7 +4091,12 @@ class Jira:
         ensure_nonemptystring('issue_id_or_key')
         ensure_nonemptystring('assignee')
 
-        return self._client().assign_issue(issue_id_or_key, assignee)
+        return (
+            self._put(
+                f'issue/{issue_id_or_key}/assignee', json={'name': assignee}
+            ).status_code
+            == 204
+        )
 
     @api_call
     def update_issue(
@@ -4471,7 +4536,7 @@ class Jira:
         self,
         servicedesk_id: str,
         requesttype_id: str,
-        fields: List[Dict[str, Any]],
+        fields: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Create new request on specified service desk.
 
@@ -4497,7 +4562,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
-        ensure_instance('fields', list)
+        ensure_instance('fields', Dict[str, Any])
 
         result = requests.post(
             join_url(self.SERVICEDESK_BASE_URL, 'request'),
