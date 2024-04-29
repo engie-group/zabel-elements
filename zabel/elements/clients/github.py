@@ -355,6 +355,7 @@ class GitHub(Base):
             raise ValueError('You must specify at least one of: sha, branch.')
 
         attempts = 0
+        content = str(b64encode(bytes(content, encoding='utf-8')), 'utf-8')
         while True:
             if sha is None:
                 file: Dict[str, str] = self.get_repository_content(
@@ -367,7 +368,6 @@ class GitHub(Base):
             else:
                 effective_sha = sha
 
-            content = str(b64encode(bytes(content, encoding='utf-8')), 'utf-8')
             try:
                 result = self.update_repository_file(
                     organization_name,

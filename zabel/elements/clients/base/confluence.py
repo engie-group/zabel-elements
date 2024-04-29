@@ -955,7 +955,28 @@ class Confluence:
         Handles pagination (i.e., it returns all spaces, not only the
         first _n_ spaces).
         """
-        return self._collect_data('space')
+        # The following no longer works on 8.5.8 (was working up until 8.5.5)
+        # return self._collect_data('space', params={'limit': '100'})
+
+        api_url = join_url(self.url, 'rest/spacedirectory/1/search')
+        params = {'startIndex': 0, 'limit': '100'}
+        collected: List[Any] = []
+        more = True
+        while more:
+            response = self.session().get(
+                api_url, params=params, headers={'Accept': 'application/json'}
+            )
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                workload = response.json()
+                collected += workload['spaces']
+            except Exception as exception:
+                raise ApiError(exception)
+            more = len(collected) < workload['totalSize']
+            if more:
+                params['startIndex'] = len(collected)
+        return collected
 
     @api_call
     def get_space(
