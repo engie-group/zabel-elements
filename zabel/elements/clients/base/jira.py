@@ -1823,6 +1823,8 @@ class Jira:
     # remove_project_role_actor
     #
     # list_projectoverviews
+    #
+    # list_project_versions
 
     @api_call
     def list_projects(
@@ -2848,6 +2850,39 @@ class Jira:
             params=params,
         )
 
+    @api_call
+    def list_project_versions(
+        self, project_id_or_key: Union[int, str], expand: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return the list of versions in project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+
+        # Returned value
+
+        A list of _versions_.  Each version is a dictionary with the
+        following entries:
+
+        - self: a string (an URL)
+        - id: an integer
+        - name: a string
+        - archived: a boolean
+        - released: a boolean
+        - releaseDate: a string
+        - userReleaseDate: a string
+        - projectId: an integer
+        - description: a string
+        - overdue: a boolean
+        """
+        ensure_instance('project_id_or_key', (str, int))
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        return self._get_json(f'project/{project_id_or_key}/versions', params=params)  # type: ignore
+
     ####################################################################
     # JIRA roles
     #
@@ -3126,6 +3161,7 @@ class Jira:
     #
     # validate_user_anonymization
     # schedule_anonymization
+    # get_anonymization_progress
 
     @api_call
     def validate_user_anonymization(
@@ -3200,6 +3236,45 @@ class Jira:
         data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
 
         return self._post('user/anonymization', json=data)  # type: ignore
+    
+    @api_call
+    def get_anonymization_progress(self, task_id: Optional[int] = None) -> Dict[str, Any]:
+        """Get user anonymization progress.
+
+        # Optional parameters
+
+        - task_id: an integer
+
+        If `task_id` is not specified, the progress of all tasks is
+        returned.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - userKey: a string
+        - userName: a string
+        - fullName: a string
+        - progressUrl: a string
+        - currentProgress: an integer
+        - currentSubTask: a string
+        - submittedTime: a string (an ISO8601 timestamp)
+        - startTime: a string (an ISO8601 timestamp) 
+        - finishTime: a string (an ISO8601 timestamp)
+        - operations: a list of strings
+        - status: a string with following values: 'COMPLETED', 'IN_PROGRESS', 'INTERRUPTED', 'VALIDATION_FAILED'
+        - executingNode: a string
+        - isRerun: a boolean
+        - rerun: a boolean
+        """
+        ensure_noneorinstance('task_id', int)
+
+        if task_id is not None:
+            return self._get_json(f'user/anonymization/progress/{task_id}')
+
+        return self._get_json('user/anonymization/progress')
 
     ####################################################################
     # JIRA agile
@@ -4430,6 +4505,178 @@ class Jira:
         return self._collect_agile_data(
             f'sprint/{sprint_id}/issue', params=params, key='issues'
         )
+
+    ####################################################################
+    # JIRA versions
+    #
+    # list_versions
+    # get_version
+    # create_version
+    # update_version
+    # delete_version
+
+    @api_call
+    def list_versions(
+        self,
+        start_at: Optional[int] = None,
+        max_results: Optional[int] = None,
+        query: Optional[str] = None,
+        project_ids: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return the list of all versions.
+
+        # Optional parameters
+
+        - start_at: an integer or None (None by default)
+        - max_results: an integer or None (None by default)
+        - query: a string or None (None by default)
+        - project_ids: a string or None (None by default)
+
+        # Returned value
+
+        A list of _versions_.  Each version is a dictionary with the
+        following entries:
+
+        - self: a string
+        - id: a string
+        - description: a string
+        - name: a string
+        - archived: a boolean
+        - released: a boolean
+        - releaseDate: a string
+        - overdue: a boolean
+        - userReleaseDate: a string
+        - projectId: an integer
+        """
+
+        ensure_noneorinstance('start_at', int)
+        ensure_noneorinstance('max_results', int)
+        ensure_noneorinstance('query', str)
+        ensure_noneorinstance('project_ids', str)
+
+        params = {}
+        add_if_specified(params, 'startAt', start_at)
+        add_if_specified(params, 'maxResults', max_results)
+        add_if_specified(params, 'query', query)
+        add_if_specified(params, 'projectIds', project_ids)
+
+        return self._collect_data('version', params=params)
+
+    @api_call
+    def get_version(
+        self, version_id: int, expand: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return the version details.
+
+        # Required parameters
+
+        - version_id: an integer
+
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+
+        # Returned value
+
+        A _version_ dictionary with the following entries:
+
+        - self: a string
+        - id: a string
+        - description: a string
+        - name: a string
+        - archived: a boolean
+        - released: a boolean
+        - releaseDate: a string
+        - overdue: a boolean
+        - userReleaseDate: a string
+        - projectId: an integer
+        """
+        ensure_nonemptystring('version_id')
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        return self._get_json(f'version/{version_id}', params=params)
+
+    @api_call
+    def create_version(
+        self,
+        name: str,
+        project_key: str,
+        description: Optional[str] = None,
+        release_date: Optional[str] = None,
+        start_date: Optional[str] = None,
+        archived: Optional[bool] = False,
+        released: Optional[bool] = False,
+    ) -> Dict[str, Any]:
+        """Create a new version.
+
+        # Required parameters
+
+        - name: a non-empty string
+        - project_key: a non-empty string
+
+        # Optional parameters
+
+        - description: a string or None
+        - release_date: a string or None
+        - start_date: a string or None
+        - archived: a boolean (False by default)
+        - released: a boolean (False by default)
+
+        # Returned value
+
+        A dictionary.
+        """
+
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('project_key')
+        ensure_noneorinstance('description', str)
+        ensure_noneorinstance('release_date', str)
+        ensure_noneorinstance('start_date', str)
+        ensure_instance('archived', bool)
+        ensure_instance('released', bool)
+
+        return self.client().create_version(
+            name,
+            project_key,
+            description,
+            release_date,
+            start_date,
+            archived,
+            released,
+        )
+
+    @api_call
+    def update_version(self, version_id: int, fields: Dict[str, Any]) -> None:
+        """Update version.
+
+        # Required parameters
+
+        - version_id: an integer
+        - fields: a dictionary
+
+        # Returned value
+
+        None.
+        """
+        ensure_instance('version_id', int)
+        ensure_instance('fields', dict)
+
+        return self._put(f'version/{version_id}', fields)
+
+    @api_call
+    def delete_version(self, version_id: int) -> bool:
+        """Delete version.
+
+        # Required parameters
+
+        - version_id: an integer
+        """
+
+        response = self._delete(f'version/{version_id}')
+
+        return response.status_code == 204
 
     ####################################################################
     # Xray for JIRA
