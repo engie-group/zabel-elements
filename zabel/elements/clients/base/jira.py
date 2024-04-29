@@ -3161,6 +3161,7 @@ class Jira:
     #
     # validate_user_anonymization
     # schedule_anonymization
+    # get_anonymization_progress
 
     @api_call
     def validate_user_anonymization(
@@ -3235,6 +3236,45 @@ class Jira:
         data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
 
         return self._post('user/anonymization', json=data)  # type: ignore
+    
+    @api_call
+    def get_anonymization_progress(self, task_id: Optional[int] = None) -> Dict[str, Any]:
+        """Get user anonymization progress.
+
+        # Optional parameters
+
+        - task_id: an integer
+
+        If `task_id` is not specified, the progress of all tasks is
+        returned.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - errors: a dictionary
+        - warnings: a dictionary
+        - userKey: a string
+        - userName: a string
+        - fullName: a string
+        - progressUrl: a string
+        - currentProgress: an integer
+        - currentSubTask: a string
+        - submittedTime: a string (an ISO8601 timestamp)
+        - startTime: a string (an ISO8601 timestamp) 
+        - finishTime: a string (an ISO8601 timestamp)
+        - operations: a list of strings
+        - status: a string with following values: 'COMPLETED', 'IN_PROGRESS', 'INTERRUPTED', 'VALIDATION_FAILED'
+        - executingNode: a string
+        - isRerun: a boolean
+        - rerun: a boolean
+        """
+        ensure_noneorinstance('task_id', int)
+
+        if task_id is not None:
+            return self._get_json(f'user/anonymization/progress/{task_id}')
+
+        return self._get_json('user/anonymization/progress')
 
     ####################################################################
     # JIRA agile
