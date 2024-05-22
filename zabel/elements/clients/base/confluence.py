@@ -384,7 +384,7 @@ class Confluence:
         """
         ensure_nonemptystring('group_name')
 
-        return self._delete(f'admin.group/{group_name}').status_code == 204
+        return self._delete(f'admin/group/{group_name}').status_code == 204
 
     @api_call
     def add_group_user(self, group_name: str, user_name: str) -> bool:
