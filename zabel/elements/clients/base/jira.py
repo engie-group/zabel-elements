@@ -1921,9 +1921,8 @@ class Jira:
         upd = result.text.split(
             'WRM._unparsedData["com.atlassian.jira.project.browse:projects"]="'
         )[1].split('\n')[0][:-2]
-        return json.loads(
-            upd.replace('\\"', '"').replace('\\\\', '\\').replace("\\\'", "'")
-        )
+
+        return json.loads(upd.replace('\\u0022', '"'))
 
     @api_call
     def get_project(
@@ -3236,9 +3235,11 @@ class Jira:
         data = {'userKey': user_key, 'newOwnerKey': new_owner_key}
 
         return self._post('user/anonymization', json=data)  # type: ignore
-    
+
     @api_call
-    def get_anonymization_progress(self, task_id: Optional[int] = None) -> Dict[str, Any]:
+    def get_anonymization_progress(
+        self, task_id: Optional[int] = None
+    ) -> Dict[str, Any]:
         """Get user anonymization progress.
 
         # Optional parameters
@@ -3261,7 +3262,7 @@ class Jira:
         - currentProgress: an integer
         - currentSubTask: a string
         - submittedTime: a string (an ISO8601 timestamp)
-        - startTime: a string (an ISO8601 timestamp) 
+        - startTime: a string (an ISO8601 timestamp)
         - finishTime: a string (an ISO8601 timestamp)
         - operations: a list of strings
         - status: a string with following values: 'COMPLETED', 'IN_PROGRESS', 'INTERRUPTED', 'VALIDATION_FAILED'
