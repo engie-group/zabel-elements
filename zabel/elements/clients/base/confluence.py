@@ -2132,6 +2132,30 @@ class Confluence:
         return result
 
     ####################################################################
+    # Confluence index
+    #
+    # reindex
+
+    @api_call
+    def reindex(self) -> Dict[str, Any]:
+        """Reindex the Confluence instance.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - progress: a dictionary
+        - started: a string
+        - duration: an integer
+        - finished: a string
+        """
+        return (
+            self.session()
+            .post(join_url(self.url, 'prototype/1/index/reindex'))
+            .json()
+        )
+
+    ####################################################################
     # confluence helpers
 
     def _get(
