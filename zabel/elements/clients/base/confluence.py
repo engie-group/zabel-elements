@@ -2144,10 +2144,11 @@ class Confluence:
 
         A dictionary with the following entries:
 
-        - progress: a dictionary
-        - started: a string
-        - duration: an integer
-        - finished: a string
+        - finished: a boolean
+        - percentageComplete: an integer
+        - elapsedTime: a string (a timestamp)
+        - remainingTime: a string (a timestamp)
+        - jobID: an integer
         """
         self.session().headers['Content-Type'] = 'application/json'
         return (
