@@ -2149,9 +2149,10 @@ class Confluence:
         - duration: an integer
         - finished: a string
         """
+        self.session().headers['Content-Type'] = 'application/json'
         return (
             self.session()
-            .post(join_url(self.url, 'prototype/1/index/reindex'))
+            .post(join_url(self.url, 'rest/prototype/1/index/reindex'))
             .json()
         )
 
