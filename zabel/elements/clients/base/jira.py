@@ -4565,13 +4565,13 @@ class Jira:
 
     @api_call
     def get_version(
-        self, version_id: int, expand: Optional[str] = None
+        self, version_id: Union[str, int], expand: Optional[str] = None
     ) -> Dict[str, Any]:
         """Return the version details.
 
         # Required parameters
 
-        - version_id: an integer
+        - version_id: a string or an integer
 
         # Optional parameters
 
@@ -4592,7 +4592,7 @@ class Jira:
         - userReleaseDate: a string
         - projectId: an integer
         """
-        ensure_nonemptystring('version_id')
+        ensure_instance('version_id', (str, int))
 
         params = {}
         add_if_specified(params, 'expand', expand)
@@ -4638,7 +4638,7 @@ class Jira:
         ensure_instance('archived', bool)
         ensure_instance('released', bool)
 
-        return self.client().create_version(
+        return self.client.create_version(
             name,
             project_key,
             description,
@@ -4649,31 +4649,33 @@ class Jira:
         )
 
     @api_call
-    def update_version(self, version_id: int, fields: Dict[str, Any]) -> None:
+    def update_version(self, version_id: Union[str, int], fields: Dict[str, Any]) -> None:
         """Update version.
 
         # Required parameters
 
-        - version_id: an integer
+        - version_id: a string or an integer
         - fields: a dictionary
 
         # Returned value
 
         None.
         """
-        ensure_instance('version_id', int)
+        ensure_instance('version_id', (str, int)
         ensure_instance('fields', dict)
 
         return self._put(f'version/{version_id}', fields)
 
     @api_call
-    def delete_version(self, version_id: int) -> bool:
+    def delete_version(self, version_id: Union[str, int]) -> bool:
         """Delete version.
 
         # Required parameters
 
-        - version_id: an integer
+        - version_id: a string or an integer
         """
+        
+        ensure_instance('version_id', (str, int))
 
         response = self._delete(f'version/{version_id}')
 
