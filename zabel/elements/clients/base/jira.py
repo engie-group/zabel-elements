@@ -4661,7 +4661,7 @@ class Jira:
 
         None.
         """
-        ensure_instance('version_id', (str, int)
+        ensure_instance('version_id', (str, int))
         ensure_instance('fields', dict)
 
         return self._put(f'version/{version_id}', fields)
