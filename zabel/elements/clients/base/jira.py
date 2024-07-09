@@ -4638,7 +4638,7 @@ class Jira:
         ensure_instance('archived', bool)
         ensure_instance('released', bool)
 
-        return self.client.create_version(
+        return self._client().create_version(
             name,
             project_key,
             description,
