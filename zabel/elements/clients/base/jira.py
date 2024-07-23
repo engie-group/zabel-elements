@@ -247,6 +247,7 @@ class Jira:
                 options['headers'] = {
                     'Authorization': f'Bearer {self.bearer_auth}'
                 }
+            print(options)
             self.client = JIRA(
                 options=options,
                 basic_auth=self.basic_auth,
@@ -4638,18 +4639,22 @@ class Jira:
         ensure_instance('archived', bool)
         ensure_instance('released', bool)
 
-        return self._client().create_version(
-            name,
-            project_key,
-            description,
-            release_date,
-            start_date,
-            archived,
-            released,
-        )
+        params = {
+            'name': name,
+            'project': project_key,
+        }
+        add_if_specified(params, 'description', description)
+        add_if_specified(params, 'releaseDate', release_date)
+        add_if_specified(params, 'startDate', start_date)
+        add_if_specified(params, 'archived', archived)
+        add_if_specified(params, 'released', released)
+
+        return self._post('version', json=params)
 
     @api_call
-    def update_version(self, version_id: Union[str, int], fields: Dict[str, Any]) -> None:
+    def update_version(
+        self, version_id: Union[str, int], fields: Dict[str, Any]
+    ) -> None:
         """Update version.
 
         # Required parameters
@@ -4674,7 +4679,7 @@ class Jira:
 
         - version_id: a string or an integer
         """
-        
+
         ensure_instance('version_id', (str, int))
 
         response = self._delete(f'version/{version_id}')
