@@ -398,6 +398,33 @@ class CloudBeesJenkins(Base):
     # delete_user
 
     @api_call
+    def list_oc_users(self) -> List[Dict[str, Any]]:
+        """Return the Operations Center list of known users.
+
+        # Returned value
+
+        A list of u_sers_.  Each user is a dictionary with the following
+        entries:
+
+        - user: a dictionary
+        - project: None or ...
+        - lastChange: None or ...
+
+        The dictionary in the `user` key has the following entries:
+
+        - fullName: a string
+        - absoluteUrl: a string
+        """
+        groups = self.list_oc_groups()
+        users = []
+        for group in groups:
+            users.extend(group['users'])
+        return [
+            {'user': {'absoluteUrl': join_url(self.url, f'cjoc/user/{u}')}}
+            for u in users
+        ]
+
+    @api_call
     def delete_oc_user(self, user_id: str) -> None:
         """Delete an user in the cjoc
 
@@ -409,10 +436,7 @@ class CloudBeesJenkins(Base):
         ensure_nonemptystring('user_id')
 
         response = self._get(join_url(self.url, f'cjoc/user/{user_id}/delete'))
-        re_match = re.search(
-            r'data-crumb-value="(\w+)"',
-            response.text,
-        )
+        re_match = re.search(r'data-crumb-value="(\w+)"', response.text)
 
         if not re_match:
             raise ValueError(
