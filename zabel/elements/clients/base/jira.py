@@ -247,7 +247,6 @@ class Jira:
                 options['headers'] = {
                     'Authorization': f'Bearer {self.bearer_auth}'
                 }
-            print(options)
             self.client = JIRA(
                 options=options,
                 basic_auth=self.basic_auth,
