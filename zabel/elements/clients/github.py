@@ -51,31 +51,39 @@ class GitHub(Base):
     # Reference URLs
 
     - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.20/v3>
+    - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
     # Implemented features
 
-    - hooks
+    - users
     - organizations
     - repositories
-    - users
+    - branches
+    - pullrequests
+    - references
+    - hooks
+    - copilot
     - misc. operations (version, staff reports & stats)
+
+    Some methods require an Enterprise Cloud account.
 
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import GitHub
-    >>>
-    >>> # standard use
-    >>> url = 'https://github.example.com/api/v3/'
-    >>> gh = GitHub(url, user, token)
-    >>> gh.get_users()
+    # standard use
+    from zabel.elements.clients import GitHub
 
-    >>> # enabling management features
-    >>> mngt = 'https://github.example.com/'
-    >>> gh = GitHub(url, user, token, mngt)
-    >>> gh.create_organization('my_organization', 'admin')
+    url = 'https://github.example.com/api/v3/'
+    gh = GitHub(url, basic_auth=(user, token))
+    gh.list_users()
+
+    # enabling management features
+    from zabel.elements import clients
+
+    mngt = 'https://github.example.com/'
+    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh.create_organization('my_organization', 'admin')
     ```
     """
 
@@ -421,7 +429,8 @@ class GitHub(Base):
         - github_com_saml_name_id: a string
         - github_com_orgs_with_pending_invites: a list of strings
         - github_com_two_factor_auth: a boolean
-        - github_com_two_factor_auth_required_by_date: a datetime as a string
+        - github_com_two_factor_auth_required_by_date: a datetime as a
+          string
         - enterprise_server_primary_emails: a list of stringsF
         - visual_studio_license_status: a string
         - visual_studio_subscription_email: a string
