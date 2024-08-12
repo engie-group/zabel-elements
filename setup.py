@@ -38,7 +38,7 @@ setup(
     packages=find_namespace_packages(include=['zabel.*']),
     install_requires=['zabel-commons>=1.7'],
     extras_require={
-        'jira': ['Jira>=3.0,< 3.1'],
+        'jira': ['Jira>=3.0'],
         'kubernetes': ['kubernetes>=10.1.0'],
         'okta': ['okta>=2.3.1'],
         'all': ['Jira>=3.0,<3.1', 'kubernetes>=10.1.0', 'okta>=2.3.1'],
