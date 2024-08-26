@@ -33,7 +33,7 @@ for the managed services to function, but otherwise not seen by project members.
 An LDAP server would probably be a utility, used both as a reference and as an access
 control tool.
 
-In the above list, Kubernetes is a utility.  The other elements are managed services.
+In the above list, Kubernetes and Okta are utilities.  The other elements are managed services.
 
 You can use this library independently of the Zabel platform, as it has no
 specific dependencies on it.  In particular, the **zabel.elements.clients**
@@ -98,7 +98,7 @@ If a wrapper class method is called with an obviously invalid parameter
 (wrong type, not a permitted value, ...), a _ValueError_ exception will
 be raised.
 
-#### Note
+<h4>Note</h4>
 
 Base classes do not try to provide features not offered by the tool API.
 

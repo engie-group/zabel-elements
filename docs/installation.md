@@ -4,18 +4,18 @@
 
 ## Prerequisites
 
-The Zabel Elements package is a Python 3 library. It requires Python 3.6.5 or a later
+The Zabel Elements package is a Python 3 library. It requires Python 3.8 or a later
 version.  It is expected to work with newer Python 3 releases too.
 
 The zabel.elements library has one essential external dependency, **requests**.
-It also has secondary dependencies, **jira**, **kubernetes**, and **PyYAML**,
+It also has secondary dependencies, **jira**, **kubernetes**, **okta**, and **PyYAML**,
 depending on the used features.
 
 ## Installation
 
 The Platform API is currently available as a PyPI package and as a git repository.
 
-The easiet way to install the current stable release of zabel-elements is to use PyPI:
+The easiest way to install the current stable release of `zabel-elements` is to use PyPI:
 
 ```bash
 pip3 install --upgrade zabel-elements
@@ -191,7 +191,7 @@ python3 oauth_token_generator.py confluence ZABEL_KEY zabel_confluence.pem
 Any user can acknowledge a token (which will provide its rights only), and there can be
 many simultaneously defined tokens.
 
-Please note that if you remove the application link, all corresponding oauth tokens will
+Please note that if you remove the application link, all corresponding OAuth tokens will
 be removed too.
 
 ### Further Reading
