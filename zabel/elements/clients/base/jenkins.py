@@ -182,8 +182,10 @@ class CloudBeesJenkins:
         return result['roles']  # type: ignore
 
     @api_call
-    def list_oc_users(self) -> List[Dict[str, Any]]:
+    def _list_oc_users(self) -> List[Dict[str, Any]]:
         """Return the Operations Center list of known users.
+
+        DEPRECATED - No longer used.
 
         # Returned value
 
