@@ -471,7 +471,7 @@ class GitHub(Base):
         secret_value: str,
         visibility: str = 'all',
         repositories_ids: Optional[List[int]] = None,
-    ) -> Dict[str, Any]:
+    ) -> bool:
         """Create or update the organization's secret.
 
         # Required parameters
@@ -517,7 +517,10 @@ class GitHub(Base):
         if visibility == 'selected':
             data['selected_repository_ids'] = repositories_ids
 
-        return self._put(
+        response = self._put(
             f'orgs/{organization_name}/actions/secrets/{secret_name}',
             json=data,
         )
+
+        if response.status_code in [201, 204]:
+            return True

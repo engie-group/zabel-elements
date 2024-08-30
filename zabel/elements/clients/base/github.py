@@ -907,6 +907,7 @@ class GitHub:
     #
     # get_organization_public_key
     # get_organization_secret
+    # delete_organization_secret
 
     @api_call
     def get_organization_public_key(
@@ -957,6 +958,31 @@ class GitHub:
 
         return self._get(
             f'orgs/{organization_name}/actions/secrets/{secret_name}'
+        )
+        
+    @api_call
+    def delete_organization_secret(
+        self, organization_name: str, secret_name: str
+    ) -> bool:
+        """Delete the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if the secret has been deleted.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+
+        return (
+            self._delete(
+                f'orgs/{organization_name}/actions/secrets/{secret_name}'
+            ).status_code
+            == 204
         )
 
     ####################################################################
