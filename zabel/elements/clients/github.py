@@ -21,10 +21,12 @@ import csv
 import time
 
 from base64 import b64decode, b64encode
+from nacl import public, encoding
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
     api_call,
+    ensure_in,
     ensure_instance,
     ensure_nonemptystring,
     ensure_noneorinstance,
@@ -455,3 +457,70 @@ class GitHub(Base):
                 break
 
         return collected
+
+    ####################################################################
+    # GitHub organization secret
+    #
+    # create_update_organization_secret
+
+    @api_call
+    def create_update_organization_secret(
+        self,
+        organization_name: str,
+        secret_name: str,
+        secret_value: str,
+        visibility: str = 'all',
+        repositories_ids: Optional[List[int]] = None,
+    ) -> bool:
+        """Create or update the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+        - secret_value: a non-empty string
+
+        # Optional parameters
+
+        - visibility: a string, one of 'all', 'private', or 'selected' ('all' by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+        ensure_nonemptystring('secret_value')
+        ensure_in('visibility', ('all', 'private', 'selected'))
+
+        orga_key = self.get_organization_public_key(organization_name)
+
+        public_key_bytes = b64decode(orga_key['key'])
+
+        public_key_obj = public.PublicKey(public_key_bytes)
+        sealed_box = public.SealedBox(public_key_obj)
+        encrypted_value = sealed_box.encrypt(secret_value.encode())
+        encrypted_value_base64 = b64encode(encrypted_value).decode()
+
+        data = {
+            'encrypted_value': encrypted_value_base64,
+            'key_id': orga_key['key_id'],
+            'visibility': visibility,
+        }
+
+        if visibility == 'selected':
+            data['selected_repository_ids'] = repositories_ids
+
+        response = self._put(
+            f'orgs/{organization_name}/actions/secrets/{secret_name}',
+            json=data,
+        )
+
+        if response.status_code in [201, 204]:
+            return True

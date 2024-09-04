@@ -41,7 +41,8 @@ setup(
         'jira': ['Jira>=3.0'],
         'kubernetes': ['kubernetes>=10.1.0'],
         'okta': ['okta>=2.3.1'],
-        'all': ['Jira>=3.0,<3.1', 'kubernetes>=10.1.0', 'okta>=2.3.1'],
+        'pynacl': ['pynacl>=1.5.0'],
+        'all': ['Jira>=3.0,<3.1', 'kubernetes>=10.1.0', 'okta>=2.3.1', 'pynacl>=1.5.0'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',

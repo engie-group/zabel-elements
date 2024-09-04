@@ -903,6 +903,89 @@ class GitHub:
     )
 
     ####################################################################
+    # GitHub secrets
+    #
+    # get_organization_public_key
+    # get_organization_secret
+    # delete_organization_secret
+
+    @api_call
+    def get_organization_public_key(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's public key.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - key_id: a string
+        - key: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/public-key'
+        )
+
+    @api_call
+    def get_organization_secret(
+        self, organization_name: str, secret_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/{secret_name}'
+        )
+        
+    @api_call
+    def delete_organization_secret(
+        self, organization_name: str, secret_name: str
+    ) -> bool:
+        """Delete the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if the secret has been deleted.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+
+        return (
+            self._delete(
+                f'orgs/{organization_name}/actions/secrets/{secret_name}'
+            ).status_code
+            == 204
+        )
+
+    ####################################################################
     # GitHub apps
     #
     # https://docs.github.com/en/enterprise-server@3.10/rest/orgs/personal-access-tokens?apiVersion=2022-11-28
