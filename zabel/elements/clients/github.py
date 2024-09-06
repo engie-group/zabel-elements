@@ -461,10 +461,10 @@ class GitHub(Base):
     ####################################################################
     # GitHub organization secret
     #
-    # create_update_organization_secret
+    # create_or_update_organization_secret
 
     @api_call
-    def create_update_organization_secret(
+    def create_or_update_organization_secret(
         self,
         organization_name: str,
         secret_name: str,

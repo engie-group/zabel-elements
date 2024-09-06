@@ -905,9 +905,58 @@ class GitHub:
     ####################################################################
     # GitHub secrets
     #
+    # list_organization_secrets
     # get_organization_public_key
     # get_organization_secret
     # delete_organization_secret
+
+    @api_call
+    def list_organization_secrets(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's secrets.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - total_count: an integer
+        - secrets: a list of dictionaries
+
+        Each secret is a dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        api_url = join_url(
+            self.url, f'orgs/{organization_name}/actions/secrets'
+        )
+        org_secrets = {'total_count': 0, 'secrets': []}
+        while True:
+            response = self.session().get(api_url)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                response_data = response.json()
+                org_secrets['total_count'] = response_data['total_count']
+                org_secrets['secrets'] += response_data['secrets']
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return org_secrets
 
     @api_call
     def get_organization_public_key(
@@ -959,7 +1008,7 @@ class GitHub:
         return self._get(
             f'orgs/{organization_name}/actions/secrets/{secret_name}'
         )
-        
+
     @api_call
     def delete_organization_secret(
         self, organization_name: str, secret_name: str
