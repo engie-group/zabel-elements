@@ -174,6 +174,14 @@ class Jira:
         - consumer_key: a string
         - key_cert: a string
 
+        It may have a `signature_method` entry too.  If `oauth` is used,
+        the following signature methods will be tried in order, if
+        available:
+
+        - `oauth['signature_method']`
+        - `SIGNATURE_HMAC_SHA1`
+        - `SIGNATURE_RSA`
+
         # Optional parameters
 
         - verify: a boolean (True by default)
@@ -194,24 +202,6 @@ class Jira:
         self.oauth = oauth
         self.bearer_auth = bearer_auth
 
-        if basic_auth is not None:
-            self.auth = basic_auth
-        if oauth is not None:
-            from requests_oauthlib import OAuth1
-            from oauthlib.oauth1 import SIGNATURE_RSA
-
-            self.auth = OAuth1(
-                oauth['consumer_key'],
-                'dont_care',
-                oauth['access_token'],
-                oauth['access_token_secret'],
-                signature_method=SIGNATURE_RSA,
-                rsa_key=oauth['key_cert'],
-                signature_type='auth_header',
-            )
-        if bearer_auth is not None:
-            self.auth = BearerAuth(bearer_auth)
-
         self.client = None
         self.verify = verify
         self.UPM_BASE_URL = join_url(url, 'rest/plugins/1.0/')
@@ -220,6 +210,41 @@ class Jira:
         self.SERVICEDESK_BASE_URL = join_url(url, 'rest/servicedeskapi/')
         self.SDBUNDLE_BASE_URL = join_url(url, 'rest/jsdbundled/1.0')
         self.XRAY_BASE_URL = join_url(url, 'rest/raven/1.0')
+
+        if basic_auth is not None:
+            self.auth = basic_auth
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
+        if oauth is not None:
+            from requests_oauthlib import OAuth1
+            from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1 as DEFAULT_SHA
+
+            try:
+                from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
+            except ImportError:
+                FALLBACK_SHA = DEFAULT_SHA
+
+            for sha_type in (
+                oauth.get("signature_method"),
+                DEFAULT_SHA,
+                FALLBACK_SHA,
+            ):
+                if sha_type is None:
+                    continue
+                self.oauth['signature_method'] = sha_type
+                self.auth = OAuth1(
+                    oauth['consumer_key'],
+                    'dont_care',
+                    oauth['access_token'],
+                    oauth['access_token_secret'],
+                    signature_method=sha_type,
+                    rsa_key=oauth['key_cert'],
+                    signature_type='auth_header',
+                )
+                if self._get('/rest/api/2/myself').status_code == 200:
+                    break
+            else:
+                raise ValueError('OAuth authentication failed')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
@@ -4344,6 +4369,7 @@ class Jira:
         board_id: int,
         start_date: Optional[Any] = None,
         end_date: Optional[Any] = None,
+        goal: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create new sprint.
 
@@ -4356,6 +4382,7 @@ class Jira:
 
         - start_date
         - end_date
+        - goal
 
         # Returned value
 
@@ -4366,7 +4393,7 @@ class Jira:
 
         return (
             self._client()
-            .create_sprint(name, board_id, start_date, end_date)
+            .create_sprint(name, board_id, start_date, end_date, goal)
             .raw
         )
 

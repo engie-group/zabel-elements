@@ -21,10 +21,12 @@ import csv
 import time
 
 from base64 import b64decode, b64encode
+from nacl import public, encoding
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
     api_call,
+    ensure_in,
     ensure_instance,
     ensure_nonemptystring,
     ensure_noneorinstance,
@@ -51,31 +53,39 @@ class GitHub(Base):
     # Reference URLs
 
     - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.20/v3>
+    - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
     # Implemented features
 
-    - hooks
+    - users
     - organizations
     - repositories
-    - users
+    - branches
+    - pullrequests
+    - references
+    - hooks
+    - copilot
     - misc. operations (version, staff reports & stats)
+
+    Some methods require an Enterprise Cloud account.
 
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import GitHub
-    >>>
-    >>> # standard use
-    >>> url = 'https://github.example.com/api/v3/'
-    >>> gh = GitHub(url, user, token)
-    >>> gh.get_users()
+    # standard use
+    from zabel.elements.clients import GitHub
 
-    >>> # enabling management features
-    >>> mngt = 'https://github.example.com/'
-    >>> gh = GitHub(url, user, token, mngt)
-    >>> gh.create_organization('my_organization', 'admin')
+    url = 'https://github.example.com/api/v3/'
+    gh = GitHub(url, basic_auth=(user, token))
+    gh.list_users()
+
+    # enabling management features
+    from zabel.elements import clients
+
+    mngt = 'https://github.example.com/'
+    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh.create_organization('my_organization', 'admin')
     ```
     """
 
@@ -421,7 +431,8 @@ class GitHub(Base):
         - github_com_saml_name_id: a string
         - github_com_orgs_with_pending_invites: a list of strings
         - github_com_two_factor_auth: a boolean
-        - github_com_two_factor_auth_required_by_date: a datetime as a string
+        - github_com_two_factor_auth_required_by_date: a datetime as a
+          string
         - enterprise_server_primary_emails: a list of stringsF
         - visual_studio_license_status: a string
         - visual_studio_subscription_email: a string
@@ -446,3 +457,70 @@ class GitHub(Base):
                 break
 
         return collected
+
+    ####################################################################
+    # GitHub organization secret
+    #
+    # create_or_update_organization_secret
+
+    @api_call
+    def create_or_update_organization_secret(
+        self,
+        organization_name: str,
+        secret_name: str,
+        secret_value: str,
+        visibility: str = 'all',
+        repositories_ids: Optional[List[int]] = None,
+    ) -> bool:
+        """Create or update the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+        - secret_value: a non-empty string
+
+        # Optional parameters
+
+        - visibility: a string, one of 'all', 'private', or 'selected' ('all' by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+        ensure_nonemptystring('secret_value')
+        ensure_in('visibility', ('all', 'private', 'selected'))
+
+        orga_key = self.get_organization_public_key(organization_name)
+
+        public_key_bytes = b64decode(orga_key['key'])
+
+        public_key_obj = public.PublicKey(public_key_bytes)
+        sealed_box = public.SealedBox(public_key_obj)
+        encrypted_value = sealed_box.encrypt(secret_value.encode())
+        encrypted_value_base64 = b64encode(encrypted_value).decode()
+
+        data = {
+            'encrypted_value': encrypted_value_base64,
+            'key_id': orga_key['key_id'],
+            'visibility': visibility,
+        }
+
+        if visibility == 'selected':
+            data['selected_repository_ids'] = repositories_ids
+
+        response = self._put(
+            f'orgs/{organization_name}/actions/secrets/{secret_name}',
+            json=data,
+        )
+
+        if response.status_code in [201, 204]:
+            return True

@@ -46,7 +46,14 @@ from zabel.commons.utils import (
 class GitHub:
     """GitHub Low-Level Wrapper.
 
-    # Reference URL
+    There can be as many GitHub instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    # Reference URLs
 
     - <https://developer.github.com/v3/>
     - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
@@ -424,7 +431,8 @@ class GitHub:
 
         # Returned value
 
-        An invitation object.  An invitation is a dictionary with the following keys:
+        An invitation object.  An invitation is a dictionary with the
+        following keys:
 
         - id: an integer
         - login: a string
@@ -486,8 +494,8 @@ class GitHub:
 
         # Returned value
 
-        A list of _failed invitations_.  Each failed invitation is a dictionary with the following
-        keys:
+        A list of _failed invitations_.  Each failed invitation is a
+        dictionary with the following keys:
 
         - id: an integer
         - login: a string
@@ -517,8 +525,8 @@ class GitHub:
 
         # Returned value
 
-        A list of _pending invitations_.  Each pending invitation is a dictionary with the following
-        keys:
+        A list of _pending invitations_.  Each pending invitation is a
+        dictionary with the following keys:
 
         - id: an integer
         - login: a string
@@ -533,6 +541,45 @@ class GitHub:
         ensure_nonemptystring('organization_name')
 
         return self._collect_data(f'orgs/{organization_name}/invitations')
+
+    @api_call
+    def list_organization_installations(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return app installations.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _installations_.  Each installation is a dictionary
+        with the following keys:
+
+        - access_tokens_url: a string
+        - account: a dictionary
+        - app_id: an integer
+        - app_slug: a string
+        - created_at: a string
+        - events: a list of strings
+        - has_multiple_single_files: a boolean
+        - html_url: a string
+        - id: an integer
+        - permissions: a dictionary
+        - repositories_url: a string
+        - repository_selection: a string
+        - single_file_name: a string
+        - single_file_paths
+        - suspended_at: a string or None
+        - suspended_by: a ? or None
+        - target_id: an integer
+        - target_type: a string
+        - updated_at: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(f'orgs/{organization_name}/installations').json()['installations']  # type: ignore
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -757,8 +804,8 @@ class GitHub:
         If `user` already had membership, `state` is `'active'`.  If
         `user` was previously unaffiliated, `state` is `'pending'`.
 
-        Refer to #list_organizations() and #list_users() for more details
-        on `organization` and `user` content.
+        Refer to #list_organizations() and #list_users() for more
+        details on `organization` and `user` content.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user')
@@ -856,6 +903,138 @@ class GitHub:
     )
 
     ####################################################################
+    # GitHub secrets
+    #
+    # list_organization_secrets
+    # get_organization_public_key
+    # get_organization_secret
+    # delete_organization_secret
+
+    @api_call
+    def list_organization_secrets(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's secrets.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - total_count: an integer
+        - secrets: a list of dictionaries
+
+        Each secret is a dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        api_url = join_url(
+            self.url, f'orgs/{organization_name}/actions/secrets'
+        )
+        org_secrets = {'total_count': 0, 'secrets': []}
+        while True:
+            response = self.session().get(api_url)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                response_data = response.json()
+                org_secrets['total_count'] = response_data['total_count']
+                org_secrets['secrets'] += response_data['secrets']
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return org_secrets
+
+    @api_call
+    def get_organization_public_key(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's public key.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - key_id: a string
+        - key: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/public-key'
+        )
+
+    @api_call
+    def get_organization_secret(
+        self, organization_name: str, secret_name: str
+    ) -> Dict[str, Any]:
+        """Return the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - name: a string
+        - created_at: a string
+        - updated_at: a string
+        - visibility: a string
+        - selected_repositories_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/{secret_name}'
+        )
+
+    @api_call
+    def delete_organization_secret(
+        self, organization_name: str, secret_name: str
+    ) -> bool:
+        """Delete the organization's secret.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - secret_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if the secret has been deleted.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('secret_name')
+
+        return (
+            self._delete(
+                f'orgs/{organization_name}/actions/secrets/{secret_name}'
+            ).status_code
+            == 204
+        )
+
+    ####################################################################
     # GitHub apps
     #
     # https://docs.github.com/en/enterprise-server@3.10/rest/orgs/personal-access-tokens?apiVersion=2022-11-28
@@ -917,7 +1096,7 @@ class GitHub:
         - updated_at: a string
         - single_file_name: a string
         """
-        ensure_nonemptystring('organization_name')
+        # ensure_nonemptystring('organization_name')
 
         return self._collect_data('app/installations')
 
