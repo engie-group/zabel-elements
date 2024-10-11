@@ -1542,33 +1542,30 @@ class SonarQube:
     @api_call
     def list_projectbranches(
         self,
-        project_id: Optional[int] = None,
-        project_key: Optional[str] = None,
+        project_key: str,
     ) -> List[Dict[str, str]]:
         """List branches of a project.
 
         # Required parameters
 
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - `project_key` : str
 
         # Returned value
 
         A list of _project branches_. Each project branch is a
         dictionary with the following four entries:
 
-        - name: a string : branch name
-        - type: a string : branch type
-        - isMain: a boolean : whether the branch is the main branch
-        - analysisDate: a string : date of the last analysis
+        - name: a string 
+        - type: a string
+        - isMain: a boolean
+        - analysisDate: a string 
+        - status: a dictionary
+        - excludedFromPurge: a boolean
         """
-        ensure_onlyone('project_id', 'project_key')
+        
+        ensure_nonemptystring('project_key')
 
-        params = {}
-        add_if_specified(params, 'projectId', project_id)
-        add_if_specified(params, 'projectKey', project_key)
-
-        result = self._get('project_branches/list', params=params).json()
+        result = self._get('project_branches/list', params={'project': project_key}).json()
         return result.get('branches', {})
 
     ####################################################################
