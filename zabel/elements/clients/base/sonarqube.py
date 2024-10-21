@@ -1535,6 +1535,40 @@ class SonarQube:
         return result.get('links', {})
 
     ####################################################################
+    # SonarQube projectBranches
+    #
+    # list_projectbranches
+    
+    @api_call
+    def list_projectbranches(
+        self,
+        project_key: str,
+    ) -> List[Dict[str, str]]:
+        """List branches of a project.
+
+        # Required parameters
+
+        - `project_key` : a string
+
+        # Returned value
+
+        A list of _project branches_. Each project branch is a
+        dictionary with the following four entries:
+
+        - name: a string 
+        - type: a string
+        - isMain: a boolean
+        - analysisDate: a string 
+        - status: a dictionary
+        - excludedFromPurge: a boolean
+        """
+        
+        ensure_nonemptystring('project_key')
+
+        result = self._get('project_branches/list', params={'project': project_key}).json()
+        return result.get('branches', {})
+
+    ####################################################################
     # SonarQube usergroups
     #
     # create_usergroup
