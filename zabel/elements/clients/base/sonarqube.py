@@ -1548,7 +1548,7 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_key` : str
+        - `project_key` : a string
 
         # Returned value
 
