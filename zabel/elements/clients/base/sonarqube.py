@@ -1384,6 +1384,7 @@ class SonarQube:
     # SonarQube projects
     #
     # list_projects
+    # delete project
 
     @api_call
     def list_projects(
@@ -1431,6 +1432,24 @@ class SonarQube:
         add_if_specified(params, 'projects', projects)
 
         return self._collect_data('projects/search', 'components', params)
+    
+    @api_call
+    def delete_project(
+        self,
+        project_key: str
+        ) -> None:
+        """Delete a sonarQube project.
+
+        # Required parameters
+
+        - `project_key` : a string 
+
+        # Returned value
+
+        None
+        """
+        ensure_nonemptystring(project_key)
+        return self._post('projects/delete', params = {'project_key': project_key})
 
     ####################################################################
     # SonarQube projectanalyses
