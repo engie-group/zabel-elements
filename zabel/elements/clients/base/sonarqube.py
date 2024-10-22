@@ -1449,7 +1449,7 @@ class SonarQube:
         None
         """
         ensure_nonemptystring(project_key)
-        return self._post('projects/delete', params = {'project_key': project_key})
+        return self._post('projects/delete', params = {'project': project_key})
 
     ####################################################################
     # SonarQube projectanalyses
