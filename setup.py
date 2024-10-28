@@ -43,7 +43,7 @@ setup(
         'okta': ['okta>=2.3.1'],
         'pynacl': ['pynacl>=1.5.0'],
         'all': [
-            'Jira>=3.0,<3.1',
+            'Jira>=3.0',
             'kubernetes>=10.1.0',
             'okta>=2.3.1',
             'pynacl>=1.5.0',
