@@ -43,15 +43,11 @@ pages:
     - Images:
       - Overview: images.md
 
-sort: name
 theme:
-  name: 'material'
   features:
-    - navigation.indexes # https://squidfunk.github.io/mkdocs-material/setup/setting-up-navigation/#section-index-pages
-    - navigation.instant
+    - navigation.indexes
     # - navigation.tabs
-    - content.tabs.link
-    - content.code.copy
+  name: material
   palette:
     - scheme: default
       toggle:
