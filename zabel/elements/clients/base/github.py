@@ -157,8 +157,10 @@ class GitHub:
     #
     # list_users
     # get_user
-    # TODO update_user
-    # TODO get_user_organizations
+    # create_user
+    # update_user
+    # delete_user
+    # get_user_organizations
     # suspend_user
     # unsuspend_user
 
@@ -243,6 +245,135 @@ class GitHub:
         ensure_nonemptystring('user_name')
 
         return self._get(f'users/{user_name}')  # type: ignore
+    
+
+    @api_call
+    def get_user_organizations(
+        self,
+        login: str
+    ) -> Dict[str, Any]:
+        """Get the list of organizations for a specific user.
+
+        # Required parameters
+        - login: the login identifier of the user.
+
+        # Returned value
+        A dictionary containing the organizations the user belongs to.
+        """
+        ensure_nonemptystring('login')
+
+        response = self._get(f'users/{login}/orgs')
+        return response
+        
+    @api_call
+    def create_user(
+        self,
+        login: str,
+        email: Optional[str] = None,
+        suspended: bool = False,
+    ) -> Dict[str, Any]:
+        """Create a new user on GitHub Enterprise.
+
+        # Required parameters
+
+        - login: a non-empty string
+        
+        # Optional parameters
+
+        - email: a string or None (None by default)
+        - suspended: a boolean (True by default)
+
+        # Returned value
+
+        A dictionary with the following entry:
+
+        - user: a dictionary
+
+        The `user` dictionary with the following entries:
+
+        - login: a string
+        - id: an integer
+        - email: a string
+        - scmAccount: a list of strings
+        - active: a boolean
+        - local: a boolean
+        """
+        ensure_nonemptystring('login')
+        if email:
+            ensure_instance('email', str)
+
+
+        data = {
+            'login': login,
+            'email': email,
+        }
+
+        result = self._post('admin/users', data)
+        return result  
+    
+    @api_call
+    def update_user(
+        self,
+        current_username: str,
+        new_username: str,
+        ) -> Dict[str, Any]:
+            """Update the username for a user on Github Enterprise.
+
+            # Required parameters
+             
+            - current_username: a non-empty string
+            - new_username: a non-empty string
+
+            # Returned value
+
+            A user object.  A user is a dictionary with the
+            following keys:
+
+            - login: a string
+            - id: an integer
+            - email: a string
+            - scmAccount: a list of strings
+            - active: a boolean
+            - local: a boolean
+            """
+
+            ensure_nonemptystring('current_username')
+            ensure_nonemptystring('new_username')
+
+            data = {
+                'login': new_username
+            }
+
+            resultat = self._patch(f'admin/users/{current_username}', data)
+            return resultat
+
+
+    @api_call
+    def delete_user(
+        self,
+        username: str) -> None:
+        """ Delete a user from Github Entreprise
+        
+        # Required parameters
+
+        - username: a string
+
+        # Returned value
+        
+        - None
+        """
+
+        ensure_nonemptystring('username')
+        result = self._delete(f'admin/users/{username}')
+        return result
+
+
+        
+
+
+    
+        
+    
 
     @api_call
     def suspend_user(self, user_name: str) -> bool:
