@@ -4826,8 +4826,7 @@ class Jira:
         with the following entries:
 
         - id: a string
-        - name: a string
-        - key: a string
+        - projectName: a string
         - projectKey: a string
         - projectId: a string
         - _links: a dictionary
