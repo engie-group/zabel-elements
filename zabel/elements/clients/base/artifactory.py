@@ -388,7 +388,7 @@ class Artifactory:
         self,
         name: str,
         email: str,
-        password: str,
+        password: Optional[str] = None,
         admin: bool = False,
         profile_updatable: bool = True,
         disable_ui_access: bool = True,
@@ -403,11 +403,11 @@ class Artifactory:
         # Required parameters
 
         - name: a non-empty string
-        - email: a non-empty string
         - password: a non-empty string
 
         # Optional parameters
 
+        - email: a string
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
@@ -430,23 +430,25 @@ class Artifactory:
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
-        ensure_nonemptystring('password')
         ensure_instance('admin', bool)
         ensure_instance('profile_updatable', bool)
         ensure_instance('disable_ui_access', bool)
         ensure_instance('internal_password_disabled', bool)
         ensure_noneorinstance('groups', list)
 
+        if not internal_password_disabled:
+            ensure_nonemptystring('password')
+
         data = {
             'username': name,
             'email': email,
-            'password': password,
             'admin': admin,
             'profile_updatable': profile_updatable,
             'disable_ui_access': disable_ui_access,
             'internal_password_disabled': internal_password_disabled,
         }
         add_if_specified(data, 'groups', groups)
+        add_if_specified(data, 'password', password)
 
         result = self._post('access/api/v2/users', json=data)
         return result  # type: ignore
