@@ -245,13 +245,9 @@ class GitHub:
         ensure_nonemptystring('user_name')
 
         return self._get(f'users/{user_name}')  # type: ignore
-    
 
     @api_call
-    def get_user_organizations(
-        self,
-        login: str
-    ) -> Dict[str, Any]:
+    def get_user_organizations(self, login: str) -> Dict[str, Any]:
         """Get the list of organizations for a specific user.
 
         # Required parameters
@@ -264,7 +260,7 @@ class GitHub:
 
         response = self._get(f'users/{login}/orgs')
         return response
-        
+
     @api_call
     def create_user(
         self,
@@ -277,7 +273,7 @@ class GitHub:
         # Required parameters
 
         - login: a non-empty string
-        
+
         # Optional parameters
 
         - email: a string or None (None by default)
@@ -302,78 +298,64 @@ class GitHub:
         if email:
             ensure_instance('email', str)
 
-
         data = {
             'login': login,
             'email': email,
         }
 
         result = self._post('admin/users', data)
-        return result  
-    
+        return result
+
     @api_call
     def update_user(
         self,
         current_username: str,
         new_username: str,
-        ) -> Dict[str, Any]:
-            """Update the username for a user on Github Enterprise.
+    ) -> Dict[str, Any]:
+        """Update the username for a user on Github Enterprise.
 
-            # Required parameters
-             
-            - current_username: a non-empty string
-            - new_username: a non-empty string
+        # Required parameters
 
-            # Returned value
+        - current_username: a non-empty string
+        - new_username: a non-empty string
 
-            A user object.  A user is a dictionary with the
-            following keys:
+        # Returned value
 
-            - login: a string
-            - id: an integer
-            - email: a string
-            - scmAccount: a list of strings
-            - active: a boolean
-            - local: a boolean
-            """
+        A user object.  A user is a dictionary with the
+        following keys:
 
-            ensure_nonemptystring('current_username')
-            ensure_nonemptystring('new_username')
+        - login: a string
+        - id: an integer
+        - email: a string
+        - scmAccount: a list of strings
+        - active: a boolean
+        - local: a boolean
+        """
 
-            data = {
-                'login': new_username
-            }
+        ensure_nonemptystring('current_username')
+        ensure_nonemptystring('new_username')
 
-            resultat = self._patch(f'admin/users/{current_username}', data)
-            return resultat
+        data = {'login': new_username}
 
+        resultat = self._patch(f'admin/users/{current_username}', data)
+        return resultat
 
     @api_call
-    def delete_user(
-        self,
-        username: str) -> None:
-        """ Delete a user from Github Entreprise
-        
+    def delete_user(self, username: str) -> None:
+        """Delete a user from Github Entreprise
+
         # Required parameters
 
         - username: a string
 
         # Returned value
-        
+
         - None
         """
 
         ensure_nonemptystring('username')
         result = self._delete(f'admin/users/{username}')
         return result
-
-
-        
-
-
-    
-        
-    
 
     @api_call
     def suspend_user(self, user_name: str) -> bool:
