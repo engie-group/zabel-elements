@@ -4813,6 +4813,7 @@ class Jira:
     # get_organization
     # create_organization
     # delete_organization
+    # add_servicedesk_organization
 
     @api_call
     def list_servicedesks(
@@ -5330,6 +5331,39 @@ class Jira:
         )
 
         return result.status_code in [200, 201, 204]
+    
+    @api_call
+    def add_servicedesk_organization(
+        self, servicedesk_id: Union[int, str], organization_id: Union[int, str]
+    ) -> bool:
+        """Add organization to servicedesk.
+
+        # Required parameters
+
+        - servicedesk_id: an integer
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        
+        ensure_instance('servicedesk_id', (str, int))
+        ensure_instance('organization_id', (str, int))
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/organization',
+            ),
+            json={'organizationId': organization_id},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code == 204
 
     ####################################################################
     # JIRA misc. operation
