@@ -968,12 +968,18 @@ class SonarQube:
         return result  # type: ignore
 
     @api_call
-    def deactivate_user(self, login: str) -> Dict[str, Any]:
-        """Deactivate a user.
+    def deactivate_user(self, login: str,
+                        anonymize: bool = False
+    ) -> Dict[str, Any]:
+        """Deactivate a user and optionally anonymize it.
 
         # Required parameter
 
         - login: a non-empty string
+
+        # Optional parameter
+
+        - anonymize: a boolean
 
         # Returned value
 
@@ -984,8 +990,14 @@ class SonarQube:
         Refer to #create_user() for more details on its content.
         """
         ensure_nonemptystring('login')
+        anonymize = 'true' if anonymize else 'false'
 
-        result = self._post('users/deactivate', {'login': login})
+        data = {
+        'login': login,
+        'anonymize': anonymize
+    }
+
+        result = self._post('users/deactivate', data)
         return result  # type: ignore
 
     @api_call
