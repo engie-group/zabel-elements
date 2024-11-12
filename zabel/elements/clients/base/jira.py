@@ -4813,12 +4813,17 @@ class Jira:
     # get_organization
     # create_organization
     # delete_organization
+    # add_servicedesk_organization
 
     @api_call
     def list_servicedesks(
         self, include_archived: Optional[bool] = False
     ) -> List[Dict[str, Any]]:
         """Return the available service desks.
+
+        # Optional parameters
+
+        - include_archived: a boolean (False by default)
 
         # Returned value
 
@@ -5123,6 +5128,10 @@ class Jira:
     ) -> List[Dict[str, Any]]:
         """Return the list of all service desk organizations.
 
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+
         # Returned value
 
         A list of _organizations_.  An organization is a dictionary.
@@ -5330,6 +5339,39 @@ class Jira:
         )
 
         return result.status_code in [200, 201, 204]
+
+    @api_call
+    def add_servicedesk_organization(
+        self, servicedesk_id: Union[int, str], organization_id: int
+    ) -> bool:
+        """Add organization to servicedesk.
+
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+
+        ensure_instance('servicedesk_id', (str, int))
+        ensure_instance('organization_id', (str, int))
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/organization',
+            ),
+            json={'organizationId': organization_id},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code == 204
 
     ####################################################################
     # JIRA misc. operation
