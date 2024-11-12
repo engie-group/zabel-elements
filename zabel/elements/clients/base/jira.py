@@ -4821,6 +4821,10 @@ class Jira:
     ) -> List[Dict[str, Any]]:
         """Return the available service desks.
 
+        # Optional parameters
+
+        - include_archived: a boolean (False by default)
+
         # Returned value
 
         A list of _service desks_.  Each service desk is a dictionary
@@ -5124,6 +5128,10 @@ class Jira:
     ) -> List[Dict[str, Any]]:
         """Return the list of all service desk organizations.
 
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+
         # Returned value
 
         A list of _organizations_.  An organization is a dictionary.
@@ -5331,23 +5339,23 @@ class Jira:
         )
 
         return result.status_code in [200, 201, 204]
-    
+
     @api_call
     def add_servicedesk_organization(
-        self, servicedesk_id: Union[int, str], organization_id: Union[int, str]
+        self, servicedesk_id: Union[int, str], organization_id: int
     ) -> bool:
         """Add organization to servicedesk.
 
         # Required parameters
 
-        - servicedesk_id: an integer
+        - servicedesk_id: an integer or a string
         - organization_id: an integer
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        
+
         ensure_instance('servicedesk_id', (str, int))
         ensure_instance('organization_id', (str, int))
 
