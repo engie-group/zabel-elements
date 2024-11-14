@@ -990,16 +990,14 @@ class SonarQube:
         Refer to #create_user() for more details on its content.
         """
         ensure_nonemptystring('login')
-        if anonymize:
-            ensure_instance(anonymize, bool)
-        anonymize = 'true' if anonymize else 'false'
-
+        ensure_instance(anonymize, bool)
+        
         data = {
         'login': login,
         'anonymize': anonymize
     }
 
-        result = self._post('users/deactivate', data)
+        result = self._post('users/deactivate', json=data)
         return result  # type: ignore
 
     @api_call
@@ -2050,11 +2048,11 @@ class SonarQube:
     def _post(
         self,
         api: str,
-        json: Optional[Mapping[str, Any]] = None,
         data: Optional[Union[MutableMapping[str, str], bytes]] = None,
+        json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().post(api_url, json=json, data=data)
+        return self.session().post(api_url, data, json)
 
     def _get(
         self,
