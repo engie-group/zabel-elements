@@ -295,8 +295,7 @@ class GitHub:
         - local: a boolean
         """
         ensure_nonemptystring('login')
-        if email:
-            ensure_instance('email', str)
+        ensure_noneornonemptystring('email')
 
         data = {
             'login': login,

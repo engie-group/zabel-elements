@@ -979,7 +979,7 @@ class SonarQube:
 
         # Optional parameter
 
-        - anonymize: a boolean
+        - anonymize: a boolean (False by default)
 
         # Returned value
 
@@ -990,6 +990,8 @@ class SonarQube:
         Refer to #create_user() for more details on its content.
         """
         ensure_nonemptystring('login')
+        if anonymize:
+            ensure_instance(anonymize, bool)
         anonymize = 'true' if anonymize else 'false'
 
         data = {
@@ -2048,10 +2050,11 @@ class SonarQube:
     def _post(
         self,
         api: str,
+        json: Optional[Mapping[str, Any]] = None,
         data: Optional[Union[MutableMapping[str, str], bytes]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().post(api_url, data)
+        return self.session().post(api_url, json=json, data=data)
 
     def _get(
         self,

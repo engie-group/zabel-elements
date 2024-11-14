@@ -407,7 +407,7 @@ class Artifactory:
 
         # Optional parameters
 
-        - email: a string
+        - email: a string or None (None by default)
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
@@ -436,9 +436,8 @@ class Artifactory:
         ensure_instance('internal_password_disabled', bool)
         ensure_noneorinstance('groups', list)
 
-        if not internal_password_disabled:
-            ensure_nonemptystring('password')
-
+        if internal_password_disabled:
+            password = None
         data = {
             'username': name,
             'email': email,
