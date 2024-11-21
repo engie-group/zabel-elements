@@ -327,7 +327,7 @@ class Artifactory:
         self,
         name: str,
         email: str,
-        password: str,
+        password: Optional[str] = None,
         admin: bool = False,
         profile_updatable: bool = True,
         disable_ui_access: bool = True,
@@ -362,23 +362,25 @@ class Artifactory:
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
-        ensure_nonemptystring('password')
         ensure_instance('admin', bool)
         ensure_instance('profile_updatable', bool)
         ensure_instance('disable_ui_access', bool)
         ensure_instance('internal_password_disabled', bool)
         ensure_noneorinstance('groups', list)
 
+        if internal_password_disabled:
+            password = None
+
         data = {
             'name': name,
             'email': email,
-            'password': password,
             'admin': admin,
             'profileUpdatable': profile_updatable,
             'disableUIAccess': disable_ui_access,
             'internalPasswordDisabled': internal_password_disabled,
         }
         add_if_specified(data, 'groups', groups)
+        add_if_specified(data, 'password', password)
 
         result = self._put(f'security/users/{name}', json=data)
         return result  # type: ignore
