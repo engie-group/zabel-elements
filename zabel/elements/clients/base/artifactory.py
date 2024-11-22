@@ -407,11 +407,11 @@ class Artifactory:
         # Required parameters
 
         - name: a non-empty string
+        - email: a non-empty string
 
         # Optional parameters
 
         - password: a non-empty string or None (None by default)
-        - email: a string or None (None by default)
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
