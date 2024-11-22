@@ -4799,6 +4799,7 @@ class Jira:
     ####################################################################
     # JIRA Service Desk
     #
+    # list_servicedesks
     # create_request
     # get_request
     # list_request_comments
@@ -4807,10 +4808,40 @@ class Jira:
     # list_queues
     # list_queue_issues
     # list_requesttypes
+    # list_servicedesk_organizations
     # list_organizations
     # get_organization
     # create_organization
     # delete_organization
+    # add_servicedesk_organization
+
+    @api_call
+    def list_servicedesks(
+        self, include_archived: Optional[bool] = False
+    ) -> List[Dict[str, Any]]:
+        """Return the available service desks.
+
+        # Optional parameters
+
+        - include_archived: a boolean (False by default)
+
+        # Returned value
+
+        A list of _service desks_.  Each service desk is a dictionary
+        with the following entries:
+
+        - id: a string
+        - projectName: a string
+        - projectKey: a string
+        - projectId: a string
+        - _links: a dictionary
+        """
+        ensure_instance('include_archived', bool)
+
+        params = {}
+        add_if_specified(params, 'includeArchived', include_archived)
+
+        return self._collect_sd_data('servicedesk', params)
 
     @api_call
     def create_request(
@@ -5092,6 +5123,29 @@ class Jira:
         )
 
     @api_call
+    def list_servicedesk_organizations(
+        self, servicedesk_id: Union[int, str]
+    ) -> List[Dict[str, Any]]:
+        """Return the list of all service desk organizations.
+
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+
+        # Returned value
+
+        A list of _organizations_.  An organization is a dictionary.
+
+        Refer to
+        #get_organization() for details on its structure.
+        """
+        organizations = self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/organization',
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+        return organizations
+
+    @api_call
     def list_organizations(self) -> List[Dict[str, Any]]:
         """Return the list of all service desk organizations.
 
@@ -5285,6 +5339,39 @@ class Jira:
         )
 
         return result.status_code in [200, 201, 204]
+
+    @api_call
+    def add_servicedesk_organization(
+        self, servicedesk_id: Union[int, str], organization_id: int
+    ) -> bool:
+        """Add organization to servicedesk.
+
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+
+        ensure_instance('servicedesk_id', (str, int))
+        ensure_instance('organization_id', (str, int))
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/organization',
+            ),
+            json={'organizationId': organization_id},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+            headers={'X-ExperimentalApi': 'opt-in'},
+        )
+
+        return result.status_code == 204
 
     ####################################################################
     # JIRA misc. operation

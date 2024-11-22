@@ -327,7 +327,7 @@ class Artifactory:
         self,
         name: str,
         email: str,
-        password: str,
+        password: Optional[str] = None,
         admin: bool = False,
         profile_updatable: bool = True,
         disable_ui_access: bool = True,
@@ -346,10 +346,10 @@ class Artifactory:
 
         - name: a non-empty string
         - email: a non-empty string
-        - password: a non-empty string
 
         # Optional parameters
 
+        - password: a non-empty string or None (None by default)
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
@@ -362,23 +362,27 @@ class Artifactory:
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
-        ensure_nonemptystring('password')
         ensure_instance('admin', bool)
         ensure_instance('profile_updatable', bool)
         ensure_instance('disable_ui_access', bool)
         ensure_instance('internal_password_disabled', bool)
         ensure_noneorinstance('groups', list)
 
+        if not internal_password_disabled:
+            ensure_nonemptystring('password')
+        else:
+            ensure_noneorinstance('password', str)
+
         data = {
             'name': name,
             'email': email,
-            'password': password,
             'admin': admin,
             'profileUpdatable': profile_updatable,
             'disableUIAccess': disable_ui_access,
             'internalPasswordDisabled': internal_password_disabled,
         }
         add_if_specified(data, 'groups', groups)
+        add_if_specified(data, 'password', password)
 
         result = self._put(f'security/users/{name}', json=data)
         return result  # type: ignore
@@ -388,7 +392,7 @@ class Artifactory:
         self,
         name: str,
         email: str,
-        password: str,
+        password: Optional[str] = None,
         admin: bool = False,
         profile_updatable: bool = True,
         disable_ui_access: bool = True,
@@ -404,10 +408,10 @@ class Artifactory:
 
         - name: a non-empty string
         - email: a non-empty string
-        - password: a non-empty string
 
         # Optional parameters
 
+        - password: a non-empty string or None (None by default)
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
@@ -430,23 +434,28 @@ class Artifactory:
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
-        ensure_nonemptystring('password')
         ensure_instance('admin', bool)
         ensure_instance('profile_updatable', bool)
         ensure_instance('disable_ui_access', bool)
         ensure_instance('internal_password_disabled', bool)
         ensure_noneorinstance('groups', list)
 
+        if not internal_password_disabled:
+            ensure_nonemptystring('password')
+        else:
+            ensure_noneorinstance('password', str)
+
         data = {
             'username': name,
             'email': email,
-            'password': password,
             'admin': admin,
             'profile_updatable': profile_updatable,
             'disable_ui_access': disable_ui_access,
             'internal_password_disabled': internal_password_disabled,
         }
+        add_if_specified(data, 'password', password)
         add_if_specified(data, 'groups', groups)
+        add_if_specified(data, 'password', password)
 
         result = self._post('access/api/v2/users', json=data)
         return result  # type: ignore
@@ -802,12 +811,18 @@ class Artifactory:
         return self._get('access/api/v2/groups')  # type: ignore
 
     @api_call
-    def get_group(self, group_name: str) -> Dict[str, Any]:
+    def get_group(
+        self, group_name: str, include_users: Optional[bool] = False
+    ) -> Dict[str, Any]:
         """Return group details.
 
         # Required parameters
 
         - group_name: a non-empty string
+
+        # Optional parameters
+
+        - include_users: a boolean (False by default)
 
         # Returned value
 
@@ -818,10 +833,16 @@ class Artifactory:
         - autoJoin: a boolean
         - adminPrivileges: a string
         - realm: a string
+        - userNames: a list of strings if include_users is True
         """
-        ensure_nonemptystring('group_name')
 
-        return self._get(f'security/groups/{group_name}')  # type: ignore
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('include_users', bool)
+
+        params = {}
+        add_if_specified(params, 'includeUsers', include_users)
+
+        return self._get(f'security/groups/{group_name}', params=params)  # type: ignore
 
     @api_call
     def get_group2(self, group_name: str) -> Dict[str, Any]:

@@ -968,12 +968,18 @@ class SonarQube:
         return result  # type: ignore
 
     @api_call
-    def deactivate_user(self, login: str) -> Dict[str, Any]:
-        """Deactivate a user.
+    def deactivate_user(
+        self, login: str, anonymize: bool = False
+    ) -> Dict[str, Any]:
+        """Deactivate a user and optionally anonymize it.
 
         # Required parameter
 
         - login: a non-empty string
+
+        # Optional parameter
+
+        - anonymize: a boolean (False by default)
 
         # Returned value
 
@@ -984,8 +990,11 @@ class SonarQube:
         Refer to #create_user() for more details on its content.
         """
         ensure_nonemptystring('login')
+        ensure_instance(anonymize, bool)
 
-        result = self._post('users/deactivate', {'login': login})
+        data = {'login': login, 'anonymize': anonymize}
+
+        result = self._post('users/deactivate', json=data)
         return result  # type: ignore
 
     @api_call
@@ -1432,24 +1441,21 @@ class SonarQube:
         add_if_specified(params, 'projects', projects)
 
         return self._collect_data('projects/search', 'components', params)
-    
+
     @api_call
-    def delete_project(
-        self,
-        project_key: str
-        ) -> None:
+    def delete_project(self, project_key: str) -> None:
         """Delete a sonarQube project.
 
         # Required parameters
 
-        - `project_key` : a string 
+        - `project_key` : a string
 
         # Returned value
 
         None
         """
         ensure_nonemptystring(project_key)
-        return self._post('projects/delete', params = {'project': project_key})
+        return self._post('projects/delete', params={'project': project_key})
 
     ####################################################################
     # SonarQube projectanalyses
@@ -1557,7 +1563,7 @@ class SonarQube:
     # SonarQube projectBranches
     #
     # list_projectbranches
-    
+
     @api_call
     def list_projectbranches(
         self,
@@ -1574,17 +1580,19 @@ class SonarQube:
         A list of _project branches_. Each project branch is a
         dictionary with the following four entries:
 
-        - name: a string 
+        - name: a string
         - type: a string
         - isMain: a boolean
-        - analysisDate: a string 
+        - analysisDate: a string
         - status: a dictionary
         - excludedFromPurge: a boolean
         """
-        
+
         ensure_nonemptystring('project_key')
 
-        result = self._get('project_branches/list', params={'project': project_key}).json()
+        result = self._get(
+            'project_branches/list', params={'project': project_key}
+        ).json()
         return result.get('branches', {})
 
     ####################################################################
@@ -2037,9 +2045,10 @@ class SonarQube:
         self,
         api: str,
         data: Optional[Union[MutableMapping[str, str], bytes]] = None,
+        json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
         api_url = join_url(self.url, api)
-        return self.session().post(api_url, data)
+        return self.session().post(api_url, data, json)
 
     def _get(
         self,
