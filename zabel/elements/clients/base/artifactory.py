@@ -824,6 +824,7 @@ class Artifactory:
         - autoJoin: a boolean
         - adminPrivileges: a string
         - realm: a string
+        - userNames: a list of strings if include_users is True
         """
 
         ensure_nonemptystring('group_name')
