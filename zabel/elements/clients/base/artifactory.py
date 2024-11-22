@@ -803,7 +803,7 @@ class Artifactory:
 
     @api_call
     def get_group(
-        self, group_name: str, include_users: bool = False
+        self, group_name: str, include_users: Optional[bool] = False
     ) -> Dict[str, Any]:
         """Return group details.
 
