@@ -811,12 +811,18 @@ class Artifactory:
         return self._get('access/api/v2/groups')  # type: ignore
 
     @api_call
-    def get_group(self, group_name: str) -> Dict[str, Any]:
+    def get_group(
+        self, group_name: str, include_users: Optional[bool] = False
+    ) -> Dict[str, Any]:
         """Return group details.
 
         # Required parameters
 
         - group_name: a non-empty string
+
+        # Optional parameters
+
+        - include_users: a boolean (False by default)
 
         # Returned value
 
@@ -827,10 +833,16 @@ class Artifactory:
         - autoJoin: a boolean
         - adminPrivileges: a string
         - realm: a string
+        - userNames: a list of strings if include_users is True
         """
-        ensure_nonemptystring('group_name')
 
-        return self._get(f'security/groups/{group_name}')  # type: ignore
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('include_users', bool)
+
+        params = {}
+        add_if_specified(params, 'includeUsers', include_users)
+
+        return self._get(f'security/groups/{group_name}', params=params)  # type: ignore
 
     @api_call
     def get_group2(self, group_name: str) -> Dict[str, Any]:
