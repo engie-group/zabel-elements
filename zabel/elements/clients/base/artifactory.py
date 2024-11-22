@@ -407,11 +407,11 @@ class Artifactory:
         # Required parameters
 
         - name: a non-empty string
-        - email: a non-empty string
 
         # Optional parameters
 
         - password: a non-empty string or None (None by default)
+        - email: a string or None (None by default)
         - admin: a boolean (False by default)
         - profile_updatable: a boolean (True by default)
         - disable_ui_access: a boolean (True by default)
@@ -448,7 +448,6 @@ class Artifactory:
         data = {
             'username': name,
             'email': email,
-            'password': password,
             'admin': admin,
             'profile_updatable': profile_updatable,
             'disable_ui_access': disable_ui_access,
@@ -456,6 +455,7 @@ class Artifactory:
         }
         add_if_specified(data, 'password', password)
         add_if_specified(data, 'groups', groups)
+        add_if_specified(data, 'password', password)
 
         result = self._post('access/api/v2/users', json=data)
         return result  # type: ignore
