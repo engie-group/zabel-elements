@@ -5743,6 +5743,7 @@ class Jira:
             timeout=TIMEOUT,
         ).json()
         return result['iTotalRecords']
+    
     @api_call
     def list_project_components(
         self,
@@ -5801,10 +5802,10 @@ class Jira:
         name: str,
         project: str,
         description: Optional[str] = None,
-        leadUserName: Optional[str] = None,
-        assigneeType: Optional[str] = None,
-        isAssigneeTypeValid: Optional[bool] = None,
-        projectId: Optional[int] = None,
+        lead_user_name: Optional[str] = None,
+        assignee_type: Optional[str] = None,
+        is_assignee_type_valid: Optional[bool] = None,
+        project_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Creates a new component.
 
@@ -5815,11 +5816,11 @@ class Jira:
 
         # Optional parameters
 
-        - description: a string or None
-        - leadUserName: a string or None
-        - assigneeType: a string or None
-        - isAssigneeTypeValid: a boolean or None
-        - projectId: an integer or None
+        - description: a string or none
+        - lead_user_name: a string or none
+        - assignee_type: a string or none
+        - is_assignee_type_valid: a boolean or none
+        - project_id: an integer or none
 
         # Returned value
 
@@ -5828,20 +5829,20 @@ class Jira:
         ensure_instance('name', str)
         ensure_instance('project', str)
         ensure_noneorinstance('description', str)
-        ensure_noneorinstance('leadUserName', str)
-        ensure_noneorinstance('assigneeType', str)
-        ensure_noneorinstance('isAssigneeTypeValid', bool)
-        ensure_noneorinstance('projectId', int)
+        ensure_noneorinstance('lead_user_name', str)
+        ensure_noneorinstance('assignee_type', str)
+        ensure_noneorinstance('is_assignee_type_valid', bool)
+        ensure_noneorinstance('project_id', int)
 
         params = {
             'name': name,
             'project': project,
         }
         add_if_specified(params, 'description', description)
-        add_if_specified(params, 'leadUserName', leadUserName)
-        add_if_specified(params, 'assigneeType', assigneeType)
-        add_if_specified(params, 'isAssigneeTypeValid', isAssigneeTypeValid)
-        add_if_specified(params, 'projectId', projectId)
+        add_if_specified(params, 'lead_user_name', lead_user_name)
+        add_if_specified(params, 'assignee_type', assignee_type)
+        add_if_specified(params, 'is_assignee_type_valid', is_assignee_type_valid)
+        add_if_specified(params, 'project_id', project_id)
 
         return self._post('component', json=params)
 
