@@ -5843,7 +5843,7 @@ class Jira:
         add_if_specified(params, 'isAssigneeTypeValid', isAssigneeTypeValid)
         add_if_specified(params, 'projectId', projectId)
 
-        return self._post_json('component', json=params)
+        return self._post('component', json=params)
 
     @api_call
     def delete_component(
