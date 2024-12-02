@@ -4742,7 +4742,7 @@ class Jira:
 
         # Returned value
 
-        A list of _components_. Each component is a dictionary with the
+        A list of _components_.  Each component is a dictionary with the
         following entries:
 
         - self: a string
@@ -4803,27 +4803,27 @@ class Jira:
 
         A dictionary representing the created component.
         """
-        ensure_instance('name', str)
-        ensure_instance('project', str)
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('project')
         ensure_noneorinstance('description', str)
         ensure_noneorinstance('lead_user_name', str)
         ensure_noneorinstance('assignee_type', str)
         ensure_noneorinstance('is_assignee_type_valid', bool)
         ensure_noneorinstance('project_id', int)
 
-        params = {
+        data = {
             'name': name,
             'project': project,
         }
-        add_if_specified(params, 'description', description)
-        add_if_specified(params, 'lead_user_name', lead_user_name)
-        add_if_specified(params, 'assignee_type', assignee_type)
+        add_if_specified(data, 'description', description)
+        add_if_specified(data, 'lead_user_name', lead_user_name)
+        add_if_specified(data, 'assignee_type', assignee_type)
         add_if_specified(
-            params, 'is_assignee_type_valid', is_assignee_type_valid
+            data, 'is_assignee_type_valid', is_assignee_type_valid
         )
-        add_if_specified(params, 'project_id', project_id)
+        add_if_specified(data, 'project_id', project_id)
 
-        return self._post('component', json=params)
+        return self._post('component', json=data)
 
     @api_call
     def update_component(
@@ -4855,7 +4855,7 @@ class Jira:
         self,
         component_id: Union[int, str],
         move_issues_to: Optional[str] = None,
-    ) -> None:
+    ) -> bool:
         """Delete a project component.
 
         # Required parameters
@@ -4868,7 +4868,7 @@ class Jira:
 
         # Returned value
 
-        None
+        A boolean.  True if the deletion was successful.
         """
         ensure_instance('component_id', (str, int))
         ensure_noneorinstance('move_issues_to', str)
@@ -4876,11 +4876,11 @@ class Jira:
         params = {}
         add_if_specified(params, 'moveIssuesTo', move_issues_to)
 
-        self._delete(f'component/{component_id}', params=params)
+        return self._delete(f'component/{component_id}', params=params).status_code == 204
 
     ####################################################################
 
-    # Xray for JIRA
+    # Xray for JIRA 
     #
     # list_xray_projects
     # enable_xray
@@ -5910,137 +5910,3 @@ class Jira:
             timeout=TIMEOUT,
         ).json()
         return result['iTotalRecords']
-
-    @api_call
-    def list_project_components(
-        self,
-        project_id_or_key: str,
-        start_at: Optional[int] = None,
-        max_results: Optional[int] = None,
-        query: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """Return the list of all components for a project.
-
-        # Required parameters
-
-        - project_id_or_key: a non-empty string
-
-        # Optional parameters
-
-        - start_at: an integer or None (None by default)
-        - max_results: an integer or None (None by default)
-        - query: a string or None (None by default)
-
-        # Returned value
-
-        A list of _components_. Each component is a dictionary with the
-        following entries:
-
-        - self: a string
-        - id: a string
-        - name: a string
-        - description: a string
-        - lead: a dictionary
-        - assigneeType: a string
-        - assignee: a dictionary
-        - realAssigneeType: a string
-        - realAssignee: a dictionary
-        - isAssigneeTypeValid: a boolean
-        - project: a string
-        - projectId: an integer
-        - archived: a boolean
-        - deleted: a boolean
-        """
-        # ensure_noneorinstance('start_at', int)
-        # ensure_noneorinstance('max_results', int)
-        # ensure_noneorinstance('query', str)
-        ensure_noneorinstance('project_id_or_key', str)
-
-        params = {}
-        add_if_specified(params, 'startAt', start_at)
-        add_if_specified(params, 'maxResults', max_results)
-        add_if_specified(params, 'query', query)
-
-        return self._get_json(
-            f'project/{project_id_or_key}/components', params=params
-        )
-
-    @api_call
-    def create_component(
-        self,
-        name: str,
-        project: str,
-        description: Optional[str] = None,
-        lead_user_name: Optional[str] = None,
-        assignee_type: Optional[str] = None,
-        is_assignee_type_valid: Optional[bool] = None,
-        project_id: Optional[int] = None,
-    ) -> Dict[str, Any]:
-        """Creates a new component.
-
-        # Required parameters
-
-        - name: a non-empty string
-        - project: a non-empty string
-
-        # Optional parameters
-
-        - description: a string or none
-        - lead_user_name: a string or none
-        - assignee_type: a string or none
-        - is_assignee_type_valid: a boolean or none
-        - project_id: an integer or none
-
-        # Returned value
-
-        A dictionary representing the created component.
-        """
-        ensure_instance('name', str)
-        ensure_instance('project', str)
-        ensure_noneorinstance('description', str)
-        ensure_noneorinstance('lead_user_name', str)
-        ensure_noneorinstance('assignee_type', str)
-        ensure_noneorinstance('is_assignee_type_valid', bool)
-        ensure_noneorinstance('project_id', int)
-
-        params = {
-            'name': name,
-            'project': project,
-        }
-        add_if_specified(params, 'description', description)
-        add_if_specified(params, 'lead_user_name', lead_user_name)
-        add_if_specified(params, 'assignee_type', assignee_type)
-        add_if_specified(
-            params, 'is_assignee_type_valid', is_assignee_type_valid
-        )
-        add_if_specified(params, 'project_id', project_id)
-
-        return self._post('component', json=params)
-
-    @api_call
-    def delete_component(
-        self,
-        component_id: Union[int, str],
-        move_issues_to: Optional[str] = None,
-    ) -> None:
-        """Delete a project component.
-
-        # Required parameters
-
-        - component_id: an integer or a string
-
-        # Optional parameters
-
-        - move_issues_to: a string or None
-
-        # Returned value
-
-        None
-        """
-        ensure_instance('component_id', (str, int))
-        ensure_noneorinstance('move_issues_to', str)
-
-        params = {}
-        add_if_specified(params, 'moveIssuesTo', move_issues_to)
-
-        self._delete(f'component/{component_id}', params=params)
