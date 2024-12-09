@@ -4816,12 +4816,12 @@ class Jira:
             'project': project,
         }
         add_if_specified(data, 'description', description)
-        add_if_specified(data, 'lead_user_name', lead_user_name)
-        add_if_specified(data, 'assignee_type', assignee_type)
+        add_if_specified(data, 'leadUserName', lead_user_name)
+        add_if_specified(data, 'assigneeType', assignee_type)
         add_if_specified(
-            data, 'is_assignee_type_valid', is_assignee_type_valid
+            data, 'isAssignedTypeValid', is_assignee_type_valid
         )
-        add_if_specified(data, 'project_id', project_id)
+        add_if_specified(data, 'projectId', project_id)
 
         return self._post('component', json=data)
 
