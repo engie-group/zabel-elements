@@ -109,8 +109,9 @@ class CloudBeesJenkins(Base):
     There can be as many CloudBeesJenkins instances as needed.
 
     This class depends on the public **requests** library.  It also
-    depends on three **zabel-commons** modules, #::commons.exceptions,
-    #::commons.sessions, and #::commons.utils.
+    depends on three **zabel-commons**
+    modules, #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Description
 

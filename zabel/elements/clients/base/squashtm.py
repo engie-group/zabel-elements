@@ -121,9 +121,13 @@ class SquashTM:
         ensure_noneorinstance('basic_auth', tuple)
         ensure_instance('verify', bool)
 
-        if (user and token) and (basic_auth or bearer_auth):
+        if basic_auth and bearer_auth:
             raise ValueError(
                 'You can only specify either basic_auth or bearer_auth.'
+            )
+        if (user or token) and (basic_auth or bearer_auth):
+            raise ValueError(
+                'You can only specify either basic_auth or bearer_auth, and you should not use user and/or token.'
             )
 
         self.url = url
