@@ -5041,7 +5041,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
-        ensure_instance('fields', Dict[str, Any])
+        ensure_instance('fields', dict)
 
         result = requests.post(
             join_url(self.SERVICEDESK_BASE_URL, 'request'),
@@ -5288,6 +5288,41 @@ class Jira:
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/requesttype'
         )
+    
+    @api_call
+    def list_requesttypes_fields(self, servicedesk_id: str, requesttype_id: str) -> List[Dict[str, Any]]:
+        """Return the list of all request types for a given service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+
+        # Returned value
+
+        A list _request types_.  Each request type is a dictionary with
+        the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - helpText: a string
+        - serviceDeskId: a string
+        - groupIds: a list of strings
+        - icon: a dictionary
+        - _links: a dictionary
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('requesttype_id')
+        result = requests.get(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/requesttype/{requesttype_id}/field',
+            ),
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result
 
     @api_call
     def list_servicedesk_organizations(
