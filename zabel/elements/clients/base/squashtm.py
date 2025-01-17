@@ -21,7 +21,7 @@ pagination if appropriate, but does not process the results or compose
 API requests.
 """
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import requests
 
@@ -36,6 +36,7 @@ from zabel.commons.utils import (
     ensure_nonemptystring,
     ensure_noneornonemptystring,
     join_url,
+    BearerAuth,
 )
 
 ########################################################################
@@ -71,24 +72,36 @@ class SquashTM:
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import SquashTM
-    >>>
-    >>> url = 'https://squash-tm.example.com/squash/api/rest/latest/'
-    >>> tm = SquashTM(url, user, token)
-    >>> tm.list_projects()
+    from zabel.elements.clients import SquashTM
+
+    url = 'https://squash-tm.example.com/squash/api/rest/latest/'
+    tm = SquashTM(url, basic_auth=(user, token))
+    tm.list_projects()
     ```
     """
 
     def __init__(
-        self, url: str, user: str, token: str, verify: bool = True
+        self,
+        url: str,
+        user: Optional[str] = None,
+        token: Optional[str] = None,
+        *,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        bearer_auth: Optional[str] = None,
+        verify: bool = True,
     ) -> None:
         """Create a SquashTM instance object.
 
+        You can only specify either `basic_auth` or `bearer_auth`.
+
+        The `user` and `token` parameters are deprecated.
+        Use `basic_auth` instead.
+
         # Required parameters
 
-        - url: a string
-        - user: a string
-        - token: a string
+        - url: a non-empty string
+        - basic_auth: a tuple of two strings (user, token) or None
+        - bearer_auth: a string or None
 
         The `url` parameter is the top-level API point. E.g.,
         `https://squash-tm.example.com/squash/api/rest/latest`
@@ -101,8 +114,29 @@ class SquashTM:
         SquashTM communication is required.  Tons of warnings will occur
         if this is set to False.
         """
+        ensure_nonemptystring('url')
+        ensure_noneornonemptystring('user')
+        ensure_noneornonemptystring('token')
+        ensure_noneornonemptystring('bearer_auth')
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_instance('verify', bool)
+
+        if basic_auth and bearer_auth:
+            raise ValueError(
+                'You can only specify either basic_auth or bearer_auth.'
+            )
+        if (user or token) and (basic_auth or bearer_auth):
+            raise ValueError(
+                'You can only specify either basic_auth or bearer_auth, and you should not use user and/or token.'
+            )
+
         self.url = url
-        self.auth = (user, token)
+        if user:
+            self.auth = (user, token)
+        elif basic_auth:
+            self.auth = basic_auth
+        else:
+            self.auth = BearerAuth(bearer_auth)
         self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
 
