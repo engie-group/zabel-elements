@@ -4818,9 +4818,7 @@ class Jira:
         add_if_specified(data, 'description', description)
         add_if_specified(data, 'leadUserName', lead_user_name)
         add_if_specified(data, 'assigneeType', assignee_type)
-        add_if_specified(
-            data, 'isAssignedTypeValid', is_assignee_type_valid
-        )
+        add_if_specified(data, 'isAssignedTypeValid', is_assignee_type_valid)
         add_if_specified(data, 'projectId', project_id)
 
         return self._post('component', json=data)
@@ -4876,11 +4874,16 @@ class Jira:
         params = {}
         add_if_specified(params, 'moveIssuesTo', move_issues_to)
 
-        return self._delete(f'component/{component_id}', params=params).status_code == 204
+        return (
+            self._delete(
+                f'component/{component_id}', params=params
+            ).status_code
+            == 204
+        )
 
     ####################################################################
 
-    # Xray for JIRA 
+    # Xray for JIRA
     #
     # list_xray_projects
     # enable_xray
