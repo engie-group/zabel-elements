@@ -999,7 +999,10 @@ class SonarQube:
 
     @api_call
     def update_identity_provider(
-        self, login: str, provider: str, externalIdentity: Optional[str]
+        self,
+        login: str,
+        provider: str,
+        external_identity: Optional[str] = None,
     ):
         """Update identity provider
 
@@ -1010,15 +1013,15 @@ class SonarQube:
 
         # Optional Parameter
 
-        - externalIdentity: a string
+        - external_identity: a string or None (None by default)
 
         """
         ensure_nonemptystring('login')
         ensure_noneornonemptystring('provider')
-        ensure_noneornonemptystring('externalIdentity')
+        ensure_noneornonemptystring('external_identity')
 
         data = {'login': login, 'newExternalProvider': provider}
-        add_if_specified(data, 'newExternalIdentity', externalIdentity)
+        add_if_specified(data, 'newExternalIdentity', external_identity)
 
         self._post('users/update_identity_provider', data)
 
@@ -1056,12 +1059,12 @@ class SonarQube:
         return result  # type: ignore
 
     @api_call
-    def delete_qualitygate(self, qualitygate_id: int) -> None:
+    def delete_qualitygate(self, qualitygate_id: str) -> None:
         """Delete a quality gate.
 
         # Required parameters
 
-        - qualitygate_id: an integer
+        - qualitygate_id: a string
 
         # Returned value
 
@@ -1072,11 +1075,9 @@ class SonarQube:
         An _ApiError_ exception is raised if the quality gate does not
         exist.
         """
-        ensure_instance('qualitygate_id', int)
+        ensure_instance('qualitygate_id', str)
 
-        result = self._post(
-            'qualitygates/destroy', {'id': str(qualitygate_id)}
-        )
+        result = self._post('qualitygates/destroy', {'id': qualitygate_id})
         return result  # type: ignore
 
     @api_call
@@ -1193,7 +1194,7 @@ class SonarQube:
 
     @api_call
     def add_qualityprofile_project(
-        self, profile_key: str, project_key: str
+        self, profile_name: str, language: str, project_key: str
     ) -> None:
         """Associate quality profile to project.
 
@@ -1201,7 +1202,8 @@ class SonarQube:
 
         # Required parameters
 
-        - profile_key: a non-empty string
+        - profile_name: a non-empty string
+        - language: a non-empty strig
         - project_key: a non-empty string
 
         # Returned value
@@ -1213,12 +1215,17 @@ class SonarQube:
         An _ApiError_ exception is raised if `profile_key` or
         `profile_key` does not exist.
         """
-        ensure_nonemptystring('profile_key')
+        ensure_nonemptystring('profile_name')
+        ensure_nonemptystring('language')
         ensure_nonemptystring('project_key')
 
         result = self._post(
             'qualityprofiles/add_project',
-            {'key': profile_key, 'project': project_key},
+            {
+                'qualityProfile': profile_name,
+                'language': language,
+                'project': project_key,
+            },
         )
         return result  # type: ignore
 
@@ -1239,15 +1246,15 @@ class SonarQube:
         None.
         """
         ensure_nonemptystring('profile_name')
-        ensure_nonemptystring('parent_name')
         ensure_nonemptystring('language')
+        ensure_nonemptystring('parent_name')
 
         result = self._post(
             'qualityprofiles/change_parent',
             {
                 'qualityProfile': profile_name,
-                'parentQualityProfile': parent_name,
                 'language': language,
+                'parentQualityProfile': parent_name,
             },
         )
         return result  # type: ignore
@@ -1455,7 +1462,7 @@ class SonarQube:
         None
         """
         ensure_nonemptystring(project_key)
-        return self._post('projects/delete', params={'project': project_key})
+        return self._post('projects/delete', {'project': project_key})
 
     ####################################################################
     # SonarQube projectanalyses
