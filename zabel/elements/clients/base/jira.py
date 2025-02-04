@@ -5291,9 +5291,11 @@ class Jira:
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/requesttype'
         )
-    
+
     @api_call
-    def list_requesttypes_fields(self, servicedesk_id: str, requesttype_id: str) -> List[Dict[str, Any]]:
+    def list_requesttypes_fields(
+        self, servicedesk_id: str, requesttype_id: str
+    ) -> List[Dict[str, Any]]:
         """Return the list of all request types for a given service desk.
 
         # Required parameters
