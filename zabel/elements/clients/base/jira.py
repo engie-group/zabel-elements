@@ -280,7 +280,7 @@ class Jira:
         return self.client
 
     ####################################################################
-    # JIRA search
+    #  search
     #
     # search
 
@@ -408,7 +408,10 @@ class Jira:
         return self._client().remove_group(group_name)
 
     @api_call
-    def list_group_users(self, group_name: str) -> Dict[str, Any]:
+    def list_group_users(
+        self,
+        group_name: str,
+    ) -> Dict[str, Any]:
         """Return group users.
 
         # Required parameters
@@ -427,6 +430,42 @@ class Jira:
         ensure_nonemptystring('group_name')
 
         return self._client().group_members(group_name)
+
+    @api_call
+    def list_group_users_2(
+        self,
+        group_name: str,
+        include_inactive_users: bool,
+        start_at: int = 0,
+        max_results: int = 50,
+    ) -> Dict[str, Any]:
+        """Return group users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A dictionary.  Keys are the user names, and values are
+        dictionaries with the following entries:
+
+        - active: a boolean
+        - fullname: a string
+        - email: a string
+        """
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('include_inactive_users', bool)
+        ensure_instance('start_at', int)
+        ensure_instance('max_results', int)
+        params = {
+            'groupname': group_name,
+            'includeInactiveUsers': include_inactive_users,
+            'startAt': start_at,
+            'maxResults': max_results,
+        }
+
+        return self._get_json('group/member', params=params)
 
     @api_call
     def add_group_user(
@@ -4818,9 +4857,7 @@ class Jira:
         add_if_specified(data, 'description', description)
         add_if_specified(data, 'leadUserName', lead_user_name)
         add_if_specified(data, 'assigneeType', assignee_type)
-        add_if_specified(
-            data, 'isAssignedTypeValid', is_assignee_type_valid
-        )
+        add_if_specified(data, 'isAssignedTypeValid', is_assignee_type_valid)
         add_if_specified(data, 'projectId', project_id)
 
         return self._post('component', json=data)
@@ -4876,11 +4913,16 @@ class Jira:
         params = {}
         add_if_specified(params, 'moveIssuesTo', move_issues_to)
 
-        return self._delete(f'component/{component_id}', params=params).status_code == 204
+        return (
+            self._delete(
+                f'component/{component_id}', params=params
+            ).status_code
+            == 204
+        )
 
     ####################################################################
 
-    # Xray for JIRA 
+    # Xray for JIRA
     #
     # list_xray_projects
     # enable_xray
