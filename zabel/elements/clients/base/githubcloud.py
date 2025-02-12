@@ -25,6 +25,7 @@ from zabel.commons.utils import (
     api_call,
     ensure_instance,
     ensure_nonemptystring,
+    ensure_noneorinstance,
     ensure_in,
     add_if_specified,
     BearerAuth,
@@ -133,7 +134,6 @@ class GitHubCloud:
                 "variables": {"enterprise": enterprise_name},
             },
         ).json()
-
         return (
             result.get('data')
             .get('enterprise')
@@ -367,9 +367,8 @@ class GitHubCloud:
         result = self._delete(f'orgs/{organization}/memberships/{username}')
         return (result.status_code // 100) == 2
 
-
     ####################################################################
-    # GitHub secrets
+    # GitHub organization action secrets
     #
     # list_organization_secrets
     # get_organization_public_key
@@ -499,7 +498,403 @@ class GitHubCloud:
             ).status_code
             == 204
         )
-    
+
+    ####################################################################
+    # GitHub repositories
+    #
+    #
+    # get_repository
+    # create_repository
+    # list_reporitory_teams
+    # list_repository_collaborators
+    # add_repository_collaborator
+    # rm_repository_collaborator
+    # list_repository_permissions_user
+
+    @api_call
+    def get_repository(
+        self, organization: str, repository: str
+    ) -> Dict[str, Any]:
+        """Return extended information on a repository.
+
+        # Required parameters
+
+        - organization: a non-empty string
+        - repository: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following keys:
+
+        - id
+        - node_id
+        - name
+        - full_name
+        - private
+        - owner
+        - html_url
+        - description
+        - fork
+        - url
+        - forks_url
+        - keys_url
+        - collaborators_url
+        - teams_url
+        - hooks_url
+        - issue_events_url
+        - events_url
+        - assignees_url
+        - branches_url
+        - tags_url
+        - blobs_url
+        - git_tags_url
+        - git_refs_url
+        - trees_url
+        - statuses_url
+        - languages_url
+        - stargazers_url
+        - contributors_url
+        - subscribers_url
+        - subscription_url
+        - commits_url
+        - git_commits_url
+        - comments_url
+        - issue_comment_url
+        - contents_url
+        - compare_url
+        - merges_url
+        - archive_url
+        - downloads_url
+        - issues_url
+        - pulls_url
+        - milestones_url
+        - notifications_url
+        - labels_url
+        - releases_url
+        - deployments_url
+        - created_at
+        - updated_at
+        - pushed_at
+        - git_url
+        - ssh_url
+        - clone_url
+        - svn_url
+        - homepage
+        - size
+        - stargazers_count
+        - watchers_count
+        - language
+        - has_issues
+        - has_projects
+        - has_downloads
+        - has_wiki
+        - has_pages
+        - has_discussions
+        - forks_count
+        - mirror_url
+        - archived
+        - disabled
+        - open_issues_count
+        - license
+        - allow_forking
+        - is_template
+        - web_commit_signoff_required
+        - topics
+        - visibility
+        - forks
+        - open_issues
+        - watchers
+        - default_branch
+        - permissions
+        - temp_clone_token
+        - allow_squash_merge
+        - allow_merge_commit
+        - allow_rebase_merge
+        - allow_auto_merge
+        - delete_branch_on_merge
+        - allow_update_branch
+        - use_squash_pr_title_as_default
+        - squash_merge_commit_message
+        - squash_merge_commit_title
+        - merge_commit_message
+        - merge_commit_title
+        - custom_properties
+        - organization
+        - security_and_analysis
+        - network_count
+        - subscribers_count
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
+
+        return self._get(f'repos/{organization}/{repository}')
+
+    @api_call
+    def create_repository(
+        self,
+        organization_name: str,
+        repository_name: str,
+        description: Optional[str] = None,
+        private: bool = False,
+        visibility: Optional[str] = None,
+        has_issues: bool = True,
+        has_projects: bool = True,
+        has_wiki: bool = True,
+        has_downloads: bool = True,
+        is_template: bool = False,
+        team_id: Optional[int] = None,
+        auto_init: bool = False,
+        gitignore_template: Optional[str] = None,
+        license_template: Optional[str] = None,
+        allow_squash_merge: bool = True,
+        allow_merge_commit: bool = True,
+        allow_rebase_merge: bool = True,
+        allow_auto_merge: bool = True,
+        delete_branch_on_merge: bool = False,
+        use_squash_pr_title_as_default: bool = False,
+        squash_merge_commit_title: Optional[str] = None,
+        squash_merge_commit_message: Optional[str] = None,
+        merge_commit_title: Optional[str] = None,
+        merge_commit_message: Optional[str] = None,
+        custom_properties: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create a repository in an organization.
+
+        # Required parameters:
+        #
+        # - organization_name: a non-empty string
+        # - repository_name: a non-empty string
+        #
+        # # Optional parameters:
+        #
+        # - description: a string
+        # - private: a boolean
+        # - visibility: a string, one of 'public', 'private', or 'internal'
+        # - has_issues: a boolean
+        # - has_projects: a boolean
+        # - has_wiki: a boolean
+        # - has_downloads: a boolean
+        # - is_template: a boolean
+        # - team_id: an integer
+        # - auto_init: a boolean
+        # - gitignore_template: a string
+        # - license_template: a string
+        # - allow_squash_merge: a boolean
+        # - allow_merge_commit: a boolean
+        # - allow_rebase_merge: a boolean
+        # - allow_auto_merge: a boolean
+        # - delete_branch_on_merge: a boolean
+        # - use_squash_pr_title_as_default: a boolean
+        # - squash_merge_commit_title: a string
+        # - squash_merge_commit_message: a string
+        # - merge_commit_title: a string
+        # - merge_commit_message: a string
+        # - custom_properties: a dictionary
+        #
+        # # Returned value
+        #
+        # A _repository_. See #get_repository() for its content.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+
+        ensure_noneorinstance('description', str)
+        ensure_instance('private', bool)
+        ensure_noneorinstance('visibility', str)
+        ensure_instance('has_issues', bool)
+        ensure_instance('has_projects', bool)
+        ensure_instance('has_wiki', bool)
+        ensure_instance('has_downloads', bool)
+        ensure_instance('is_template', bool)
+        ensure_noneorinstance('team_id', int)
+        ensure_instance('auto_init', bool)
+        ensure_noneorinstance('gitignore_template', str)
+        ensure_noneorinstance('license_template', str)
+        ensure_instance('allow_squash_merge', bool)
+        ensure_instance('allow_merge_commit', bool)
+        ensure_instance('allow_rebase_merge', bool)
+        ensure_instance('allow_auto_merge', bool)
+        ensure_instance('delete_branch_on_merge', bool)
+        ensure_instance('use_squash_pr_title_as_default', bool)
+        ensure_noneorinstance('squash_merge_commit_title', str)
+        ensure_noneorinstance('squash_merge_commit_message', str)
+        ensure_noneorinstance('merge_commit_title', str)
+        ensure_noneorinstance('merge_commit_message', str)
+        ensure_noneorinstance('custom_properties', dict)
+
+        data = {
+            'name': repository_name,
+            'private': private,
+            'has_issues': has_issues,
+            'has_projects': has_projects,
+            'has_wiki': has_wiki,
+            'auto_init': auto_init,
+            'has_downloads': has_downloads,
+            'is_template': is_template,
+            'allow_squash_merge': allow_squash_merge,
+            'allow_merge_commit': allow_merge_commit,
+            'allow_rebase_merge': allow_rebase_merge,
+            'allow_auto_merge': allow_auto_merge,
+            'delete_branch_on_merge': delete_branch_on_merge,
+            'use_squash_pr_title_as_default': use_squash_pr_title_as_default,
+        }
+
+        add_if_specified(data, 'description', description)
+        add_if_specified(data, 'visibility', visibility)
+        add_if_specified(data, 'team_id', team_id)
+        add_if_specified(data, 'gitignore_template', gitignore_template)
+        add_if_specified(data, 'license_template', license_template)
+        add_if_specified(
+            data, 'squash_merge_commit_title', squash_merge_commit_title
+        )
+        add_if_specified(
+            data, 'squash_merge_commit_message', squash_merge_commit_message
+        )
+        add_if_specified(data, 'merge_commit_title', merge_commit_title)
+        add_if_specified(data, 'merge_commit_message', merge_commit_message)
+        add_if_specified(data, 'custom_properties', custom_properties)
+
+        result = self._post(f'orgs/{organization_name}/repos', json=data)
+        return result
+
+    @api_call
+    def list_repository_teams(
+        self, organization: str, repository: str
+    ) -> List[Dict[str, Any]]:
+        """List the teams of a repository.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - repository: a non-empty string
+
+        # Returned value:
+
+        A list of _teams_. Each team is a dictionary with the following
+        keys:
+        
+        - name
+        - id
+        - node_id
+        - slug
+        - description
+        - privacy
+        - notification_setting
+        - url
+        - html_url
+        - members_url
+        - repositories_url
+        - permission
+        - permissions
+        - parent
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
+
+        return self._collect_data(f'repos/{organization}/{repository}/teams')
+
+    @api_call
+    def list_repository_collaborators(
+        self, organization: str, repository: str
+    ) -> List[Dict[str, Any]]:
+        """List the collaborators of a repository.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - repository: a non-empty string
+
+        # Returned value:
+
+        A list of _members_.  Each member is a dictionary with the
+        following entries:
+        
+        - login: a string
+        - id: an integer
+        - node_id: a string
+        - avatar_url: a string
+        - gravatar_id: a string
+        - url: a string
+        - html_url: a string
+        - followers_url: a string
+        - following_url: a string
+        - gists_url: a string
+        - starred_url: a string
+        - subscriptions_url: a string
+        - organizations_url: a string
+        - repos_url: a string
+        - events_url: a string
+        - received_events_url: a string
+        - type: a string
+        - user_view_type: a string
+        - site_admin: a boolean
+        - permissions: a dictionary
+        - role_name: a string
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
+
+        return self._collect_data(
+            f'repos/{organization}/{repository}/collaborators'
+        )
+
+    @api_call
+    def add_repository_collaborator(
+        self,
+        organization: str,
+        repository: str,
+        username: str,
+        permission: str = 'pull',
+    ) -> bool:
+        """Add a collaborator to a repository.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - repository: a non-empty string
+        - username: a non-empty string
+        - permission: a non-empty string
+
+        # Returned value:
+
+        - a boolean
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
+        ensure_nonemptystring('username')
+        ensure_nonemptystring('permission')
+
+        result = self._put(
+            f'repos/{organization}/{repository}/collaborators/{username}',
+            json={'permission': permission},
+        )
+        return (result.status_code // 100) == 2
+
+    @api_call
+    def rm_repository_collaborator(
+        self, organization: str, repository: str, username: str
+    ) -> bool:
+        """Remove a collaborator from a repository.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - repository: a non-empty string
+        - username: a non-empty string
+
+        # Returned value:
+
+        - a boolean
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
+        ensure_nonemptystring('username')
+
+        result = self._delete(
+            f'repos/{organization}/{repository}/collaborators/{username}'
+        )
+        return (result.status_code // 100) == 2
+
     ####################################################################
     # GitHubCloud enterprise
     #
