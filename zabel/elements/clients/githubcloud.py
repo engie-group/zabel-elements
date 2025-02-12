@@ -4,7 +4,6 @@ from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     ensure_instance,
-    ensure_noneorinstance,
 )
 
 
@@ -43,7 +42,6 @@ class GitHubCloud(Base):
             .get('data', {})
             .get('enterprise')
         )
-        print(enterprise)
         if not enterprise:
             raise ValueError(f'Enterprise {enterprise_name} not found')
         return self.create_organization(

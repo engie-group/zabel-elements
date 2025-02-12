@@ -19,12 +19,13 @@ from typing import Dict, List, Optional, Mapping, Union, Any
 
 import requests
 
+from zabel.commons.exceptions import ApiError
 from zabel.commons.sessions import prepare_session
 from zabel.commons.utils import (
     api_call,
     ensure_instance,
     ensure_nonemptystring,
-    ensure_noneorinstance,
+    ensure_in,
     add_if_specified,
     BearerAuth,
     join_url,
@@ -87,6 +88,8 @@ class GitHubCloud:
     # list_organizations
     # create_organization
     # get_organization
+    # list_organization_repositories
+    # list_organization_members
     # add_organization_membership
     # remove_organization_membership
 
@@ -102,6 +105,9 @@ class GitHubCloud:
 
         - a list of organizations
         """
+
+        ensure_nonemptystring('enterprise_name')
+
         query = """
         query($enterprise: String!) {
             enterprise(slug: $enterprise) {
@@ -129,9 +135,9 @@ class GitHubCloud:
         ).json()
 
         return (
-            result.get('data', {})
-            .get('enterprise', {})
-            .get('organizations', {})
+            result.get('data')
+            .get('enterprise')
+            .get('organizations')
             .get('nodes', [])
         )
 
@@ -148,14 +154,14 @@ class GitHubCloud:
 
         # Required parameters:
 
-        - organization_name: The name of the organization
-        - enterprise_id: The enterprise ID
-        - admins: List of admin usernames
-        - billing_email: The billing email
+        - organization_name: a non-empty string
+        - enterprise_id: a non-empty string
+        - admins: a list of strings
+        - billing_email: a non-empty string
 
         # Optional parameters:
 
-        - profile_name: The profile name
+        - profile_name: a string
 
         # Returned value
 
@@ -189,11 +195,10 @@ class GitHubCloud:
         }
 
         add_if_specified(organization, 'profileName', profile_name)
-        result = self._post(
+        return self._post(
             'graphql',
             json={'query': query, 'variables': {'organization': organization}},
         ).json()
-        return result.get('data', {}).get('createEnterpriseOrganization', {}).get('organization', {})  # type: ignore
 
     @api_call
     def get_organization(self, organization_name: str) -> Dict[str, Any]:
@@ -271,6 +276,97 @@ class GitHubCloud:
 
         return self._get(f'orgs/{organization_name}')  # type: ignore
 
+    @api_call
+    def list_organization_repositories(
+        self, organization: str
+    ) -> List[Dict[str, Any]]:
+        """List the repositories in an organization.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+
+        # Returned value:
+
+        - a list of repositories
+        """
+        ensure_nonemptystring('organization')
+
+        return self._collect_data(f'orgs/{organization}/repos')
+
+    @api_call
+    def list_organization_members(
+        self, organization: str, role='all'
+    ) -> List[Dict[str, Any]]:
+        """List the members of an organization.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+
+        # Optional parameters
+
+        - role: a non-empty string, one of 'all', 'member', or 'admin'
+          ('all' by default)
+
+        # Returned value:
+
+        - a list of members
+        """
+        ensure_nonemptystring('organization')
+        ensure_in('role', ('all', 'member', 'admin'))
+        return self._collect_data(
+            f'orgs/{organization}/members', params={'role': role}
+        )
+
+    @api_call
+    def add_organization_membership(
+        self,
+        organization: str,
+        username: str,
+        role: Optional[str] = 'member',
+    ):
+        """Add a user to an organization.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - username: a non-empty string
+
+        # Optional parameters:
+
+        - role: a string, either 'member' or 'admin'
+
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('username')
+        ensure_in('role', ['member', 'admin'])
+
+        return self._put(
+            f'orgs/{organization}/memberships/{username}',
+            json={'role': role},
+        )
+
+    @api_call
+    def rm_organization_membership(
+        self,
+        organization: str,
+        username: str,
+    ):
+        """Remove a user from an organization.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+        - username: a non-empty string
+
+        """
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('username')
+
+        result = self._delete(f'orgs/{organization}/memberships/{username}')
+        return (result.status_code // 100) == 2
+
     ####################################################################
     # GitHubCloud enterprise
     #
@@ -282,7 +378,7 @@ class GitHubCloud:
 
         # Required parameters:
 
-        - enterprise_name: The name of the enterprise
+        - enterprise_name: a non-empty string
 
         """
         ensure_nonemptystring('enterprise_name')
@@ -299,13 +395,14 @@ class GitHubCloud:
                 createdAt
             }
         }"""
-        return self._post(
+        result = self._post(
             'graphql',
             json={
                 "query": query,
                 "variables": {"enterprise": enterprise_name},
             },
         )
+        return result['data']['enterprise']
 
     ####################################################################
     # GitHub helpers
@@ -321,6 +418,7 @@ class GitHubCloud:
     ) -> requests.Response:
         """Return GitHub API call results, as Response."""
         api_url = join_url(self.url, api)
+        print(api_url)
         return self.session().get(api_url, headers=headers, params=params)
 
     def _post(
@@ -334,3 +432,51 @@ class GitHubCloud:
         return self.session().post(
             api_url, json=json, params=params, headers=headers
         )
+
+    def _put(
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().put(api_url, json=json, headers=headers)
+
+    def _delete(
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().delete(api_url, json=json, headers=headers)
+
+    def _collect_data(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return GitHub API call results, collected.
+
+        The API call is expected to return a list of items. If not,
+        an _ApiError_ exception is raised.
+        """
+        api_url = join_url(self.url, api)
+        collected: List[Dict[str, Any]] = []
+        while True:
+            response = self.session().get(
+                api_url, params=params, headers=headers
+            )
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                collected += response.json()
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return collected
