@@ -14,7 +14,6 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-
 from typing import Dict, List, Optional, Mapping, Union, Any
 
 import requests
@@ -110,9 +109,9 @@ class GitHubCloud:
         ensure_nonemptystring('enterprise_name')
 
         query = """
-        query($enterprise: String!) {
+        query($enterprise: String!, $after: String) {
             enterprise(slug: $enterprise) {
-                organizations(first: 100) {
+                organizations(first: 100, after: $after) {
                     nodes {
                         login
                         id
@@ -123,23 +122,36 @@ class GitHubCloud:
                         updatedAt
                         description
                     }
+                    pageInfo {
+                        endCursor
+                        hasNextPage
+                    }
                 }
             }
         }
         """
-        result = self._post(
-            'graphql',
-            json={
-                "query": query,
-                "variables": {"enterprise": enterprise_name},
-            },
-        ).json()
-        return (
-            result.get('data')
-            .get('enterprise')
-            .get('organizations')
-            .get('nodes', [])
-        )
+
+        after = None
+        collected = []
+        more = True
+
+        while more:
+            result = self._post(
+                'graphql',
+                json={
+                    "query": query,
+                    "variables": {
+                        "enterprise": enterprise_name,
+                        'after': after,
+                    },
+                },
+            ).json()
+            organizations = result['data']['enterprise']['organizations']
+            collected += organizations['nodes']
+            more = organizations['pageInfo']['hasNextPage']
+            after = organizations['pageInfo']['endCursor']
+
+        return collected
 
     @api_call
     def create_organization(
@@ -772,7 +784,7 @@ class GitHubCloud:
 
         A list of _teams_. Each team is a dictionary with the following
         keys:
-        
+
         - name
         - id
         - node_id
@@ -808,7 +820,7 @@ class GitHubCloud:
 
         A list of _members_.  Each member is a dictionary with the
         following entries:
-        
+
         - login: a string
         - id: an integer
         - node_id: a string
