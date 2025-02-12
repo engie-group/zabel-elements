@@ -81,6 +81,98 @@ class GitHubCloud:
     def __repr__(self) -> str:
         url, auth = self.url, self.auth[0]
         return f'<{self.__class__.__name__}: {url!r}, {auth!r}>'
+    
+    
+    ####################################################################
+    # GitHub users (that or organization members?)
+    #
+    # list_users
+    # get_user
+
+    @api_call
+    def list_users(self) -> List[Dict[str, Any]]:
+        """Return the list of users.
+
+        This API returns users, bots and organizations.  Use the `type` entry
+        in the returned items to distinguish (`'User'` or
+        `'Organization'` or `'Bot'`).
+
+        # Returned value
+
+        A list of _users_.  A user is a dictionary with the following
+        entries:
+
+        - login: a string
+        - id: an integer
+        - node_id: a string
+        - avatar_url: a string
+        - gravatar_id: a string
+        - url: a string
+        - html_url: a string
+        - followers_url: a string
+        - following_url: a string
+        - gist_url: a string
+        - starred_url: a string
+        - subscription_url: a string
+        - organizations_url: a string
+        - repos_url: a string
+        - events_url: a string
+        - received_events_url: a string
+        - type: a string
+        - user_view_type: a string
+        - site_admin: a boolean
+        """
+        return self._collect_data('users')
+
+    @api_call
+    def get_user(self, user_name: str) -> Dict[str, Any]:
+        """Return the user details.
+
+        # Required parameters
+
+        - user_name: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - avatar_url: a string
+        - bio:
+        - blog:
+        - company:
+        - created_at: a string (a timestamp)
+        - email:
+        - events_url: a string
+        - followers: an integer
+        - followers_url: a string
+        - following: an integer
+        - following_url: a string
+        - gist_url: a string
+        - gravatar_id: a string
+        - hireable:
+        - html_url: a string
+        - id: an integer
+        - location:
+        - login: a string
+        - name:
+        - node_id: a string
+        - organizations_url: a string
+        - public_gists: an integer
+        - public_repos: an integer
+        - received_events_url: a string
+        - repos_url: a string
+        - site_admin: a boolean
+        - starred_url: a string
+        - subscription_url: a string
+        - twitter_username: a string
+        - type: a string
+        - updated_at:
+        - url: a string
+        - user_view_type: a string
+        """
+        ensure_nonemptystring('user_name')
+
+        return self._get(f'users/{user_name}')  # type: ignore
 
     ####################################################################
     # GitHubCloud organizations
