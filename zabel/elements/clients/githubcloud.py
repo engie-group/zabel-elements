@@ -22,24 +22,23 @@ class GitHubCloud(Base):
         profile_name: Optional[str] = '',
     ):
         """Create an organization in an enterprise.
-        
+
         # Required parameters:
-        
+
         - organization: The name of the organization
         - enterprise_name: The name of the enterprise
         - admins: List of admin usernames
-        
+
         # Optional parameters:
-        
+
         - profile_name: The profile name
-        
-        
+
+
         """
 
         ensure_nonemptystring('organization')
         ensure_nonemptystring('enterprise_name')
         ensure_instance('admins', list)
-        
 
         enterprise = (
             self.get_enterprise(enterprise_name)
@@ -55,7 +54,7 @@ class GitHubCloud(Base):
             enterprise['billingEmail'],
             profile_name,
         )
-    
+
     ####################################################################
     # GitHub organization secret
     #
@@ -119,8 +118,4 @@ class GitHubCloud(Base):
             f'orgs/{organization_name}/actions/secrets/{secret_name}',
             json=data,
         )
-        print(response.text)
-        print(response.json())
-        print(response.status_code)
-        if response.status_code in [201, 204]:
-            return True
+        return response.status_code in [201, 204]
