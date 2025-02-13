@@ -81,8 +81,7 @@ class GitHubCloud:
     def __repr__(self) -> str:
         url, auth = self.url, self.auth[0]
         return f'<{self.__class__.__name__}: {url!r}, {auth!r}>'
-    
-    
+
     ####################################################################
     # GitHub users (that or organization members?)
     #
@@ -184,6 +183,7 @@ class GitHubCloud:
     # list_organization_members
     # add_organization_membership
     # remove_organization_membership
+    # list_organization_saml_identities
 
     @api_call
     def list_organizations(self, enterprise_name: str) -> List[Dict[str, Any]]:
@@ -240,8 +240,9 @@ class GitHubCloud:
             ).json()
             organizations = result['data']['enterprise']['organizations']
             collected += organizations['nodes']
-            more = organizations['pageInfo']['hasNextPage']
-            after = organizations['pageInfo']['endCursor']
+            page_info = self._get_page_info(organizations)
+            more = page_info['hasNextPage']
+            after = page_info['endCursor']
 
         return collected
 
@@ -470,6 +471,83 @@ class GitHubCloud:
 
         result = self._delete(f'orgs/{organization}/memberships/{username}')
         return (result.status_code // 100) == 2
+
+    @api_call
+    def list_organization_saml_identities(
+        self, organization: str
+    ) -> List[Dict[str, Any]]:
+        """List the SAML identities of an organization.
+
+        # Required parameters:
+
+        - organization: a non-empty string
+
+        # Returned value:
+
+        A list of _external identities_.  Each external identity is a
+        dictionary with the following entries:
+
+        - login: a string
+        - name_id: a string
+        """
+        ensure_nonemptystring('organization')
+        query = """
+        query($login: String!, $after: String) {
+            organization(login: $login) {
+                samlIdentityProvider {
+                    externalIdentities(first: 100, after: $after) {
+                        edges {
+                            node {
+                                samlIdentity {
+                                    nameId
+                                }
+                                user {
+                                    login
+                                }
+                            }
+                        }
+                        pageInfo {
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+            }
+        }"""
+        after = None
+        collected = []
+        more = True
+
+        while more:
+            result = self._post(
+                'graphql',
+                json={
+                    "query": query,
+                    "variables": {
+                        "login": organization,
+                        'after': after,
+                    },
+                },
+            ).json()
+            external_identities = result['data']['organization'][
+                'samlIdentityProvider'
+            ]['externalIdentities']
+            collected += [
+                {
+                    'login': (
+                        edge['node']['user']['login']
+                        if edge['node']['user'] is not None
+                        else None
+                    ),
+                    'name_id': edge['node']['samlIdentity']['nameId'],
+                }
+                for edge in external_identities['edges']
+            ]
+            page_info = self._get_page_info(external_identities)
+            more = page_info['hasNextPage']
+            after = page_info['endCursor']
+
+        return collected
 
     ####################################################################
     # GitHub organization action secrets
@@ -1050,7 +1128,6 @@ class GitHubCloud:
     ) -> requests.Response:
         """Return GitHub API call results, as Response."""
         api_url = join_url(self.url, api)
-        print(api_url)
         return self.session().get(api_url, headers=headers, params=params)
 
     def _post(
@@ -1112,3 +1189,21 @@ class GitHubCloud:
                 break
 
         return collected
+
+    def _get_page_info(self, data: Dict[str, Any]) -> Optional[Any]:
+        """Recursively search for the 'pageInfo' key in a nested dictionary."""
+        if 'pageInfo' in data:
+            return data['pageInfo']
+
+        for key, value in data.items():
+            if isinstance(value, dict):
+                result = self._get_page_info(value)
+                if result is not None:
+                    return result
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        result = self._get_page_info(item)
+                        if result is not None:
+                            return result
+        return None
