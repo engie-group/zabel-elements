@@ -432,40 +432,45 @@ class Jira:
         return self._client().group_members(group_name)
 
     @api_call
-    def list_group_users_2(
+    def list_group_users2(
         self,
         group_name: str,
-        include_inactive_users: bool,
-        start_at: int = 0,
-        max_results: int = 50,
-    ) -> Dict[str, Any]:
+        include_inactive_users: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
         """Return group users.
 
         # Required parameters
 
         - group_name: a non-empty string
 
+        # Optional parameters
+
+        - include_inactive_users: a boolean or None (None by default)
+
         # Returned value
 
-        A dictionary.  Keys are the user names, and values are
-        dictionaries with the following entries:
+        A list of dictionaries.  Each dictionary has the following keys:
 
+        - self: a string
+        - name: a string
+        - key: a string
+        - emailAddress: a string
+        - avatarUrls: a dictionary
+        - displayName: a string
         - active: a boolean
-        - fullname: a string
-        - email: a string
+        - timeZone: a string
         """
         ensure_nonemptystring('group_name')
         ensure_noneorinstance('include_inactive_users', bool)
-        ensure_instance('start_at', int)
-        ensure_instance('max_results', int)
+
         params = {
             'groupname': group_name,
-            'includeInactiveUsers': include_inactive_users,
-            'startAt': start_at,
-            'maxResults': max_results,
         }
+        add_if_specified(
+            params, 'includeInactiveUsers', include_inactive_users
+        )
 
-        return self._get_json('group/member', params=params)
+        return self._collect_data('group/member', params=params)
 
     @api_call
     def add_group_user(
