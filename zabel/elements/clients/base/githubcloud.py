@@ -79,7 +79,7 @@ class GitHubCloud:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-        url, auth = self.url, self.auth[0]
+        url, auth = self.url, self.auth
         return f'<{self.__class__.__name__}: {url!r}, {auth!r}>'
 
     ####################################################################
@@ -593,7 +593,7 @@ class GitHubCloud:
                 org_secrets['total_count'] = response_data['total_count']
                 org_secrets['secrets'] += response_data['secrets']
             except Exception as exception:
-                raise ApiError(exception)
+                raise ApiError from exception
             if 'next' in response.links:
                 api_url = response.links['next']['url']
             else:
@@ -1172,7 +1172,7 @@ class GitHubCloud:
             try:
                 collected += response.json()
             except Exception as exception:
-                raise ApiError(exception)
+                raise ApiError from exception
             if 'next' in response.links:
                 api_url = response.links['next']['url']
             else:
@@ -1185,7 +1185,7 @@ class GitHubCloud:
         if 'pageInfo' in data:
             return data['pageInfo']
 
-        for key, value in data.items():
+        for _, value in data.items():
             if isinstance(value, dict):
                 result = self._get_page_info(value)
                 if result is not None:

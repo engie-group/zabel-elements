@@ -1,17 +1,59 @@
+# Copyright (c) 2019 Martin Lafaix (martin.lafaix@external.engie.com)
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+"""GitHubCloud.
+
+A class wrapping the GitHub Cloud APIs.
+
+This module depends ont the **requests** public library. It also depends
+on three **zabel-commons** modules, #::zabel.commons.exceptions,
+#::zabel.commons.sessions, and #::zabel.commons.utils.
+"""
+
 from typing import List, Optional
 from base64 import b64decode, b64encode
 from nacl import public
 
-from .base.githubcloud import GitHubCloud as Base
 from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     ensure_instance,
     ensure_in,
 )
+from .base.githubcloud import GitHubCloud as Base
 
 
 class GitHubCloud(Base):
+    """GitHubCloud Low-Level Wrapper.
+
+    There can be as many GitHub instances as needed.
+
+    A class wrapping the GitHub Cloud APIs.
+
+    This module depends ont the **requests** public library. It also depends
+    on three **zabel-commons** modules, #::zabel.commons.exceptions,
+    #::zabel.commons.sessions, and #::zabel.commons.utils.
+
+    # Reference URLs
+
+    - <https://docs.github.com/en/enterprise-cloud@latest/rest?apiVersion=2022-11-28>
+    - <https://docs.github.com/en/enterprise-cloud@latest/graphql>
+
+    # Sample use
+
+    ```python
+    # standard use
+    from zabel.elements.clients import GitHubCloud
+
+    url = 'https://api.github.com'
+    ghc = GitHubCloud(url, bearer_auth=token)
+    ghc.list_organizations('my_enterprise')
+    ```
+    """
 
     @api_call
     def create_enterprise_organization(
