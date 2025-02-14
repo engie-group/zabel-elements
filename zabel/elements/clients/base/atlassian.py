@@ -27,7 +27,6 @@ from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     join_url,
-    BearerAuth,
 )
 
 ########################################################################
@@ -81,7 +80,6 @@ class Atlassian:
 
         self.url = url
         self.bearer_auth = bearer_auth
-        self.auth = BearerAuth(bearer_auth)
         self.session = prepare_session(self.auth)
 
     def __str__(self) -> str:
@@ -98,8 +96,11 @@ class Atlassian:
     # list_organization_users
 
     @api_call
-    def list_organization_users(self, org_id) -> List[Dict[str, Any]]:
-        """Return the users list.
+    def list_organization_users(self, org_id: str) -> List[Dict[str, Any]]:
+        """List organization users.
+
+        # Required parameters
+        - org_id: a string
 
         # Returned value
 
