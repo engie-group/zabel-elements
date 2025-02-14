@@ -63,7 +63,7 @@ class GitHubCloud(Base):
     @api_call
     def create_or_update_organization_secret(
         self,
-        organization_name: str,
+        organization: str,
         secret_name: str,
         secret_value: str,
         visibility: str = 'all',
@@ -73,7 +73,7 @@ class GitHubCloud(Base):
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organizatio: a non-empty string
         - secret_name: a non-empty string
         - secret_value: a non-empty string
 
@@ -91,12 +91,12 @@ class GitHubCloud(Base):
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
         ensure_nonemptystring('secret_name')
         ensure_nonemptystring('secret_value')
         ensure_in('visibility', ('all', 'private', 'selected'))
 
-        orga_key = self.get_organization_public_key(organization_name)
+        orga_key = self.get_organization_public_key(organization)
 
         public_key_bytes = b64decode(orga_key['key'])
 
@@ -115,7 +115,7 @@ class GitHubCloud(Base):
             data['selected_repository_ids'] = repositories_ids
 
         response = self._put(
-            f'orgs/{organization_name}/actions/secrets/{secret_name}',
+            f'orgs/{organization}/actions/secrets/{secret_name}',
             json=data,
         )
         return response.status_code in [201, 204]

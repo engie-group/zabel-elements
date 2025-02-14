@@ -249,7 +249,7 @@ class GitHubCloud:
     @api_call
     def create_organization(
         self,
-        organization_name: str,
+        organization: str,
         enterprise_id: str,
         admins: List[str],
         billing_email: str,
@@ -259,7 +259,7 @@ class GitHubCloud:
 
         # Required parameters:
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
         - enterprise_id: a non-empty string
         - admins: a list of strings
         - billing_email: a non-empty string
@@ -274,7 +274,7 @@ class GitHubCloud:
 
         """
 
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
         ensure_nonemptystring('enterprise_id')
         ensure_instance('admins', list)
         ensure_nonemptystring('billing_email')
@@ -296,7 +296,7 @@ class GitHubCloud:
             'adminLogins': admins,
             'billingEmail': billing_email,
             'enterpriseId': enterprise_id,
-            'login': organization_name,
+            'login': organization,
         }
 
         add_if_specified(organization, 'profileName', profile_name)
@@ -306,12 +306,12 @@ class GitHubCloud:
         ).json()
 
     @api_call
-    def get_organization(self, organization_name: str) -> Dict[str, Any]:
+    def get_organization(self, organization: str) -> Dict[str, Any]:
         """Return extended information on organization.
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
 
         # Returned value
 
@@ -377,9 +377,9 @@ class GitHubCloud:
         - secret_scanning_push_protection_custom_link_enabled
         - secret_scanning_validity_checks_enabled_for_new_repositories
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
 
-        return self._get(f'orgs/{organization_name}')  # type: ignore
+        return self._get(f'orgs/{organization}')  # type: ignore
 
     @api_call
     def list_organization_repositories(
@@ -558,14 +558,12 @@ class GitHubCloud:
     # delete_organization_secret
 
     @api_call
-    def list_organization_secrets(
-        self, organization_name: str
-    ) -> Dict[str, Any]:
+    def list_organization_secrets(self, organization: str) -> Dict[str, Any]:
         """Return the organization's secrets.
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
 
         # Returned value
 
@@ -582,11 +580,9 @@ class GitHubCloud:
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
 
-        api_url = join_url(
-            self.url, f'orgs/{organization_name}/actions/secrets'
-        )
+        api_url = join_url(self.url, f'orgs/{organization}/actions/secrets')
         org_secrets = {'total_count': 0, 'secrets': []}
         while True:
             response = self.session().get(api_url)
@@ -606,14 +602,12 @@ class GitHubCloud:
         return org_secrets
 
     @api_call
-    def get_organization_public_key(
-        self, organization_name: str
-    ) -> Dict[str, Any]:
+    def get_organization_public_key(self, organization: str) -> Dict[str, Any]:
         """Return the organization's public key.
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
 
         # Returned value
 
@@ -622,21 +616,19 @@ class GitHubCloud:
         - key_id: a string
         - key: a string
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
 
-        return self._get(
-            f'orgs/{organization_name}/actions/secrets/public-key'
-        )
+        return self._get(f'orgs/{organization}/actions/secrets/public-key')
 
     @api_call
     def get_organization_secret(
-        self, organization_name: str, secret_name: str
+        self, organization: str, secret_name: str
     ) -> Dict[str, Any]:
         """Return the organization's secret.
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
         - secret_name: a non-empty string
 
         # Returned value
@@ -649,34 +641,32 @@ class GitHubCloud:
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
         ensure_nonemptystring('secret_name')
 
-        return self._get(
-            f'orgs/{organization_name}/actions/secrets/{secret_name}'
-        )
+        return self._get(f'orgs/{organization}/actions/secrets/{secret_name}')
 
     @api_call
     def delete_organization_secret(
-        self, organization_name: str, secret_name: str
+        self, organization: str, secret_name: str
     ) -> bool:
         """Delete the organization's secret.
 
         # Required parameters
 
-        - organization_name: a non-empty string
+        - organization: a non-empty string
         - secret_name: a non-empty string
 
         # Returned value
 
         A boolean.  True if the secret has been deleted.
         """
-        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('organization')
         ensure_nonemptystring('secret_name')
 
         return (
             self._delete(
-                f'orgs/{organization_name}/actions/secrets/{secret_name}'
+                f'orgs/{organization}/actions/secrets/{secret_name}'
             ).status_code
             == 204
         )
@@ -814,8 +804,8 @@ class GitHubCloud:
     @api_call
     def create_repository(
         self,
-        organization_name: str,
-        repository_name: str,
+        organization: str,
+        repository: str,
         description: Optional[str] = None,
         private: bool = False,
         visibility: Optional[str] = None,
@@ -844,8 +834,8 @@ class GitHubCloud:
 
         # Required parameters:
         #
-        # - organization_name: a non-empty string
-        # - repository_name: a non-empty string
+        # - organization: a non-empty string
+        # - repository: a non-empty string
         #
         # # Optional parameters:
         #
@@ -877,8 +867,8 @@ class GitHubCloud:
         #
         # A _repository_. See #get_repository() for its content.
         """
-        ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('organization')
+        ensure_nonemptystring('repository')
 
         ensure_noneorinstance('description', str)
         ensure_instance('private', bool)
@@ -905,7 +895,7 @@ class GitHubCloud:
         ensure_noneorinstance('custom_properties', dict)
 
         data = {
-            'name': repository_name,
+            'name': repository,
             'private': private,
             'has_issues': has_issues,
             'has_projects': has_projects,
@@ -936,7 +926,7 @@ class GitHubCloud:
         add_if_specified(data, 'merge_commit_message', merge_commit_message)
         add_if_specified(data, 'custom_properties', custom_properties)
 
-        result = self._post(f'orgs/{organization_name}/repos', json=data)
+        result = self._post(f'orgs/{organization}/repos', json=data)
         return result
 
     @api_call
