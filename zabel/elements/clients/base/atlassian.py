@@ -27,6 +27,7 @@ from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     join_url,
+    BearerAuth,
 )
 
 ########################################################################
@@ -72,15 +73,15 @@ class Atlassian:
         - bearer_auth: a string
 
         `url` is the top-level API endpoint.  For example,
-        `'https://api.atlassian.com/admin'`
+        `'https://api.atlassian.com/admin/v1/'`
 
         """
         ensure_nonemptystring('url')
         ensure_nonemptystring('bearer_auth')
 
         self.url = url
-        self.bearer_auth = bearer_auth
-        self.session = prepare_session(self.auth)
+        self.bearer_auth = BearerAuth(bearer_auth)
+        self.session = prepare_session(self.bearer_auth)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
@@ -116,7 +117,9 @@ class Atlassian:
         - `product_access`: a list of strings
         - `links`: a dictionary
         """
-        return self._get(f'{org_id}/users')
+
+        ensure_nonemptystring('org_id')
+        return self._get(f'orgs/{org_id}/users')
 
     ####################################################################
     # atlassian private helpers

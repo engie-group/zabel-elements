@@ -37,7 +37,7 @@ class Atlassian(Base):
     ```python
     >>> from zabel.elements.clients import Atlassian
     >>>
-    >>> url = ''https://api.atlassian.com/admin/v1/orgs''
+    >>> url = ''https://api.atlassian.com/admin/v1/''
     >>> atlassian = Atlassian(url, token)
     >>> attlasian.list_organisation_users("org_id")
     ```
