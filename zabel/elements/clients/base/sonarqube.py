@@ -1059,12 +1059,12 @@ class SonarQube:
         return result  # type: ignore
 
     @api_call
-    def delete_qualitygate(self, qualitygate_id: str) -> None:
+    def delete_qualitygate(self, name: str) -> None:
         """Delete a quality gate.
 
         # Required parameters
 
-        - qualitygate_id: a string
+        - name: a string
 
         # Returned value
 
@@ -1075,9 +1075,9 @@ class SonarQube:
         An _ApiError_ exception is raised if the quality gate does not
         exist.
         """
-        ensure_instance('qualitygate_id', str)
+        ensure_instance('name', str)
 
-        result = self._post('qualitygates/destroy', {'id': qualitygate_id})
+        result = self._post('qualitygates/destroy', {'name': name})
         return result  # type: ignore
 
     @api_call

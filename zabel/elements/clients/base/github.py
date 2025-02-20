@@ -1179,7 +1179,7 @@ class GitHub:
         """
         ensure_nonemptystring('app_slug')
 
-        return self._get(f'app/{app_slug}')  # type: ignore
+        return self._get(f'apps/{app_slug}')  # type: ignore
 
     @api_call
     def list_app_installations(self) -> List[Dict[str, Any]]:
@@ -2128,6 +2128,17 @@ class GitHub:
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
+        If `author` is omitted, the `committer` is used.  If `committer`
+        is omitted, the authenticated user is used.
+
+        The `author` and `committer` dictionaries must have the
+        following keys:
+
+        - name: a string
+        - email: a string
+
+        They may have a `date` entry (a string).
+
         # Returned value
 
         A dictionary.
@@ -2183,6 +2194,17 @@ class GitHub:
         - branch: a string or None (None by default)
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
+
+        If `author` is omitted, the `committer` is used.  If `committer`
+        is omitted, the authenticated user is used.
+
+        The `author` and `committer` dictionaries must have the
+        following keys:
+
+        - name: a string
+        - email: a string
+
+        They may have a `date` entry (a string).
 
         # Returned value
 
@@ -2859,7 +2881,7 @@ class GitHub:
         params = {'recursive': 'true'} if recursive else None
         headers = {'Accept': 'application/vnd.github+json'}
         result = self._get(
-            f'repos/{organization_name}/{repository_name}/git/tree/{tree_sha}',
+            f'repos/{organization_name}/{repository_name}/git/trees/{tree_sha}',
             params=params,
             headers=headers,
         )

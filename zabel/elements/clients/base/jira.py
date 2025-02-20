@@ -280,7 +280,7 @@ class Jira:
         return self.client
 
     ####################################################################
-    # JIRA search
+    #  search
     #
     # search
 
@@ -408,7 +408,10 @@ class Jira:
         return self._client().remove_group(group_name)
 
     @api_call
-    def list_group_users(self, group_name: str) -> Dict[str, Any]:
+    def list_group_users(
+        self,
+        group_name: str,
+    ) -> Dict[str, Any]:
         """Return group users.
 
         # Required parameters
@@ -427,6 +430,47 @@ class Jira:
         ensure_nonemptystring('group_name')
 
         return self._client().group_members(group_name)
+
+    @api_call
+    def list_group_users2(
+        self,
+        group_name: str,
+        include_inactive_users: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return group users.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Optional parameters
+
+        - include_inactive_users: a boolean or None (None by default)
+
+        # Returned value
+
+        A list of dictionaries.  Each dictionary has the following keys:
+
+        - self: a string
+        - name: a string
+        - key: a string
+        - emailAddress: a string
+        - avatarUrls: a dictionary
+        - displayName: a string
+        - active: a boolean
+        - timeZone: a string
+        """
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('include_inactive_users', bool)
+
+        params = {
+            'groupname': group_name,
+        }
+        add_if_specified(
+            params, 'includeInactiveUsers', include_inactive_users
+        )
+
+        return self._collect_data('group/member', params=params)
 
     @api_call
     def add_group_user(
@@ -5291,9 +5335,11 @@ class Jira:
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/requesttype'
         )
-    
+
     @api_call
-    def list_requesttypes_fields(self, servicedesk_id: str, requesttype_id: str) -> List[Dict[str, Any]]:
+    def list_requesttypes_fields(
+        self, servicedesk_id: str, requesttype_id: str
+    ) -> List[Dict[str, Any]]:
         """Return the list of all request types for a given service desk.
 
         # Required parameters
