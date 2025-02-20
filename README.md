@@ -20,6 +20,7 @@ found in many workplaces, namely:
 - Okta
 - SonarQube
 - SquashTM
+- Atlassian
 
 Elements are of two kinds: _ManagedServices_, which represent services that are
 managed by Zabel, and _Utilities_, which represent services that are used by Zabel.
