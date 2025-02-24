@@ -122,6 +122,7 @@ class GitHubCloud(Base):
         # Optional parameters
 
         - visibility: a string, one of 'all', 'private', or 'selected' ('all' by default)
+        - repositories_ids: a list of integers (None by default)
 
         # Returned value
 
@@ -137,6 +138,8 @@ class GitHubCloud(Base):
         ensure_nonemptystring('secret_name')
         ensure_nonemptystring('secret_value')
         ensure_in('visibility', ('all', 'private', 'selected'))
+        if visibility == 'selected':
+            ensure_instance('repositories_ids', list)
 
         orga_key = self.get_organization_public_key(organization)
 
