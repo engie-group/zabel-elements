@@ -73,6 +73,7 @@ __all__ = [
     'SonarQube',
     'SquashTM',
     'GitHubCloud',
+    'Atlassian',
 ]
 
 
@@ -87,3 +88,4 @@ from .squashtm import SquashTM
 from .okta import Okta
 from .base.okta import OktaException
 from .githubcloud import GitHubCloud
+from .base.atlassian import Atlassian
