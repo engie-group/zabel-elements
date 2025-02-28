@@ -82,11 +82,7 @@ class GitHubCloud(Base):
         ensure_nonemptystring('enterprise_name')
         ensure_instance('admins', list)
 
-        enterprise = (
-            self.get_enterprise(enterprise_name)
-            .get('data', {})
-            .get('enterprise')
-        )
+        enterprise = self.get_enterprise(enterprise_name)
         if not enterprise:
             raise ValueError(f'Enterprise {enterprise_name} not found')
         return self.create_organization(

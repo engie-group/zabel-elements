@@ -833,39 +833,39 @@ class GitHubCloud:
         """Create a repository in an organization.
 
         # Required parameters:
-        #
-        # - organization: a non-empty string
-        # - repository: a non-empty string
-        #
-        # # Optional parameters:
-        #
-        # - description: a string
-        # - private: a boolean
-        # - visibility: a string, one of 'public', 'private', or 'internal'
-        # - has_issues: a boolean
-        # - has_projects: a boolean
-        # - has_wiki: a boolean
-        # - has_downloads: a boolean
-        # - is_template: a boolean
-        # - team_id: an integer
-        # - auto_init: a boolean
-        # - gitignore_template: a string
-        # - license_template: a string
-        # - allow_squash_merge: a boolean
-        # - allow_merge_commit: a boolean
-        # - allow_rebase_merge: a boolean
-        # - allow_auto_merge: a boolean
-        # - delete_branch_on_merge: a boolean
-        # - use_squash_pr_title_as_default: a boolean
-        # - squash_merge_commit_title: a string
-        # - squash_merge_commit_message: a string
-        # - merge_commit_title: a string
-        # - merge_commit_message: a string
-        # - custom_properties: a dictionary
-        #
-        # # Returned value
-        #
-        # A _repository_. See #get_repository() for its content.
+        
+        - organization: a non-empty string
+        - repository: a non-empty string
+        
+        # Optional parameters:
+        
+        - description: a string
+        - private: a boolean
+        - visibility: a string, one of 'public', 'private', or 'internal'
+        - has_issues: a boolean
+        - has_projects: a boolean
+        - has_wiki: a boolean
+        - has_downloads: a boolean
+        - is_template: a boolean
+        - team_id: an integer
+        - auto_init: a boolean
+        - gitignore_template: a string
+        - license_template: a string
+        - allow_squash_merge: a boolean
+        - allow_merge_commit: a boolean
+        - allow_rebase_merge: a boolean
+        - allow_auto_merge: a boolean
+        - delete_branch_on_merge: a boolean
+        - use_squash_pr_title_as_default: a boolean
+        - squash_merge_commit_title: a string
+        - squash_merge_commit_message: a string
+        - merge_commit_title: a string
+        - merge_commit_message: a string
+        - custom_properties: a dictionary
+        
+        # Returned value
+        
+        A _repository_. See #get_repository() for its content.
         """
         ensure_nonemptystring('organization')
         ensure_nonemptystring('repository')
@@ -1101,7 +1101,7 @@ class GitHubCloud:
                 "query": query,
                 "variables": {"enterprise": enterprise_name},
             },
-        )
+        ).json()
         return result['data']['enterprise']
 
     ####################################################################
