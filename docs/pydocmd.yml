@@ -1,14 +1,23 @@
 site_name: Zabel Elements
 
+external_links:
+  zabel.commons.exceptions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/exceptions
+  zabel.commons.sessions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/sessions
+  zabel.commons.utils: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/utils
+
 generate:
   - clients.md:
     - zabel.elements.clients++
   - clients/artifactory.md:
     - zabel.elements.clients.Artifactory@
+  - clients/atlassian.md:
+    - zabel.elements.clients.Atlassian@
   - clients/confluence.md:
     - zabel.elements.clients.Confluence@
   - clients/github.md:
     - zabel.elements.clients.GitHub@
+  - clients/githubcloud.md:
+    - zabel.elements.clients.GitHubCloud@
   - clients/jenkins.md:
     - zabel.elements.clients.CloudBeesJenkins@
   - clients/jira.md:
@@ -32,9 +41,11 @@ pages:
       - Overview: clients.md
       - Tools:
         - Artifactory: clients/artifactory.md
+        - Atlassian: clients/atlassian.md
         - CloudBeesJenkins: clients/jenkins.md
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
+        - GitHubCloud: clients/githubcloud.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
         - Jira: clients/jira.md
