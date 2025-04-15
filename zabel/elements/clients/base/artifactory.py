@@ -1185,7 +1185,7 @@ class Artifactory:
         # Optional parameters
 
         - add_users: a list of strings or None (None by default)
-        _ rm_users: a list of strings or None (None by default)
+        - rm_users: a list of strings or None (None by default)
 
         # Returned value
 
@@ -1341,34 +1341,52 @@ class Artifactory:
         ```text
         {
           - "key": "local-repo1",
-          + "rclass" : "local",
-          + "packageType": "maven" | "gradle" | "ivy" | "sbt" | "nuget"
-                           | "gems" | "npm" | "bower" | "debian"
-                           | "composer" | "pypi" | "docker" | "vagrant"
-                           | "gitlfs" | "yum" | "conan" | "chef"
-                           | "puppet" | "generic",
+          - "projectKey": "projx",
+          - "environments":["DEV"] (mandatory when assigning repo to project),
+          + "rclass": "local",
+          - "packageType": "alpine" | "cargo" | "composer" | "bower"
+                           | "chef" | "cocoapods" | "conan" | "conda"
+                           | "cran" | "debian" | "docker" | "helm"
+                           | "helmoci" | "huggingfaceml" | "gems"
+                           | "gitlfs" | "go" | "gradle" | "ivy"
+                           | "maven" | "npm" | "nuget" | "oci" | "opkg"
+                           | "pub" | "puppet" | "pypi" | "rpm" | "sbt"
+                           | "swift" | "terraform" | "terraformbackend"
+                           | "vagrant" | "ansible" | "generic" (default),
           - "description": "The local repository public description",
           - "notes": "Some internal notes",
           - "includesPattern": "**/*" (default),
           - "excludesPattern": "" (default),
-          - "repoLayoutRef" : "maven-2-default",
-          - "debianTrivialLayout" : false,
+          - "repoLayoutRef": "maven-2-default" (default),
+          - "debianTrivialLayout": false,
           - "checksumPolicyType": "client-checksums" (default)
                                   | "server-generated-checksums",
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
           - "maxUniqueTags": 0 (default),
-          - "snapshotVersionBehavior": "unique" | "non-unique" (default)
+          - "snapshotVersionBehavior": "unique" (default) | "non-unique"
                                        | "deployer",
           - "suppressPomConsistencyChecks": false (default),
           - "blackedOut": false (default),
+          - "xrayIndex": false       (default),
           - "propertySets": ["ps1", "ps2"],
-          - "archiveBrowsingEnabled" : false,
-          - "calculateYumMetadata" : false,
-          - "yumRootDepth" : 0,
-          - "dockerApiVersion" : "V2" (default),
-          - "enableFileListsIndexing " : "false" (default)
+          - "archiveBrowsingEnabled": false,
+          - "calculateYumMetadata": false,
+          - "yumRootDepth": 0,
+          - "dockerApiVersion": "V2" (default),
+          - "terraformType": "MODULE"|"PROVIDER",
+          - "enableFileListsIndexing": "false" (default),
+          - "optionalIndexCompressionFormats": ["bz2", "lzma", "xz"],
+          - "downloadRedirect": "false" (default),
+          - "cdnRedirect": "false" (default, Applies to Artifactory Cloud Only),
+          - "blockPushingSchema1": "false",
+          - "primaryKeyPairRef": "mygpgkey",
+          - "secondaryKeyPairRef": "mysecgpgkey",
+          - "forceNugetAuthentication": false (default),
+          - "forceP2Authentication": false (default),
+          - "forceConanAuthentication": false (default),
+          - "priorityResolution": "false" (default)
         }
         ```
 
@@ -1377,26 +1395,33 @@ class Artifactory:
         ```text
         {
           - "key": "remote-repo1",
+          - "projectKey": "projx",
+          - "environments":["DEV"] (mandatory when assigning repo to project),
           + "rclass" : "remote",
-          + "packageType": "maven" | "gradle" | "ivy" | "sbt" | "nuget"
-                           | "gems" | "npm" | "bower" | "debian"
-                           | "pypi" | "docker" | "yum" | "vcs"
-                           | "composer" | "p2" | "chef" | "puppet"
-                           | "generic",
+          - "packageType": "alpine" | "cargo" | "composer" | "bower"
+                           | "chef" | "cocoapods" | "conan" | "conda"
+                           | "cran" | "debian" | "docker" | "helm"
+                           | "helmoci" | "huggingfaceml" | "gems"
+                           | "gitlfs" | "go" | "gradle" | "ivy"
+                           | "maven" | "npm" | "nuget" | "oci" | "opkg"
+                           | "pub" | "puppet" | "pypi" | "rpm" | "sbt"
+                           | "swift" | "terraform" | "ansible"
+                           | "generic" (default),
           + "url" : "http://host:port/some-repo",
           - "username": "remote-repo-user",
           - "password": "pass",
           - "proxy": "proxy1",
+          - "disableProxy": false (default),
           - "description": "The remote repository public description",
           - "notes": "Some internal notes",
           - "includesPattern": "**/*" (default),
           - "excludesPattern": "" (default),
           - "repoLayoutRef" : "maven-2-default",
+          - "remoteRepoLayoutRef" : "" (default),
           - "remoteRepoChecksumPolicyType":
-                "generate-if-absent" (default)
-                | "fail"
-                | "ignore-and-generate"
-                | "pass-thru",
+                           "generate-if-absent" (default)
+                           | "fail" | "ignore-and-generate"
+                           | "pass-thru",
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
@@ -1407,10 +1432,8 @@ class Artifactory:
           - "storeArtifactsLocally": true (default),
           - "socketTimeoutMillis": 15000 (default),
           - "localAddress": "212.150.139.167",
-          - "retrievalCachePeriodSecs": 43200 (default),
-          - "failedRetrievalCachePeriodSecs": 30 (default),
-          - "missedRetrievalCachePeriodSecs": 7200 (default),
-          - "unusedArtifactsCleanupEnabled": false (default),
+          - "retrievalCachePeriodSecs": 7200 (default),
+          - "missedRetrievalCachePeriodSecs": 1800 (default),
           - "unusedArtifactsCleanupPeriodHours": 0 (default),
           - "assumedOfflinePeriodSecs" : 300 (default),
           - "fetchJarsEagerly": false (default),
@@ -1418,15 +1441,52 @@ class Artifactory:
           - "shareConfiguration": false (default),
           - "synchronizeProperties": false (default),
           - "blockMismatchingMimeTypes" : true (default),
+          - "xrayIndex": false (default),
           - "propertySets": ["ps1", "ps2"],
           - "allowAnyHostAuth": false (default),
           - "enableCookieManagement": false (default),
-          - "bowerRegistryUrl": "https://bower.herokuapp.com" (default),
+          - "enableTokenAuthentication": false (default),
+          - "forceNugetAuthentication": false (default),
+          - "forceP2Authentication": false (default),
+          - "forceConanAuthentication": false (default),
+          - "metadataRetrievalTimeoutSecs": 60 (default),
+          - "bowerRegistryUrl": "https://registry.bower.io" (default),
+          - "gitRegistryUrl": "https://github.com/rust-lang/crates.io-index" (default),
+          - "composerRegistryUrl": "https://packagist.org" (default),
+          - "pyPIRegistryUrl": "https://pypi.org" (default),
           - "vcsType": "GIT" (default),
-          - "vcsGitProvider": "GITHUB" (default) | "BITBUCKET" | "STASH"
+          - "vcsGitProvider": "GITHUB" (default) | "GITHUBENTERPRISE"
+                              | "BITBUCKET" | "OLDSTASH" | "STASH"
                               | "ARTIFACTORY" | "CUSTOM",
           - "vcsGitDownloadUrl": "" (default),
-          - "clientTlsCertificate": "" (default)
+          - "bypassHeadRequests" : false (default),
+          - "clientTlsCertificate": "" (default),
+          + "externalDependenciesEnabled": false (default, Applies to Docker repositories only),
+          - "externalDependenciesPatterns": [
+              "**/*microsoft*/**",
+              "**/*github*/**"
+            ] (Applies to Docker repositories only)
+          - "downloadRedirect" : "false" (default),
+          - "cdnRedirect": "false" (default, Applies to Artifactory Cloud Only),
+          - "feedContextPath":"api/v2",
+          - "downloadContextPath":"api/v2/package",
+          - "v3FeedUrl":"https://api.nuget.org/v3/index.json",
+          - "listRemoteFolderItems": "false" (default),
+          - "contentSynchronisation": {
+              "enabled": false (default),
+              "statistics": {
+                  "enabled": false (default)
+              },
+              "properties": {
+                  "enabled": false (default)
+              },
+              "source": {
+                  "originAbsenceDetection": false (default)
+              }
+                },
+           - "blockPushingSchema1": false,
+           - "priorityResolution": false (default),
+           - "disableUrlNormalization": false (default)
         }
         ```
 
@@ -1435,25 +1495,93 @@ class Artifactory:
         ```text
         {
           - "key": "virtual-repo1",
+          - "projectKey": "projx",
+          - "environments":["DEV"] (mandatory when assigning repo to project),
           + "rclass" : "virtual",
-          + "packageType": "maven" | "gradle" | "ivy" | "sbt" | "nuget"
-                           | "gems" | "npm" | "bower" | "pypi"
-                           | "docker" | "p2" | "yum" | "chef" | "puppet"
-                           | "generic",
-          - "repositories": ["local-rep1", "local-rep2", "remote-rep1",
-                             "virtual-rep2"],
+          + "packageType": "alpine" | "composer" | "bower" | "chef"
+                           | "conan" | "conda" | "cran" | "debian"
+                           | "docker" | "helm" | "helmoci"
+                           | "huggingfaceml" | "gems" | "gitlfs" | "go"
+                           | "gradle" | "ivy" | "maven" | "npm"
+                           | "nuget" | "oci" | "pub" | "puppet" | "pypi"
+                           | "rpm" | "sbt" | "swift" | "terraform"
+                           | "ansible" | "generic" (default),
+          - "repositories": ["local-rep1", "local-rep2", "remote-rep1", "virtual-rep2"]
           - "description": "The virtual repository public description",
           - "notes": "Some internal notes",
           - "includesPattern": "**/*" (default),
           - "excludesPattern": "" (default),
+          - "repoLayoutRef": "maven-2-default",
           - "debianTrivialLayout" : false,
+          - "debianDefaultArchitectures" : "arm64,amd64", (applies to Debian repositories only),
           - "artifactoryRequestsCanRetrieveRemoteArtifacts": false,
           - "keyPair": "keypair1",
           - "pomRepositoryReferencesCleanupPolicy":
-                "discard_active_reference" (default)
-                | "discard_any_reference"
-                | "nothing",
-          - "defaultDeploymentRepo": "local-repo1"
+                           "discard_active_reference" (default)
+                           | "discard_any_reference" | "nothing"
+          - "defaultDeploymentRepo": "local-repo1",
+          - "optionalIndexCompressionFormats" : ["bz2", "lzma", "xz"],
+          - "forceMavenAuthentication": false, (default - Applies to Maven repositories only),
+          + "externalDependenciesEnabled": false (default - Applies to Bower, npm and Go repositories only),
+          - "externalDependenciesPatterns": [
+              "**/*microsoft*/**",
+              "**/*github*/**"
+            ] (Applies to Bower, npm and Go repositories only),
+          - "externalDependenciesRemoteRepo": "" (Applies to Bower and npm repositories only),
+          - "primaryKeyPairRef": "mygpgkey",
+          - "secondaryKeyPairRef": "mysecgpgkey"
+        }
+        ```
+
+        JSON for a federated repository:
+
+        ```text
+        {
+          - "key": "federated-repo1",
+          - "projectKey": "projx",
+          - "environments":["DEV"] (mandatory when assigning repo to project),
+          + "rclass" : "federated",
+          - "packageType": "alpine" | "maven" | "gradle" | "ivy" | "sbt"
+                           | "helm" | "helmoci" |"huggingfaceml"
+                           | "cargo" | "cocoapods" | "opkg" | "rpm"
+                           | "nuget" | "cran" | "gems" | "npm" | "bower"
+                           | "debian" | "composer" | "oci" | "pypi"
+                           | "docker" | "vagrant" | "gitlfs" | "go"
+                           | "ansible" | "conan" | "conda" | "chef"
+                           | "puppet" | "generic" (default)
+          - "members": [
+              {"url": "http://targetartifactory/artifactory/repositoryName", "enabled":"true"}
+            ]
+          - "description": "The federated repository public description",
+          - "proxy": "proxy-key",
+          - "disableProxy": false (default),
+          - "notes": "Some internal notes",
+          - "includesPattern": "**/*" (default),
+          - "excludesPattern": "" (default),
+          - "repoLayoutRef" : "maven-2-default" (default),
+          - "debianTrivialLayout" : false,
+          - "checksumPolicyType": "client-checksums" (default) | "server-generated-checksums"
+          - "handleReleases": true (default),
+          - "handleSnapshots": true (default),
+          - "maxUniqueSnapshots": 0 (default),
+          - "maxUniqueTags": 0 (default),
+          - "snapshotVersionBehavior": "unique" (default) | "non-unique" | "deployer",
+          - "suppressPomConsistencyChecks": false (default),
+          - "blackedOut": false (default),
+          - "xrayIndex" : false (default),
+          - "propertySets": ["ps1", "ps2"],
+          - "archiveBrowsingEnabled" : false,
+          - "calculateYumMetadata" : false,
+          - "yumRootDepth" : 0,
+          - "dockerApiVersion" : "V2" (default),
+          - "enableFileListsIndexing" : "false" (default),
+          - "optionalIndexCompressionFormats" : ["bz2", "lzma", "xz"],
+          - "downloadRedirect" : "false" (default),
+          - "cdnRedirect": "false" (default, Applies to Artifactory Cloud Only),
+          - "blockPushingSchema1": "false",
+          - "primaryKeyPairRef": "mygpgkey",
+          - "secondaryKeyPairRef": "mysecgpgkey",
+          - "priorityResolution": false (default)
         }
         ```
 
@@ -1795,6 +1923,7 @@ class Artifactory:
         - audience: a string or None (None by default)
         - project_key: a string or None (None by default)
         - description: a string or None (None by default)
+        - include_reference_token: a boolean (False by default)
 
         `expires_in` is in seconds (1 hour by default). Administrators
         can set it to 0 so that the token never expires.

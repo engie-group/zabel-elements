@@ -115,6 +115,9 @@ class GitHub:
         # Required parameters
 
         - url: a non-empty string
+        - user: __deprecated__ a string or None (None by default)
+        - token: __deprecated__ a string or None (None by default)
+
         - basic_auth: a string tuple (user, token) or None (None by
           default)
         - bearer_auth: a string or None (None by default)
@@ -1342,7 +1345,6 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repo_name: a non-empty string
-        - workflow_id: a non-empty string
         - run_id: an integer
 
         # Returned value
@@ -1529,6 +1531,11 @@ class GitHub:
         # Required parameters
 
         - installation_id: an integer
+
+        # Optional parameters
+
+        - repositories: a list of strings or None (None by default)
+        - permissions: a dictionary or None (None by default)
 
         # Returned value
 
@@ -2373,6 +2380,8 @@ class GitHub:
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
+        # Usage
+
         If `author` is omitted, the `committer` is used.  If `committer`
         is omitted, the authenticated user is used.
 
@@ -2439,6 +2448,8 @@ class GitHub:
         - branch: a string or None (None by default)
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
+
+        # Usage
 
         If `author` is omitted, the `committer` is used.  If `committer`
         is omitted, the authenticated user is used.
@@ -3305,6 +3316,13 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3314,11 +3332,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['push']` by default)
-        - active: a boolean (True by default)
 
         # Returned value
 
@@ -3363,6 +3376,14 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['user', 'organization']` by
+          default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3372,12 +3393,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['user', 'organization']` by
-          default)
-        - active: a boolean (True by default)
 
         # Returned value
 
@@ -3420,6 +3435,13 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3429,11 +3451,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['push']` by default)
-        - active: a boolean (True by default)
 
         # Returned value
 

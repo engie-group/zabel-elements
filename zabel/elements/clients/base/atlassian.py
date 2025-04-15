@@ -87,8 +87,7 @@ class Atlassian:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-
-        auth = self.auth.pat[:10] + '...' + self.auth.pat[-10:]
+        auth = self.bearer_auth.pat[:10] + '...' + self.bearer_auth.pat[-10:]
         return f'<{self.__class__.__name__}: {self.url!r}, {auth!r}>'
 
     ####################################################################

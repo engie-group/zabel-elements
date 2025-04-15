@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023 Martin Lafaix (martin.lafaix@external.engie.com)
+# Copyright (c) 2020 Martin Lafaix (martin.lafaix@external.engie.com)
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0

@@ -24,6 +24,8 @@ from zabel.commons.utils import ensure_nonemptystring, api_call
 
 
 class OktaException(Exception):
+    """Generic Okta exception class."""
+
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
@@ -72,8 +74,8 @@ class Okta:
 
         # Optional parameters
 
-        - query_params: a dictionary.  Refer to Okta API documentation for
-            more information.
+        - query_params: a dictionary.  Refer to Okta API documentation
+          for more information.
 
         # Returned value
 
@@ -127,26 +129,25 @@ class Okta:
         ensure_nonemptystring('user')
 
         async def get_user_info_async(self, user: str):
-            okta_user, resp, err = await self._client().get_user(user)
-            if err:
-                # TODO : check if err is itself an exception, no time
+            okta_user, _, error = await self._client().get_user(user)
+            if error:
+                # TODO : check if error is itself an exception, no time
                 # for this for now
-                raise OktaException(err)
+                raise OktaException(error)
             if okta_user is not None:
                 return okta_user.as_dict()
-            else:
-                raise OktaException(f"User {user} not found")
+            raise OktaException(f'User {user} not found')
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(get_user_info_async(self, user))
 
     @api_call
-    def list_groups_by_user_id(self, userId: str) -> List[Dict[str, Any]]:
+    def list_groups_by_user_id(self, user_id: str) -> List[Dict[str, Any]]:
         """Return the groups for an user.
 
         # Required parameters
 
-        - userId: a non-empty string
+        - user_id: a non-empty string
 
         # Raised exceptions
 
@@ -154,19 +155,20 @@ class Okta:
 
         # Returned value
 
-        Return a list of groups. Refer to #get_group_by_name() for more information.
+        Return a list of groups. Refer to #get_group_by_name() for more
+        information.
         """
 
-        ensure_nonemptystring('userId')
+        ensure_nonemptystring('user_id')
 
-        async def list_groups_by_user_id_async(self, userId: str):
-            groups, resp, err = await self._client().list_user_groups(userId)
+        async def list_groups_by_user_id_async(self, user_id: str):
+            groups, _, error = await self._client().list_user_groups(user_id)
             groups_dict = [group.as_dict() for group in groups]
             return groups_dict
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(
-            list_groups_by_user_id_async(self, userId)
+            list_groups_by_user_id_async(self, user_id)
         )
 
     ####################################################################
@@ -207,12 +209,12 @@ class Okta:
 
         async def find_group_async(self, group_name):
             param = {'q': group_name}
-            groups, resp, error = await self._client().list_groups(
+            groups, _, error = await self._client().list_groups(
                 query_params=param
             )
             if len(groups) == 0:
                 raise ApiError(f'The group {group_name} is not an Okta group')
-            elif len(groups) > 1:
+            if len(groups) > 1:
                 raise ApiError(
                     f'More than one group with the name: {group_name}'
                 )
@@ -239,7 +241,7 @@ class Okta:
         ensure_nonemptystring('user_id')
 
         async def add_user_to_group_async(self, group_id, user_id):
-            resp, error = await self._client().add_user_to_group(
+            _, error = await self._client().add_user_to_group(
                 userId=user_id, groupId=group_id
             )
             if error:
@@ -269,7 +271,7 @@ class Okta:
         ensure_nonemptystring('user_id')
 
         async def remove_user_from_group_async(self, group_id, user_id):
-            resp, error = await self._client().remove_user_from_group(
+            _, error = await self._client().remove_user_from_group(
                 userId=user_id, groupId=group_id
             )
             if error:
