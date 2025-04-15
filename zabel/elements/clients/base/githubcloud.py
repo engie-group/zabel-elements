@@ -31,6 +31,7 @@ from zabel.commons.utils import (
     join_url,
 )
 
+
 class GitHubCloud:
     """GitHubCloud Low-Level Wrapper.
 
@@ -382,7 +383,7 @@ class GitHubCloud:
         ensure_nonemptystring('organization')
 
         return self._get(f'orgs/{organization}')  # type: ignore
-    
+
     @api_call
     def get_organization_membership(
         self, organization_name: str, user: str
@@ -508,7 +509,6 @@ class GitHubCloud:
 
         result = self._delete(f'orgs/{organization}/memberships/{username}')
         return (result.status_code // 100) == 2
-
 
     @api_call
     def add_organization_outside_collaborator(
@@ -919,12 +919,12 @@ class GitHubCloud:
         """Create a repository in an organization.
 
         # Required parameters:
-        
+
         - organization: a non-empty string
         - repository: a non-empty string
-        
+
         # Optional parameters:
-        
+
         - description: a string
         - private: a boolean
         - visibility: a string, one of 'public', 'private', or 'internal'
@@ -948,9 +948,9 @@ class GitHubCloud:
         - merge_commit_title: a string
         - merge_commit_message: a string
         - custom_properties: a dictionary
-        
+
         # Returned value
-        
+
         A _repository_. See #get_repository() for its content.
         """
         ensure_nonemptystring('organization')
