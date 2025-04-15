@@ -511,7 +511,7 @@ class GitHubCloud:
         return (result.status_code // 100) == 2
 
     @api_call
-    def add_organization_outside_collaborator(
+    def add_organization_outsidecollaborator(
         self, organization_name: str, user: str
     ) -> bool:
         """Add outside collaborator to organization.
@@ -535,7 +535,7 @@ class GitHubCloud:
         return (result.status_code // 100) == 2
 
     @api_call
-    def rm_organization_outside_collaborator(
+    def remove_organization_outsidecollaborator(
         self, organization_name: str, user: str
     ) -> bool:
         """Remove outside collaborator from organization.
