@@ -184,8 +184,8 @@ class GitHubCloud:
     # list_organization_members
     # add_organization_membership
     # rm_organization_membership
-    # add_organization_outside_collaborator
-    # rm_organization_outside_collaborator
+    # add_organization_outsidecollaborator
+    # remove_organization_outsidecollaborator
     # list_organization_saml_identities
 
     @api_call
