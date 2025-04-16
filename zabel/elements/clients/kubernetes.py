@@ -89,7 +89,7 @@ class Kubernetes(Base):
         # Optional parameters
 
         - namespace: a non-empty string (`default` by default)
-        - ...
+        - kwargs: other keyword arguments
 
         Other keywords parameters can be specified.  They will be passed
         as-is to the Kubernetes API.
@@ -133,7 +133,7 @@ class Kubernetes(Base):
         # Optional parameters
 
         - namespace: a non-empty string (`default` by default)
-        - ...
+        - kwargs: other keyword arguments
 
         Other keywords parameters can be specified.  They will be passed
         as-is to the Kubernetes API.

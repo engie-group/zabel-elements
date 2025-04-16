@@ -418,11 +418,17 @@ class SonarQube:
         # Required parameters
 
         - permission: a string
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None
+        - group_name: a string or None
+
+        One and only one of `group_id` or `group_name` must be provided.
 
         # Optional parameters
 
-        - `project_id` OR `project_key`: an integer or a string
+        - project_id: an integer or None
+        - project_key: a string or None
+
+        At most one of `project_id` or `project_key` can be provided.
         """
         ensure_onlyone('group_id', 'group_name')
         if project_id is None and project_key is None:
@@ -460,7 +466,10 @@ class SonarQube:
 
         # Optional parameters
 
-        - `project_id` OR `project_key`: an integer or a string
+        - project_id: an integer or None
+        - project_key: a string or None
+
+        At most one of `project_id` or `project_key` can be provided.
         """
         ensure_instance('permission', str)
         ensure_instance('login', str)
@@ -495,12 +504,17 @@ class SonarQube:
         # Required parameters
 
         - permission: a string
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None
+        - group_name: a string or None
+
+        One and only one of `group_id` or `group_name` must be provided.
 
         # Optional parameters
 
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - project_id: an integer or None
+        - project_key: a string or None
+
+        At most one of `project_id` or `project_key` can be provided.
         """
         ensure_onlyone('group_id', 'group_name')
         if project_id is None and project_key is None:
@@ -528,6 +542,9 @@ class SonarQube:
     ) -> None:
         """Remove a permission from a user.
 
+        If neither `project_id` nor `project_key` are provided, it will
+        change the global permissions for the specified user.
+
         # Required parameters
 
         - permission: a string
@@ -535,11 +552,10 @@ class SonarQube:
 
         # Optional parameters
 
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - project_id: an integer or None
+        - project_key: a string or None
 
-        If neither `project_id` nor `project_key` are provided, it will
-        change the global permissions for the specified user.
+        At most one of `project_id` or `project_key` can be provided.
         """
         if project_id is None and project_key is None:
             if permission not in GLOBAL_PERMISSIONS:
@@ -1302,7 +1318,7 @@ class SonarQube:
 
         - profile_name: a non-empty string
         - language: a non-empty string, the quality profile language
-        - login: a non-empty string, the user login to add
+        - group: a non-empty string, the user group to add
 
         # Returned value
 
@@ -1665,7 +1681,10 @@ class SonarQube:
 
         # Required parameters
 
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None
+        - group_name: a string or None
+
+        One and only one of `group_id` or `group_name` must be provided.
 
         # Optional parameters
 
@@ -1706,7 +1725,10 @@ class SonarQube:
 
         # Required parameters
 
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None
+        - group_name: a string or None
+
+        One and only one of `group_id` or `group_name` must be provided.
 
         # Optional parameters
 

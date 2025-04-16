@@ -100,6 +100,8 @@ class SquashTM:
         # Required parameters
 
         - url: a non-empty string
+        - user: __deprecated__ a string or None (None by default)
+        - token: __deprecated__ a string or Noen (None by default)
         - basic_auth: a tuple of two strings (user, token) or None
         - bearer_auth: a string or None
 
@@ -578,6 +580,7 @@ class SquashTM:
         - last_name: a non-empty string or None (None by default)
         - email: a non-empty string or None (None by default)
         - active: a boolean or None (None by default)
+        - login: a string or None (None by default)
 
         # Returned value
 

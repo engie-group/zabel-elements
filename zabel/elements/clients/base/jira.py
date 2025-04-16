@@ -166,6 +166,12 @@ class Jira:
         - oauth: a dictionary
         - bearer_auth: a string
 
+        # Optional parameters
+
+        - verify: a boolean (True by default)
+
+        # Usage
+
         The `oauth` dictionary is expected to have the following
         entries:
 
@@ -181,10 +187,6 @@ class Jira:
         - `oauth['signature_method']`
         - `SIGNATURE_HMAC_SHA1`
         - `SIGNATURE_RSA`
-
-        # Optional parameters
-
-        - verify: a boolean (True by default)
 
         `verify` can be set to False if disabling certificate checks for
         Jira communication is required.  Tons of warnings will occur if
@@ -499,7 +501,7 @@ class Jira:
         # Required parameters
 
         - group_name: a non-empty string
-        - username: a non-empty string
+        - user_name: a non-empty string
 
         # Returned value
 
@@ -902,6 +904,8 @@ class Jira:
         - scheme_id: an integer or a non-empty string
         - issuetypescheme: a dictionary.
 
+        # Usage
+
         `issuetypescheme` is a dictionary with the following entries:
 
         - id: a string
@@ -1091,7 +1095,7 @@ class Jira:
 
         # Required parameters
 
-        - scheme_id_or_name: a non-empty string
+        - screen_id_or_name: a non-empty string
 
         # Returned value
 
@@ -2928,6 +2932,10 @@ class Jira:
 
         - project_id_or_key: an integer or a string
 
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+
         # Returned value
 
         A list of _versions_.  Each version is a dictionary with the
@@ -3372,6 +3380,8 @@ class Jira:
 
         - params: a dictionary or None (None by default)
 
+        # Usage
+
         `params`, if provided, is a dictionary with at least one of the
         following entries:
 
@@ -3657,6 +3667,8 @@ class Jira:
         - board_id: an integer
         - board_admins: a dictionary
 
+        # Usage
+
         The `board_admins` dictionary has the following two entries:
 
         - groupKeys: a list of strings
@@ -3710,6 +3722,14 @@ class Jira:
         - board_id: an integer
         - columns_template: a list of dictionaries
 
+        # Optional parameters
+
+        - statistics_field: a non-empty string (`'_none'` by default)
+
+        If specified, it must be the ID of a valid statistic field.
+
+        # Usage
+
         Each item in the `columns_template` list has the following
         entries:
 
@@ -3727,13 +3747,6 @@ class Jira:
 
         If `id` is None, a new column is created.  If it is not None,
         the column must already exist, and will be updated if needed.
-
-        # Optional parameters
-
-        - statistics_field: a non-empty string (`'_none'` by default)
-
-        If `statistics_field` is specified, it must be the ID of a
-        valid statistic field.
 
         # Returned value
 
@@ -4000,7 +4013,7 @@ class Jira:
         # Required parameters
 
         - inward_issue_id_or_key: a non-empty string
-        - type: a non-empty string
+        - type_: a non-empty string
         - outward_issue_id_or_key: a non-empty string
 
         # Returned value
@@ -4144,6 +4157,8 @@ class Jira:
         # Required parameters
 
         - fields: a dictionary
+
+        # Usage
 
         `fields` is a dictionary with at least the following entries:
 
@@ -4411,8 +4426,8 @@ class Jira:
         self,
         name: str,
         board_id: int,
-        start_date: Optional[Any] = None,
-        end_date: Optional[Any] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         goal: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create new sprint.
@@ -4424,9 +4439,9 @@ class Jira:
 
         # Optional parameters
 
-        - start_date
-        - end_date
-        - goal
+        - start_date: a string or None (None by default)
+        - end_date: a string or None (None by default)
+        - goal: a string or None (None by default)
 
         # Returned value
 
@@ -4461,13 +4476,13 @@ class Jira:
 
         # Optional parameters
 
-        - name
-        - state
-        - start_date
-        - end_date
-        - complete_date
-        - origin_board_id
-        - goal
+        - name: a string or None (None by default)
+        - state: a string or None (None by default)
+        - start_date: a string or None (None by default)
+        - end_date: a string or None (None by default)
+        - complete_date: a string or None (None by default)
+        - origin_board_id: an integer or None (None by default)
+        - goal: a string or None (None by default)
 
         # Returned value
 
@@ -4549,6 +4564,8 @@ class Jira:
         # Optional parameters
 
         - params: a dictionary or None (None by default)
+
+        # Usage
 
         `params`, if provided, is a dictionary with at least one of the
         following entries:
@@ -5072,6 +5089,8 @@ class Jira:
         - requesttype_id: a non-empty string
         - fields: a dictionary
 
+        # Usage
+
         The `fields` dictionary content depends on the request type (as
         specified by `requesttype_id`).  It typically has at least the
         following two entries:
@@ -5345,6 +5364,7 @@ class Jira:
         # Required parameters
 
         - servicedesk_id: a non-empty string
+        - requesttype_id: a non-empty string
 
         # Returned value
 

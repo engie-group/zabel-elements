@@ -15,7 +15,9 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 """
 
 from typing import List, Optional
+
 from base64 import b64decode, b64encode
+
 from nacl import public
 
 from zabel.commons.utils import (

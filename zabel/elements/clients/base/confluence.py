@@ -510,6 +510,10 @@ class Confluence:
 
         - group_name: a string
 
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+
         # Returned value
 
         A list of _users_.  Each user is a dictionary with the following
@@ -541,9 +545,10 @@ class Confluence:
 
         # Required parameters
 
-        - `user_name` or `key`: a non-empty string
+        - user_name: a non-empty string or None
+        - key: a non-empty string or None
 
-        You can only specify one of them.
+        One and only one of `user_name` or `key` must be specified.
 
         # Optional parameters
 
@@ -855,9 +860,10 @@ class Confluence:
 
         # Required parameters
 
-        - `user_name` or `key`: a non-empty string
+        - user_name: a non-empty string or None
+        - key: a non-empty string or None
 
-        You can only specify one of them.
+        One and only one of `user_name` or `key` must be specified.
 
         # Optional parameters
 
@@ -1763,6 +1769,8 @@ class Confluence:
 
         - page_id: an integer or a string
         - labels: a non-empty list of dictionaries
+
+        # Usage
 
         Dictionaries in `labels` have the following entries:
 

@@ -1099,6 +1099,11 @@ class CloudBeesJenkins:
         - group: a non-empty string
         - role: a non-empty string
 
+        # Optional parameters
+
+        - offset: an integer (0 by default)
+        - inherited: a boolean (False by default)
+
         # Returned value
 
         None.
@@ -1491,9 +1496,16 @@ class CloudBeesJenkins:
     ) -> bool:
         """Delete item.
 
+        If needed, query parameters can be provided using the `params`
+        optional parameter.
+
         # Required parameters
 
         - url: a non-empty string
+
+        # Optional parameters
+
+        - params: a dictionary or None (None by default)
 
         # Returned value
 

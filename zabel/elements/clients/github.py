@@ -21,7 +21,8 @@ import csv
 import time
 
 from base64 import b64decode, b64encode
-from nacl import public, encoding
+
+from nacl import public
 
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
@@ -482,7 +483,9 @@ class GitHub(Base):
 
         # Optional parameters
 
-        - visibility: a string, one of 'all', 'private', or 'selected' ('all' by default)
+        - visibility: a string, one of 'all', 'private', or 'selected'
+          ('all' by default)
+        - repositories_ids: a list of integers or None (None by default)
 
         # Returned value
 
@@ -522,5 +525,4 @@ class GitHub(Base):
             json=data,
         )
 
-        if response.status_code in [201, 204]:
-            return True
+        return response.status_code in [201, 204]
