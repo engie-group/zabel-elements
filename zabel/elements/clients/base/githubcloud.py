@@ -179,10 +179,13 @@ class GitHubCloud:
     # list_organizations
     # create_organization
     # get_organization
+    # get_organization_membership
     # list_organization_repositories
     # list_organization_members
     # add_organization_membership
-    # remove_organization_membership
+    # rm_organization_membership
+    # add_organization_outsidecollaborator
+    # remove_organization_outsidecollaborator
     # list_organization_saml_identities
 
     @api_call
@@ -382,6 +385,41 @@ class GitHubCloud:
         return self._get(f'orgs/{organization}')  # type: ignore
 
     @api_call
+    def get_organization_membership(
+        self, organization_name: str, user: str
+    ) -> Dict[str, Any]:
+        """Get organization membership.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - user: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - url: a string
+        - state: a string
+        - role: a string
+        - organization_url: a string
+        - organization: a dictionary
+        - user: a dictionary
+
+        `role` is either `'admin'` or `'member'`.  `state` is either
+        `'active'` or `'pending'`.
+
+        # Raised exceptions
+
+        Raises an _ApiError_ if the caller is not a member of the
+        organization.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('user')
+
+        return self._get(f'orgs/{organization_name}/memberships/{user}')
+
+    @api_call
     def list_organization_repositories(
         self, organization: str
     ) -> List[Dict[str, Any]]:
@@ -470,6 +508,54 @@ class GitHubCloud:
         ensure_nonemptystring('username')
 
         result = self._delete(f'orgs/{organization}/memberships/{username}')
+        return (result.status_code // 100) == 2
+
+    @api_call
+    def add_organization_outsidecollaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Add outside collaborator to organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - user: a non-empty string, the login of the user
+
+        # Returned value
+
+        A boolean.  True if the outside collaborator was added to the
+        organization.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('user')
+
+        result = self._put(
+            f'orgs/{organization_name}/outside_collaborators/{user}'
+        )
+        return (result.status_code // 100) == 2
+
+    @api_call
+    def remove_organization_outsidecollaborator(
+        self, organization_name: str, user: str
+    ) -> bool:
+        """Remove outside collaborator from organization.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - user: a non-empty string, the login of the user
+
+        # Returned value
+
+        A boolean.  True if the outside collaborator was removed from
+        the organization.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('user')
+
+        result = self._delete(
+            f'orgs/{organization_name}/outside_collaborators/{user}'
+        )
         return (result.status_code // 100) == 2
 
     @api_call
@@ -833,12 +919,12 @@ class GitHubCloud:
         """Create a repository in an organization.
 
         # Required parameters:
-        
+
         - organization: a non-empty string
         - repository: a non-empty string
-        
+
         # Optional parameters:
-        
+
         - description: a string
         - private: a boolean
         - visibility: a string, one of 'public', 'private', or 'internal'
@@ -862,9 +948,9 @@ class GitHubCloud:
         - merge_commit_title: a string
         - merge_commit_message: a string
         - custom_properties: a dictionary
-        
+
         # Returned value
-        
+
         A _repository_. See #get_repository() for its content.
         """
         ensure_nonemptystring('organization')

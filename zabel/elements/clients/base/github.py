@@ -115,6 +115,9 @@ class GitHub:
         # Required parameters
 
         - url: a non-empty string
+        - user: __deprecated__ a string or None (None by default)
+        - token: __deprecated__ a string or None (None by default)
+
         - basic_auth: a string tuple (user, token) or None (None by
           default)
         - bearer_auth: a string or None (None by default)
@@ -1015,7 +1018,7 @@ class GitHub:
     )
 
     ####################################################################
-    # GitHub secrets
+    # GitHub action secrets
     #
     # list_organization_secrets
     # get_organization_public_key
@@ -1144,6 +1147,250 @@ class GitHub:
                 f'orgs/{organization_name}/actions/secrets/{secret_name}'
             ).status_code
             == 204
+        )
+
+    ####################################################################
+    # GitHub action worflows
+    #
+    # create_workflow_dispatch_event
+    # list_repository_workflows
+    # get_workflow
+    # list_workflow_runs
+    # get_workflow_run
+
+    @api_call
+    def list_repository_workflows(
+        self,
+        organization_name: str,
+        repo_name: str,
+    ) -> List[Dict[str, Any]]:
+        """Return the list of workflows for a repository.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repo_name: a non-empty string
+
+        # Returned value
+
+        A list of _workflows_.  Each workflow is a dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repo_name')
+
+        response = self._get(
+            f'repos/{organization_name}/{repo_name}/actions/workflows'
+        ).json()
+        return response['workflows']
+
+    @api_call
+    def create_workflow_dispatch_event(
+        self,
+        organization_name: str,
+        repo_name: str,
+        workflow_id: str,
+        ref: str,
+        inputs: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Create a workflow dispatch event.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repo_name: a non-empty string
+        - workflow_id: a non-empty string (or the workflow file name)
+        - ref: a non-empty string
+
+        # Optional parameters
+
+        - inputs: a dictionary or None (None by default)
+
+        # Returned value
+
+        A boolean.  True if the workflow dispatch event was created.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('workflow_id')
+        ensure_nonemptystring('ref')
+        ensure_noneorinstance('inputs', dict)
+
+        data = {'ref': ref}
+        add_if_specified(data, 'inputs', inputs)
+        return (
+            self._post(
+                f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}/dispatches',
+                json=data,
+            ).status_code
+            == 204
+        )
+
+    @api_call
+    def get_workflow(
+        self,
+        organization_name: str,
+        repo_name: str,
+        workflow_id: str,
+    ) -> Dict[str, Any]:
+        """Return the workflow details.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repo_name: a non-empty string
+        - workflow_id: a non-empty string
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - id: an integer
+        - node_id: a string
+        - name: a string
+        - path: a string
+        - state: a string
+        - created_at: a string
+        - updated_at: a string
+        - url: a string
+        - html_url: a string
+        - badge_url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('workflow_id')
+
+        return self._get(
+            f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}'
+        )
+
+    @api_call
+    def list_workflow_runs(
+        self,
+        organization_name: str,
+        repo_name: str,
+        workflow_id: str,
+        actor: Optional[str] = None,
+        branch: Optional[str] = None,
+        event: Optional[str] = None,
+        status: Optional[str] = None,
+        created: Optional[str] = None,
+        exclude_pull_requests: Optional[bool] = None,
+        check_suite_id: Optional[int] = None,
+        head_sha: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the list of workflow runs.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repo_name: a non-empty string
+        - workflow_id: a non-empty string
+        - actor: a string or None (None by default)
+        - branch: a string or None (None by default)
+        - event: a string or None (None by default)
+        - status: a string or None (None by default). Can be one of: `completed`, `action_required`,
+          `cancelled`, `failure`, `neutral`, `skipped`, `stale`, `success`, `timed_out`,
+            `in_progress`, `queued`, `requested`, `waiting`, `pending`.
+        - created: a string or None (None by default)
+        - exclude_pull_requests: a boolean or None (None by default)
+        - check_suite_id: an integer or None (None by default)
+        - head_sha: a string or None (None by default)
+
+        # Returned value
+
+        A list of _run details_.  Each run details is a dictionary.
+        Refer to #get_workflow_run() for its structure.
+        """
+
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('workflow_id')
+        ensure_noneorinstance('actor', str)
+        ensure_noneorinstance('branch', str)
+        ensure_noneorinstance('event', str)
+        ensure_noneorinstance('status', str)
+        ensure_noneorinstance('created', str)
+        ensure_noneorinstance('exclude_pull_requests', bool)
+        ensure_noneorinstance('check_suite_id', int)
+        ensure_noneorinstance('head_sha', str)
+
+        params = {}
+        add_if_specified(params, 'actor', actor)
+        add_if_specified(params, 'branch', branch)
+        add_if_specified(params, 'event', event)
+        add_if_specified(params, 'status', status)
+        add_if_specified(params, 'created', created)
+        add_if_specified(
+            params, 'exclude_pull_requests', exclude_pull_requests
+        )
+        add_if_specified(params, 'check_suite_id', check_suite_id)
+        add_if_specified(params, 'head_sha', head_sha)
+
+        response = self._get(
+            f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}/runs',
+            params=params,
+        ).json()
+        return response['workflow_runs']
+
+    @api_call
+    def get_workflow_run(
+        self,
+        organization_name: str,
+        repo_name: str,
+        run_id: int,
+    ) -> Dict[str, Any]:
+        """Return the workflow run details.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repo_name: a non-empty string
+        - run_id: an integer
+
+        # Returned value
+
+        A dictionary with the following entries:
+        - id: an integer
+        - name: a string
+        - node_id: a string
+        - head_branch: a string
+        - head_sha: a string
+        - display_title: a string
+        - run_number: an integer
+        - event: a string
+        - status: a string
+        - conclusion: a string
+        - workflow_id: an integer
+        - check_suite_id: an integer
+        - check_suite_node_id: a string
+        - url: a string
+        - html_url: a string
+        - pull_requests: a list of dictionaries
+        - created_at: a string
+        - updated_at: a string
+        - actor: a dictionary
+        - run_attempt: an integer
+        - referenced_workflows: a list of dictionaries
+        - run_started_at: a string
+        - triggering_actor: a dictionary
+        - jobs_url: a string
+        - logs_url: a string
+        - check_suite_url: a string
+        - artifacts_url: a string
+        - cancel_url: a string
+        - rerun_url: a string
+        - previous_attempt_url: a string
+        - workflow_url: a string
+        - head_commit: a dictionary
+        - repository: a dictionary
+        - head_repository: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repo_name')
+        ensure_instance('run_id', int)
+
+        return self._get(
+            f'repos/{organization_name}/{repo_name}/actions/runs/{run_id}'
         )
 
     ####################################################################
@@ -1284,6 +1531,11 @@ class GitHub:
         # Required parameters
 
         - installation_id: an integer
+
+        # Optional parameters
+
+        - repositories: a list of strings or None (None by default)
+        - permissions: a dictionary or None (None by default)
 
         # Returned value
 
@@ -2128,6 +2380,8 @@ class GitHub:
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
+        # Usage
+
         If `author` is omitted, the `committer` is used.  If `committer`
         is omitted, the authenticated user is used.
 
@@ -2194,6 +2448,8 @@ class GitHub:
         - branch: a string or None (None by default)
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
+
+        # Usage
 
         If `author` is omitted, the `committer` is used.  If `committer`
         is omitted, the authenticated user is used.
@@ -3060,6 +3316,13 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3069,11 +3332,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['push']` by default)
-        - active: a boolean (True by default)
 
         # Returned value
 
@@ -3118,6 +3376,14 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['user', 'organization']` by
+          default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3127,12 +3393,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['user', 'organization']` by
-          default)
-        - active: a boolean (True by default)
 
         # Returned value
 
@@ -3175,6 +3435,13 @@ class GitHub:
         - name: a string (must be `web`)
         - config: a dictionary
 
+        # Optional parameters
+
+        - events: a list of strings (`['push']` by default)
+        - active: a boolean (True by default)
+
+        # Usage
+
         The `config` dictionary must contain the following entry:
 
         - url: a string
@@ -3184,11 +3451,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Optional parameters
-
-        - events: a list of strings (`['push']` by default)
-        - active: a boolean (True by default)
 
         # Returned value
 

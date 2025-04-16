@@ -91,6 +91,8 @@ class Kubernetes:
         - context: a non-empty string or None (None by default)
         - config: a dictionary or None (None by default)
 
+        # Usage
+
         If `config_file` or `context` are specified, `config` must
         be None.
 
