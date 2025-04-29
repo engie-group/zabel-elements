@@ -1218,6 +1218,24 @@ class GitHubCloud:
             'total_seats_consumed': data['total_seats_consumed'],
             'total_seats_purchased': data['total_seats_purchased'],
         }
+    def get_copilot_metrics(self, organization_name) -> Dict[str, Any]:
+        """ Return metrics about Copilot usage, including active users, assigned seats, and other relevant data.
+
+        # Required parameters
+        
+        - organization_name: The name of the organization (case-insensitive).
+        
+        # Returned value
+        
+        A dictionary containing Copilot metrics for the organization.
+        
+        """
+        ensure_nonemptystring('organization_name')
+        response = self._get(
+            f'orgs/{organization_name}/copilot/metrics',
+            headers={'Accept': 'application/vnd.github+json'},
+        )
+        return response.json()
 
     ####################################################################
     # GitHub helpers
