@@ -464,10 +464,7 @@ class GitHubCloud:
 
     @api_call
     def add_organization_membership(
-        self,
-        organization: str,
-        username: str,
-        role: Optional[str] = 'member',
+        self, organization: str, username: str, role: Optional[str] = 'member'
     ):
         """Add a user to an organization.
 
@@ -486,16 +483,11 @@ class GitHubCloud:
         ensure_in('role', ['member', 'admin'])
 
         return self._put(
-            f'orgs/{organization}/memberships/{username}',
-            json={'role': role},
+            f'orgs/{organization}/memberships/{username}', json={'role': role}
         )
 
     @api_call
-    def rm_organization_membership(
-        self,
-        organization: str,
-        username: str,
-    ):
+    def rm_organization_membership(self, organization: str, username: str):
         """Remove a user from an organization.
 
         # Required parameters:
@@ -609,10 +601,7 @@ class GitHubCloud:
                 'graphql',
                 json={
                     "query": query,
-                    "variables": {
-                        "login": organization,
-                        'after': after,
-                    },
+                    "variables": {"login": organization, 'after': after},
                 },
             ).json()
             external_identities = result['data']['organization'][
@@ -1208,8 +1197,7 @@ class GitHubCloud:
         """
         response = self.session().get(
             join_url(
-                self.url,
-                f'enterprises/{enterprise_name}/consumed-licenses',
+                self.url, f'enterprises/{enterprise_name}/consumed-licenses'
             )
         )
 
@@ -1218,24 +1206,49 @@ class GitHubCloud:
             'total_seats_consumed': data['total_seats_consumed'],
             'total_seats_purchased': data['total_seats_purchased'],
         }
-    def get_copilot_metrics(self, organization_name) -> Dict[str, Any]:
-        """ Return metrics about Copilot usage, including active users, assigned seats, and other relevant data.
 
-        # Required parameters
-        
-        - organization_name: The name of the organization (case-insensitive).
-        
-        # Returned value
-        
-        A dictionary containing Copilot metrics for the organization.
-        
+    @api_call
+    def list_copilot_seats_for_organization(
+        self, organization_name
+    ) -> List[Dict[str, Any]]:
+
+        """ docstring à faire
         """
         ensure_nonemptystring('organization_name')
-        response = self._get(
-            f'orgs/{organization_name}/copilot/metrics',
-            headers={'Accept': 'application/vnd.github+json'},
+
+        api_url = join_url(
+            self.url, f'orgs/{organization_name}/copilot/billing/seats'
         )
-        return response.json()
+        copilot_seats = {'total_seats': 0, 'seats': []}
+
+        while True:
+            response = self.session().get(
+                api_url, headers={'Accept': 'application/vnd.github+json'}
+            )
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                response_data = response.json()
+                copilot_seats['total_seats'] = response_data.get(
+                    'total_seats', 0
+                )
+                copilot_seats['seats'] += [
+                    {
+                        'user': seat.get('assignee', {}).get(
+                            'login', 'Unknown'
+                        ),
+                        'last_activity_at': seat.get('last_activity_at'),
+                    }
+                    for seat in response_data.get('seats', [])
+                ]
+            except Exception as exception:
+                raise ApiError(exception)
+            if 'next' in response.links:
+                api_url = response.links['next']['url']
+            else:
+                break
+
+        return copilot_seats
 
     ####################################################################
     # GitHub helpers
