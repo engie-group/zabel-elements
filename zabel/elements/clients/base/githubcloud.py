@@ -625,6 +625,74 @@ class GitHubCloud:
         return collected
 
     ####################################################################
+    # GitHubCloud Copilot
+    #
+    # list_organization_copilot_seats
+
+    @api_call
+    def list_organization_copilot_seats(
+        self, organization_name
+    ) -> List[Dict[str, Any]]:
+        """Return the list of all Copilot seat assignments for an organization
+        
+        # Required parameters
+        
+        - organization_name: a non-empty string
+        
+        # Returned value
+        
+        A list of seat assignments. Each seat is a dictionary with the following entries:
+        
+        - total_seats: an integer
+        - created_at: a string
+        - updated_at: a string
+        - pending_cancellation_date: a string or null
+        - last_activity_at: a string or null
+        - last_activity_editor: a string
+        - plan_type: a string,
+        
+        - assignee: a dictionary with user details :
+            login: a string
+            id: an integer
+            node_id: a string
+            avatar_url: a string 
+            gravatar_id: a string
+            url: a string
+            html_url: a string
+            followers_url: a string
+            following_url: a string
+            gists_url: a string
+            starred_url: a string
+            subscriptions_url: a string
+            organizations_url: a string
+            repos_url: a string
+            events_url: a string
+            received_events_url: a string
+            type: a string
+            site_admin: a boolean
+            
+        - assigning_team: a dictionary with team details :
+            -id: an integer
+            - node_id: a string
+            - url: a string
+            - html_url: a string
+            - name: a string
+            - slug: a string
+            - description: a string
+            - privacy: a string
+            - notification_setting: a string
+            - permission: a string
+            - members_url: a string
+            - repositories_url: a string
+            - parent: an object or null
+            
+        """
+        ensure_nonemptystring('organization_name')
+        return self._collect_data(
+            f'orgs/{organization_name}/copilot/billing/seats', key='seats'
+        )
+
+    ####################################################################
     # GitHub organization action secrets
     #
     # list_organization_secrets
@@ -1206,16 +1274,6 @@ class GitHubCloud:
             'total_seats_consumed': data['total_seats_consumed'],
             'total_seats_purchased': data['total_seats_purchased'],
         }
-
-    @api_call
-    def list_organization_copilot_seats(
-        self, organization_name
-    ) -> List[Dict[str, Any]]:
-        """docstring à faire"""
-        ensure_nonemptystring('organization_name')
-        return self._collect_data(
-            f'orgs/{organization_name}/copilot/billing/seats', key='seats'
-        )
 
     ####################################################################
     # GitHub helpers
