@@ -1208,47 +1208,14 @@ class GitHubCloud:
         }
 
     @api_call
-    def list_copilot_seats_for_organization(
+    def list_organization_copilot_seats(
         self, organization_name
     ) -> List[Dict[str, Any]]:
-
-        """ docstring à faire
-        """
+        """docstring à faire"""
         ensure_nonemptystring('organization_name')
-
-        api_url = join_url(
-            self.url, f'orgs/{organization_name}/copilot/billing/seats'
+        return self._collect_data(
+            f'orgs/{organization_name}/copilot/billing/seats', key='seats'
         )
-        copilot_seats = {'total_seats': 0, 'seats': []}
-
-        while True:
-            response = self.session().get(
-                api_url, headers={'Accept': 'application/vnd.github+json'}
-            )
-            if response.status_code // 100 != 2:
-                raise ApiError(response.text)
-            try:
-                response_data = response.json()
-                copilot_seats['total_seats'] = response_data.get(
-                    'total_seats', 0
-                )
-                copilot_seats['seats'] += [
-                    {
-                        'user': seat.get('assignee', {}).get(
-                            'login', 'Unknown'
-                        ),
-                        'last_activity_at': seat.get('last_activity_at'),
-                    }
-                    for seat in response_data.get('seats', [])
-                ]
-            except Exception as exception:
-                raise ApiError(exception)
-            if 'next' in response.links:
-                api_url = response.links['next']['url']
-            else:
-                break
-
-        return copilot_seats
 
     ####################################################################
     # GitHub helpers
@@ -1301,6 +1268,7 @@ class GitHubCloud:
         api: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
         headers: Optional[Mapping[str, str]] = None,
+        key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return GitHub API call results, collected.
 
@@ -1316,7 +1284,11 @@ class GitHubCloud:
             if response.status_code // 100 != 2:
                 raise ApiError(response.text)
             try:
-                collected += response.json()
+                response_data = response.json()
+                if key is not None:
+                    collected += response_data.get(key, [])
+                else:
+                    collected += response.json()
             except Exception as exception:
                 raise ApiError from exception
             if 'next' in response.links:
