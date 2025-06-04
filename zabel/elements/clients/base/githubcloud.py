@@ -1286,8 +1286,17 @@ class GitHubCloud:
 
         A list of dictionaries with the following entries:
 
-        - month: a string (YYYY-MM format)
-        - total_cost_in_cents: an integer
+        - date: a string
+        - product: a string
+        - sku: a string
+        - quantity: an integer
+        - unitType: a string
+        - pricePerUnit: a float
+        - grossAmount: a float
+        - discountAmount: a float
+        - netAmount: a float
+        - organizationName: a string
+        - repositoryName: a string
         """
         ensure_nonemptystring('enterprise_name')
         ensure_noneorinstance('year', int)
@@ -1374,8 +1383,17 @@ class GitHubCloud:
 
         A list of dictionaries with the following entries:
 
-        - month: a string (YYYY-MM format)
-        - total_cost_in_cents: an integer
+        - date: a string
+        - product: a string
+        - sku: a string
+        - quantity: an integer
+        - unitType: a string
+        - pricePerUnit: a float
+        - grossAmount: a float
+        - discountAmount: a float
+        - netAmount: a float
+        - organizationName: a string
+        - repositoryName: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_noneorinstance('year', int)
