@@ -1253,6 +1253,191 @@ class GitHubCloud:
         }
 
     ####################################################################
+    # GitHubCloud billing
+    #
+    # list_enterprise_billing_usage
+    # get_enterprise_billing_actions
+    # list_organization_billing_usage
+    # get_organization_billing_actions
+
+    @api_call
+    def list_enterprise_billing_usage(
+        self,
+        enterprise_name: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        cost_center_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List the billing usage of an enterprise.
+
+        # Required parameters:
+
+        - enterprise_name: a non-empty string
+
+        # Optional parameters:
+
+        - year: an integer, the year to filter by
+        - month: an integer, the month to filter by
+        - day: an integer, the day to filter by
+        - cost_center_id: a string, the cost center ID to filter by
+
+        # Returned value:
+
+        A list of dictionaries with the following entries:
+
+        - month: a string (YYYY-MM format)
+        - total_cost_in_cents: an integer
+        """
+        ensure_nonemptystring('enterprise_name')
+        ensure_noneorinstance('year', int)
+        ensure_noneorinstance('month', int)
+        ensure_noneorinstance('day', int)
+        ensure_noneorinstance('cost_center_id', str)
+
+        params = {}
+        add_if_specified(params, 'year', year)
+        add_if_specified(params, 'month', month)
+        add_if_specified(params, 'day', day)
+        add_if_specified(params, 'cost_center_id', cost_center_id)
+        response = self._get(
+            f'enterprises/{enterprise_name}/settings/billing/usage',
+            params=params,
+        ).json()
+        
+        return response.get('usageItems', [])
+    
+    @api_call
+    def get_enterprise_billing_actions(
+        self,
+        enterprise_name: str,
+    ) -> Dict[str, Any]:
+        """Get the billing actions of an enterprise.
+
+        # Required parameters:
+
+        - enterprise_name: a non-empty string
+
+        # Returned value:
+
+        A dictionary with the following entries:
+
+        - total_minutes_used: an integer
+        - total_paid_minutes_used: an integer
+        - included_minutes: an integer
+        - minutes_used_breakdown: a dictionary with the following entries:
+            - UBUNTU: an integer
+            - WINDOWS: an integer
+            - MACOS: an integer
+            - ubuntu_4_core: an integer
+            - ubuntu_8_core: an integer
+            - ubuntu_16_core: an integer
+            - ubuntu_32_core: an integer
+            - ubuntu_64_core: an integer
+            - windows_4_core: an integer
+            - windows_8_core: an integer
+            - windows_16_core: an integer
+            - windows_32_core: an integer
+            - windows_64_core: an integer
+            - macos_12_core: an integer
+            - total: an integer
+        """
+        ensure_nonemptystring('enterprise_name')
+
+        return self._get(
+            f'enterprises/{enterprise_name}/settings/billing/actions',
+        )
+    
+    @api_call
+    def list_organization_billing_usage(
+        self,
+        organization_name: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        cost_center_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List the billing usage of an organization.
+
+        # Required parameters:
+
+        - organization_name: a non-empty string
+
+        # Optional parameters:
+
+        - year: an integer, the year to filter by
+        - month: an integer, the month to filter by
+        - day: an integer, the day to filter by
+        - cost_center_id: a string, the cost center ID to filter by
+
+        # Returned value:
+
+        A list of dictionaries with the following entries:
+
+        - month: a string (YYYY-MM format)
+        - total_cost_in_cents: an integer
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_noneorinstance('year', int)
+        ensure_noneorinstance('month', int)
+        ensure_noneorinstance('day', int)
+        ensure_noneorinstance('cost_center_id', str)
+
+        params = {}
+        add_if_specified(params, 'year', year)
+        add_if_specified(params, 'month', month)
+        add_if_specified(params, 'day', day)
+        add_if_specified(params, 'cost_center_id', cost_center_id)
+
+        response = self._get(
+            f'orgs/{organization_name}/settings/billing/usage',
+            params=params,
+        ).json()
+        
+        return response.get('usageItems', [])
+    
+    @api_call
+    def get_organization_billing_actions(
+        self,
+        organization_name: str,
+    ) -> Dict[str, Any]:
+        """Get the billing actions of an organization.
+
+        # Required parameters:
+
+        - organization_name: a non-empty string
+
+        # Returned value:
+
+        A dictionary with the following entries:
+
+        - total_minutes_used: an integer
+        - total_paid_minutes_used: an integer
+        - included_minutes: an integer
+        - minutes_used_breakdown: a dictionary with the following entries:
+            - UBUNTU: an integer
+            - WINDOWS: an integer
+            - MACOS: an integer
+            - ubuntu_4_core: an integer
+            - ubuntu_8_core: an integer
+            - ubuntu_16_core: an integer
+            - ubuntu_32_core: an integer
+            - ubuntu_64_core: an integer
+            - windows_4_core: an integer
+            - windows_8_core: an integer
+            - windows_16_core: an integer
+            - windows_32_core: an integer
+            - windows_64_core: an integer
+            - macos_12_core: an integer
+            - total: an integer
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(
+            f'orgs/{organization_name}/settings/billing/actions',
+        )
+
+    ####################################################################
     # GitHubCloud SCIM
     #
     # list_scim_users
