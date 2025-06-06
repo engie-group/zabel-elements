@@ -187,6 +187,7 @@ class GitHubCloud:
     # add_organization_outsidecollaborator
     # remove_organization_outsidecollaborator
     # list_organization_saml_identities
+    # list_orgnization_invitations
 
     @api_call
     def list_organizations(self, enterprise_name: str) -> List[Dict[str, Any]]:
@@ -623,6 +624,38 @@ class GitHubCloud:
             after = page_info['endCursor']
 
         return collected
+
+    @api_call
+    def list_organization_invitations(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return list of pending invitations.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _pending invitations_.  Each pending invitation is a
+        dictionary with the following keys:
+
+        - id: an integer
+        - login: a string
+        - node_id: a string
+        - email: a string
+        - role: a string
+        - created_at: a string
+        - failed_at: a string
+        - failed_reason: a string
+        - inviter: a dictionary
+        - team_count: an integer
+        - invitation_team_url: a string
+        - invitation_source: a dictionary
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(f'orgs/{organization_name}/invitations')
 
     ####################################################################
     # GitHubCloud Copilot
@@ -1276,6 +1309,265 @@ class GitHubCloud:
         }
 
     ####################################################################
+    # GitHubCloud billing
+    #
+    # list_enterprise_billing_usage
+    # get_enterprise_billing_actions
+    # list_organization_billing_usage
+    # get_organization_billing_actions
+
+    @api_call
+    def list_enterprise_billing_usage(
+        self,
+        enterprise_name: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        cost_center_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List the billing usage of an enterprise.
+
+        # Required parameters:
+
+        - enterprise_name: a non-empty string
+
+        # Optional parameters:
+
+        - year: an integer, the year to filter by
+        - month: an integer, the month to filter by
+        - day: an integer, the day to filter by
+        - cost_center_id: a string, the cost center ID to filter by
+
+        # Returned value:
+
+        A list of dictionaries with the following entries:
+
+        - date: a string
+        - product: a string
+        - sku: a string
+        - quantity: an integer
+        - unitType: a string
+        - pricePerUnit: a float
+        - grossAmount: a float
+        - discountAmount: a float
+        - netAmount: a float
+        - organizationName: a string
+        - repositoryName: a string
+        """
+        ensure_nonemptystring('enterprise_name')
+        ensure_noneorinstance('year', int)
+        ensure_noneorinstance('month', int)
+        ensure_noneorinstance('day', int)
+        ensure_noneorinstance('cost_center_id', str)
+
+        params = {}
+        add_if_specified(params, 'year', year)
+        add_if_specified(params, 'month', month)
+        add_if_specified(params, 'day', day)
+        add_if_specified(params, 'cost_center_id', cost_center_id)
+        response = self._get(
+            f'enterprises/{enterprise_name}/settings/billing/usage',
+            params=params,
+        ).json()
+        
+        return response.get('usageItems', [])
+    
+    @api_call
+    def get_enterprise_billing_actions(
+        self,
+        enterprise_name: str,
+    ) -> Dict[str, Any]:
+        """Get the billing actions of an enterprise.
+
+        # Required parameters:
+
+        - enterprise_name: a non-empty string
+
+        # Returned value:
+
+        A dictionary with the following entries:
+
+        - total_minutes_used: an integer
+        - total_paid_minutes_used: an integer
+        - included_minutes: an integer
+        - minutes_used_breakdown: a dictionary with the following entries:
+            - UBUNTU: an integer
+            - WINDOWS: an integer
+            - MACOS: an integer
+            - ubuntu_4_core: an integer
+            - ubuntu_8_core: an integer
+            - ubuntu_16_core: an integer
+            - ubuntu_32_core: an integer
+            - ubuntu_64_core: an integer
+            - windows_4_core: an integer
+            - windows_8_core: an integer
+            - windows_16_core: an integer
+            - windows_32_core: an integer
+            - windows_64_core: an integer
+            - macos_12_core: an integer
+            - total: an integer
+        """
+        ensure_nonemptystring('enterprise_name')
+
+        return self._get(
+            f'enterprises/{enterprise_name}/settings/billing/actions',
+        )
+    
+    @api_call
+    def list_organization_billing_usage(
+        self,
+        organization_name: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        cost_center_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List the billing usage of an organization.
+
+        # Required parameters:
+
+        - organization_name: a non-empty string
+
+        # Optional parameters:
+
+        - year: an integer, the year to filter by
+        - month: an integer, the month to filter by
+        - day: an integer, the day to filter by
+        - cost_center_id: a string, the cost center ID to filter by
+
+        # Returned value:
+
+        A list of dictionaries with the following entries:
+
+        - date: a string
+        - product: a string
+        - sku: a string
+        - quantity: an integer
+        - unitType: a string
+        - pricePerUnit: a float
+        - grossAmount: a float
+        - discountAmount: a float
+        - netAmount: a float
+        - organizationName: a string
+        - repositoryName: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_noneorinstance('year', int)
+        ensure_noneorinstance('month', int)
+        ensure_noneorinstance('day', int)
+        ensure_noneorinstance('cost_center_id', str)
+
+        params = {}
+        add_if_specified(params, 'year', year)
+        add_if_specified(params, 'month', month)
+        add_if_specified(params, 'day', day)
+        add_if_specified(params, 'cost_center_id', cost_center_id)
+
+        response = self._get(
+            f'orgs/{organization_name}/settings/billing/usage',
+            params=params,
+        ).json()
+        
+        return response.get('usageItems', [])
+    
+    @api_call
+    def get_organization_billing_actions(
+        self,
+        organization_name: str,
+    ) -> Dict[str, Any]:
+        """Get the billing actions of an organization.
+
+        # Required parameters:
+
+        - organization_name: a non-empty string
+
+        # Returned value:
+
+        A dictionary with the following entries:
+
+        - total_minutes_used: an integer
+        - total_paid_minutes_used: an integer
+        - included_minutes: an integer
+        - minutes_used_breakdown: a dictionary with the following entries:
+            - UBUNTU: an integer
+            - WINDOWS: an integer
+            - MACOS: an integer
+            - ubuntu_4_core: an integer
+            - ubuntu_8_core: an integer
+            - ubuntu_16_core: an integer
+            - ubuntu_32_core: an integer
+            - ubuntu_64_core: an integer
+            - windows_4_core: an integer
+            - windows_8_core: an integer
+            - windows_16_core: an integer
+            - windows_32_core: an integer
+            - windows_64_core: an integer
+            - macos_12_core: an integer
+            - total: an integer
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._get(
+            f'orgs/{organization_name}/settings/billing/actions',
+        )
+
+    ####################################################################
+    # GitHubCloud SCIM
+    #
+    # list_scim_users
+
+    @api_call
+    def list_scim_users(
+        self,
+        enterprise: str,
+        start_index: int = 1,
+        count: int = 100,
+        filter: str = None,
+    ) -> List[Dict[str, Any]]:
+        """List SCIM users in an enterprise.
+
+        # Required parameters:
+
+        - enterprise: a non-empty string
+
+        # Optional parameters:
+
+        - start_index: an integer, the index of the first user to return
+        - count: an integer, the number of users to return
+        - filter: a string, a filter to apply to the list of users. Possible
+            filters are: userName, externalId, id, displayName.
+
+        # Returned value:
+
+        A list of SCIM users, each represented as a dictionary with the following
+        entries:
+
+        - schemas: a dictionary
+        - active: a boolean
+        - emails: a list of dictionaries, each with 'value' and 'primary' keys
+        - ?externalId: a string
+        - userName: a string
+        - name: a dictionary with 'givenName', 'familyName', and 'formatted' keys
+        - ?displayName: a string
+        - roles: a dictionary
+        """
+        ensure_nonemptystring('enterprise')
+        ensure_instance('start_index', int)
+        ensure_instance('count', int)
+        ensure_noneorinstance('filter', str)
+
+        params = {
+            'startIndex': str(start_index),
+            'count': str(count),
+        }
+        add_if_specified(params, 'filter', filter)
+
+        return self._collect_resources_data(
+            f'scim/v2/enterprises/{enterprise}/Users',
+            params=params,
+        )
+
+    ####################################################################
     # GitHub helpers
     #
     # All helpers are api_call-compatibles (i.e., they can be used as
@@ -1373,3 +1665,35 @@ class GitHubCloud:
                         if result is not None:
                             return result
         return None
+
+    def _collect_resources_data(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        start_index: str = 'startIndex',
+        key: str = 'Resources',
+    ):
+        """Return GitHub API call results, collected.
+
+        The API call is expected to return a list of items under the
+        specified key. If not, an _ApiError_ exception is raised.
+        """
+        api_url = join_url(self.url, api)
+        collected: List[Dict[str, Any]] = []
+        more = True
+        while more:
+            response = self.session().get(api_url, params=params)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                workload = response.json()
+                values = workload[key]
+                collected += values
+            except Exception as exception:
+                raise ApiError from exception
+            more = (
+                workload[start_index] + len(values) < workload['totalResults']
+            )
+            if more:
+                params[start_index] = workload[start_index] + len(values)
+        return collected
