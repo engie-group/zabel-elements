@@ -232,16 +232,13 @@ class GitHubCloud:
         more = True
 
         while more:
-            result = self._post(
-                'graphql',
-                json={
-                    "query": query,
-                    "variables": {
-                        "enterprise": enterprise_name,
-                        'after': after,
-                    },
+            result = self.post_graphql_query(
+                query,
+                {
+                    "enterprise": enterprise_name,
+                    'after': after,
                 },
-            ).json()
+            )
             organizations = result['data']['enterprise']['organizations']
             collected += organizations['nodes']
             page_info = self._get_page_info(organizations)
@@ -304,10 +301,7 @@ class GitHubCloud:
         }
 
         add_if_specified(organization, 'profileName', profile_name)
-        return self._post(
-            'graphql',
-            json={'query': query, 'variables': {'organization': organization}},
-        ).json()
+        return self.post_graphql_query(query, {'organization': organization})
 
     @api_call
     def get_organization(self, organization: str) -> Dict[str, Any]:
@@ -598,13 +592,9 @@ class GitHubCloud:
         more = True
 
         while more:
-            result = self._post(
-                'graphql',
-                json={
-                    "query": query,
-                    "variables": {"login": organization, 'after': after},
-                },
-            ).json()
+            result = self.post_graphql_query(
+                query, {'login': organization, 'after': after}
+            )
             external_identities = result['data']['organization'][
                 'samlIdentityProvider'
             ]['externalIdentities']
@@ -667,15 +657,15 @@ class GitHubCloud:
         self, organization_name
     ) -> List[Dict[str, Any]]:
         """Return the list of all Copilot seat assignments for an organization
-        
+
         # Required parameters
-        
+
         - organization_name: a non-empty string
-        
+
         # Returned value
-        
+
         A list of seat assignments. Each seat is a dictionary with the following entries:
-        
+
         - total_seats: an integer
         - created_at: a string
         - updated_at: a string
@@ -683,12 +673,12 @@ class GitHubCloud:
         - last_activity_at: a string or null
         - last_activity_editor: a string
         - plan_type: a string,
-        
+
         - assignee: a dictionary with user details :
             login: a string
             id: an integer
             node_id: a string
-            avatar_url: a string 
+            avatar_url: a string
             gravatar_id: a string
             url: a string
             html_url: a string
@@ -703,7 +693,7 @@ class GitHubCloud:
             received_events_url: a string
             type: a string
             site_admin: a boolean
-            
+
         - assigning_team: a dictionary with team details :
             -id: an integer
             - node_id: a string
@@ -718,7 +708,7 @@ class GitHubCloud:
             - members_url: a string
             - repositories_url: a string
             - parent: an object or null
-            
+
         """
         ensure_nonemptystring('organization_name')
         return self._collect_data(
@@ -1272,13 +1262,9 @@ class GitHubCloud:
                 createdAt
             }
         }"""
-        result = self._post(
-            'graphql',
-            json={
-                "query": query,
-                "variables": {"enterprise": enterprise_name},
-            },
-        ).json()
+        result = self.post_graphql_query(
+            query, {'enterprise': enterprise_name}
+        )
         return result['data']['enterprise']
 
     @api_call
@@ -1369,9 +1355,9 @@ class GitHubCloud:
             f'enterprises/{enterprise_name}/settings/billing/usage',
             params=params,
         ).json()
-        
+
         return response.get('usageItems', [])
-    
+
     @api_call
     def get_enterprise_billing_actions(
         self,
@@ -1412,7 +1398,7 @@ class GitHubCloud:
         return self._get(
             f'enterprises/{enterprise_name}/settings/billing/actions',
         )
-    
+
     @api_call
     def list_organization_billing_usage(
         self,
@@ -1467,9 +1453,9 @@ class GitHubCloud:
             f'orgs/{organization_name}/settings/billing/usage',
             params=params,
         ).json()
-        
+
         return response.get('usageItems', [])
-    
+
     @api_call
     def get_organization_billing_actions(
         self,
@@ -1566,6 +1552,39 @@ class GitHubCloud:
             f'scim/v2/enterprises/{enterprise}/Users',
             params=params,
         )
+
+    ####################################################################
+    # GitHub GraphQL
+    # post_graphql_query
+    #
+    @api_call
+    def post_graphql_query(
+        self,
+        query: str,
+        variables: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Post a GraphQL query to GitHub.
+
+        # Required parameters:
+
+        - query: a non-empty string, the GraphQL query to execute
+
+        # Optional parameters:
+
+        - variables: a dictionary, the variables to pass to the query
+
+        # Returned value:
+
+        A dictionary with the result of the query.
+        """
+        ensure_nonemptystring('query')
+        ensure_noneorinstance('variables', dict)
+
+        json_data = {'query': query}
+        add_if_specified(json_data, 'variables', variables)
+        
+        response = self._post('graphql', json=json_data)
+        return response.json()
 
     ####################################################################
     # GitHub helpers

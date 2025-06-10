@@ -3805,6 +3805,43 @@ class GitHub:
         return self._get(f'enterprise/stats/{what}')  # type: ignore
 
     ####################################################################
+    # GitHub GraphQL
+    # post_graphql_query
+    @api_call
+    def post_graphql_query(
+        self,
+        query: str,
+        variables: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Post a GraphQL query.
+
+        # Required parameters
+
+        - query: a non-empty string (the GraphQL query)
+
+        # Optional parameters
+
+        - variables: a dictionary or None (None by default)
+        - headers: a dictionary or None (None by default)
+
+        # Returned value
+
+        A dictionary with the result of the query.
+        """
+        ensure_nonemptystring('query')
+        ensure_noneorinstance('variables', dict)
+        ensure_noneorinstance('headers', dict)
+
+        api_url = join_url(self.management_url, 'api/graphql')
+        response = self.session().post(
+            api_url,
+            json={'query': query, 'variables': variables},
+            headers=headers,
+        )
+        return response.json()
+
+    ####################################################################
     # GitHub helpers
     #
     # All helpers are api_call-compatibles (i.e., they can be used as
