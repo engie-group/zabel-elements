@@ -380,6 +380,10 @@ class SonarQube:
         - additional_fields: a string
         - branch: a string
         - pull_request: a string
+
+        # Returned value
+
+        A dictionary.
         """
 
         ensure_instance('component_key', str)
@@ -885,7 +889,7 @@ class SonarQube:
     def search_users(
         self, query: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Return the maching users list.
+        """Return the matching users list.
 
         # Optional parameters
 
@@ -989,11 +993,11 @@ class SonarQube:
     ) -> Dict[str, Any]:
         """Deactivate a user and optionally anonymize it.
 
-        # Required parameter
+        # Required parameters
 
         - login: a non-empty string
 
-        # Optional parameter
+        # Optional parameters
 
         - anonymize: a boolean (False by default)
 
@@ -1022,12 +1026,12 @@ class SonarQube:
     ):
         """Update identity provider
 
-        # Required Parameters
+        # Required parameters
 
         - login: a non-empty string
         - provider: a non-empty string
 
-        # Optional Parameter
+        # Optional parameters
 
         - external_identity: a string or None (None by default)
 
@@ -1081,10 +1085,6 @@ class SonarQube:
         # Required parameters
 
         - name: a string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1219,12 +1219,8 @@ class SonarQube:
         # Required parameters
 
         - profile_name: a non-empty string
-        - language: a non-empty strig
+        - language: a non-empty string
         - project_key: a non-empty string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1256,10 +1252,6 @@ class SonarQube:
         - profile_name: a non-empty string
         - language: a non-empty string
         - parent_name: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('profile_name')
         ensure_nonemptystring('language')
@@ -1288,10 +1280,6 @@ class SonarQube:
         - profile_name: a non-empty string
         - language: a non-empty string, the quality profile language
         - login: a non-empty string, the user login to add
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('profile_name')
         ensure_nonemptystring('language')
@@ -1319,10 +1307,6 @@ class SonarQube:
         - profile_name: a non-empty string
         - language: a non-empty string, the quality profile language
         - group: a non-empty string, the user group to add
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('profile_name')
         ensure_nonemptystring('language')
@@ -1373,14 +1357,12 @@ class SonarQube:
     def revoke_token(self, login: str, name: str) -> None:
         """Revoke token.
 
+        It is not an error to revoke a token that does not exist.
+
         # Required parameters
 
         - login: a non-empty string
         - name: a non-empty string
-
-        # Returned value
-
-        None (even if there is no matching token or login).
         """
         ensure_nonemptystring('login')
         ensure_nonemptystring('name')
@@ -1432,7 +1414,7 @@ class SonarQube:
 
         - analyze_before: a string (ISO Timestamp representation) or
           None (None by default)
-        - on_provisioned_only: a bolean (False by default)
+        - on_provisioned_only: a boolean (False by default)
         - projects: a string (comma-separated list of project keys) or
           None (None by default)
         - qualifiers: a string (comma-separated list, `'TRK'` by
@@ -1472,10 +1454,6 @@ class SonarQube:
         # Required parameters
 
         - `project_key` : a string
-
-        # Returned value
-
-        None
         """
         ensure_nonemptystring(project_key)
         return self._post('projects/delete', {'project': project_key})
@@ -1689,10 +1667,6 @@ class SonarQube:
         # Optional parameters
 
         - login: a non-empty string or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_onlyone('group_id', 'group_name')
         ensure_noneornonemptystring('login')
@@ -1733,10 +1707,6 @@ class SonarQube:
         # Optional parameters
 
         - login: a non-empty string or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_onlyone('group_id', 'group_name')
         ensure_noneornonemptystring('login')
@@ -1759,10 +1729,6 @@ class SonarQube:
         # Required parameters
 
         - `group_id` OR `group_name`: an integer or a string
-
-        # Returned value
-
-        None.
         """
         ensure_onlyone('group_id', 'group_name')
 
@@ -2040,10 +2006,6 @@ class SonarQube:
         # Required parameters
 
         - key: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('key')
 
@@ -2057,10 +2019,6 @@ class SonarQube:
         # Required parameters
 
         - key: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('key')
 

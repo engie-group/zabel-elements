@@ -14,7 +14,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from base64 import b64decode, b64encode
 
@@ -60,27 +60,28 @@ class GitHubCloud(Base):
     @api_call
     def create_enterprise_organization(
         self,
-        organization: str,
+        organization_name: str,
         enterprise_name: str,
         admins: List[str],
         profile_name: Optional[str] = '',
-    ):
+    ) -> Dict[str, Any]:
         """Create an organization in an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: The name of the organization
-        - enterprise_name: The name of the enterprise
-        - admins: List of admin usernames
+        - organization_name: the name of the organization
+        - enterprise_name: the name of the enterprise
+        - admins: a list of admin usernames
 
-        # Optional parameters:
+        # Optional parameters
 
-        - profile_name: The profile name
+        - profile_name: The profile name, `''` by default
 
+        # Returned value
 
+        An _organization_.  An organization is a dictionary.
         """
-
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('enterprise_name')
         ensure_instance('admins', list)
 
@@ -88,7 +89,7 @@ class GitHubCloud(Base):
         if not enterprise:
             raise ValueError(f'Enterprise {enterprise_name} not found')
         return self.create_organization(
-            organization,
+            organization_name,
             enterprise['id'],
             admins,
             enterprise['billingEmail'],
@@ -103,7 +104,7 @@ class GitHubCloud(Base):
     @api_call
     def create_or_update_organization_secret(
         self,
-        organization: str,
+        organization_name: str,
         secret_name: str,
         secret_value: str,
         visibility: str = 'all',
@@ -113,13 +114,14 @@ class GitHubCloud(Base):
 
         # Required parameters
 
-        - organizatio: a non-empty string
+        - organization_name: a non-empty string
         - secret_name: a non-empty string
         - secret_value: a non-empty string
 
         # Optional parameters
 
-        - visibility: a string, one of 'all', 'private', or 'selected' ('all' by default)
+        - visibility: a string, one of 'all', 'private', or 'selected'
+          ('all' by default)
         - repositories_ids: a list of integers (None by default)
 
         # Returned value
@@ -132,14 +134,14 @@ class GitHubCloud(Base):
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('secret_name')
         ensure_nonemptystring('secret_value')
         ensure_in('visibility', ('all', 'private', 'selected'))
         if visibility == 'selected':
             ensure_instance('repositories_ids', list)
 
-        orga_key = self.get_organization_public_key(organization)
+        orga_key = self.get_organization_public_key(organization_name)
 
         public_key_bytes = b64decode(orga_key['key'])
 
@@ -158,7 +160,7 @@ class GitHubCloud(Base):
             data['selected_repository_ids'] = repositories_ids
 
         response = self._put(
-            f'orgs/{organization}/actions/secrets/{secret_name}',
+            f'orgs/{organization_name}/actions/secrets/{secret_name}',
             json=data,
         )
         return response.status_code in [201, 204]
