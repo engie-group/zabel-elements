@@ -188,10 +188,6 @@ class GitHub(Base):
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - branch: a non-empty string
-
-        # Returned value
-
-        No content.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')

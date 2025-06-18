@@ -94,10 +94,6 @@ class Kubernetes(Base):
         Other keywords parameters can be specified.  They will be passed
         as-is to the Kubernetes API.
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         If at least one Kubernetes operation fails, a _KubernetesError_
@@ -137,10 +133,6 @@ class Kubernetes(Base):
 
         Other keywords parameters can be specified.  They will be passed
         as-is to the Kubernetes API.
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 

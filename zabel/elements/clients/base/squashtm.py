@@ -101,7 +101,7 @@ class SquashTM:
 
         - url: a non-empty string
         - user: __deprecated__ a string or None (None by default)
-        - token: __deprecated__ a string or Noen (None by default)
+        - token: __deprecated__ a string or None (None by default)
         - basic_auth: a tuple of two strings (user, token) or None
         - bearer_auth: a string or None
 
@@ -213,7 +213,7 @@ class SquashTM:
         # Returned value
 
         A dictionary.  Please refer to #get_project() for more
-        informations.
+        information.
         """
         ensure_nonemptystring('name')
         ensure_instance('label', str)
@@ -332,13 +332,13 @@ class SquashTM:
 
         # Required parameters
 
-        - name: a non-empt string
+        - name: a non-empty string
         - description: a non-empty string
 
         # Returned value
 
         A dictionary.  Please refer to #get_team() for more
-        informations.
+        information.
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('description')
@@ -354,10 +354,6 @@ class SquashTM:
         # Required parameters
 
         - team_id: an integer
-
-        # Returned value
-
-        None.
         """
         ensure_instance('team_id', int)
 
@@ -374,7 +370,7 @@ class SquashTM:
         # Returned value
 
         A list of _users_.  Please refer to #get_user() for more
-        informations.
+        information.
         """
         ensure_instance('team_id', int)
 
@@ -393,10 +389,6 @@ class SquashTM:
 
         - team_id: an integer
         - members_ids: a list of integers
-
-        # Returned value
-
-        None.
         """
         ensure_instance('team_id', int)
         ensure_instance('members_ids', list)
@@ -419,10 +411,6 @@ class SquashTM:
 
         - team_id: an integer
         - members_ids: a list of integers
-
-        # Returned value
-
-        None.
         """
         ensure_instance('team_id', int)
         ensure_instance('members_ids', list)
@@ -521,7 +509,7 @@ class SquashTM:
         # Returned value
 
         A dictionary.  Please refer to #get_user() for more
-        informations.
+        information.
         """
         ensure_nonemptystring('login')
         ensure_nonemptystring('password')
@@ -549,10 +537,6 @@ class SquashTM:
         # Required parameters
 
         - user_id: an integer
-
-        # Returned value
-
-        None.
         """
         ensure_instance('user_id', int)
 
@@ -585,7 +569,7 @@ class SquashTM:
         # Returned value
 
         A dictionary.  Please refer to #get_user() for more
-        informations.
+        information.
         """
         ensure_instance('user_id', int)
         ensure_noneornonemptystring('first_name')
@@ -644,9 +628,9 @@ class SquashTM:
         - reference: a string
         - description: a string
         - status: a string
-        - project: a dictionnary
+        - project: a dictionary
         - path: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - created_by: a string
         - created_on: a string
         - last_modified_by: a string
@@ -656,7 +640,7 @@ class SquashTM:
         - actual_start_auto: boolean
         - actual_end_auto: boolean
         - custom_fields: a list
-        - iterations: a list of dictionnaries
+        - iterations: a list of dictionaries
         - attachments: a list
         - _links: a dictionary
         - iterations: a dictionary
@@ -691,7 +675,7 @@ class SquashTM:
 
         # Returned value
 
-        A list of _testplan items_.  Each testplan item is a dictionary
+        A list of _testplan items_.  Each test-plan item is a dictionary
         with at least the two following entries:
 
         - id: an integer
@@ -739,12 +723,12 @@ class SquashTM:
         - _type: a string
         - id: an integer
         - name: a string
-        - project: a dictionnary
+        - project: a dictionary
         - path: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - mode: a string
-        - current_version: a dictionnary
-        - versions: a list of dictionnaries
+        - current_version: a dictionary
+        - versions: a list of dictionaries
         - _links: a dictionary
         """
         ensure_instance('requirement_id', int)
@@ -788,21 +772,21 @@ class SquashTM:
         - name: a string
         - reference: a string
         - kind:a string
-        - project: a dictionnary
+        - project: a dictionary
         - path: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - created_by: a string
         - created_on: a string
         - last_modified_by: a string
         - last_modified_on: a string
         - importance: a string
         - status: a string
-        - nature: a dictionnary
-        - type: a dictionnary
+        - nature: a dictionary
+        - type: a dictionary
         - prerequisite: a string
         - description: a string
-        - custom_fields: a list of dictionnaries
-        - steps: a list of dictionnaries
+        - custom_fields: a list of dictionaries
+        - steps: a list of dictionaries
         - parameters: a list
         - datasets: a list
         - language: a string
@@ -857,16 +841,16 @@ class SquashTM:
         - id: an integer
         - name: a string
         - description: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - created_by: a string
         - created_on: a string
         - last_modified_by: a string
         - last_modified_on: a string
-        - project: a dictionnary
+        - project: a dictionary
         - path: a string
         - custom_fields: a dictionary
-        - test_plan: a list of dictionnaries
-        - attachments: a dictionnary
+        - test_plan: a list of dictionaries
+        - attachments: a dictionary
         - _links: a dictionary
         """
         ensure_instance('testsuite_id', int)
@@ -892,11 +876,11 @@ class SquashTM:
 
         - _type: a string
         - id: an integer
-        - test_case: a dictionnary
+        - test_case: a dictionary
         - expected_result: a string
         - index: a string
         - custom_fields: a list
-        - attachments: a dictionnary
+        - attachments: a dictionary
         - _links: a dictionary
         """
         ensure_instance('teststep_id', int)
@@ -939,9 +923,9 @@ class SquashTM:
         - _type: a string
         - id: an integer
         - name: a string
-        - project: a dictionnary
+        - project: a dictionary
         - path: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - created_by: a string
         - created_on: a string
         - last_modified_by: a string
@@ -1006,20 +990,20 @@ class SquashTM:
         - execution_mode: a string
         - reference: a string
         - dataset_label: a string
-        - execution_steps: a list of dictionnaries
+        - execution_steps: a list of dictionaries
         - comment: a string
         - prerequisite: a string
         - description: a string
         - importance: a string
-        - nature: a dictionnary
-        - type: a dictionnary
+        - nature: a dictionary
+        - type: a dictionary
         - test_case_status: a string
-        - test_plan_item: a dictionnary
+        - test_plan_item: a dictionary
         - custom_fields: a list
         - test_case_custom_fields: a list
         - language: a string
         - script_name: a string
-        - attachments: a dictionnary
+        - attachments: a dictionary
         - _links: a dictionary
         """
         ensure_instance('execution_id', int)
@@ -1071,11 +1055,11 @@ class SquashTM:
         - last_executed_by: a string
         - last_executed_on: a string
         - execution_step_order: an integer
-        - referenced_test_step: a dictionnary
-        - execution: a dictionnary
+        - referenced_test_step: a dictionary
+        - execution: a dictionary
         - custom_fields: a list
         - test_step_custom_fields: a string
-        - attachments: a dictionnary
+        - attachments: a dictionary
         - _links: a dictionary
         """
         ensure_instance('executionstep_id', int)
@@ -1144,7 +1128,7 @@ class SquashTM:
         - name: a string
         - reference: a string
         - description: a string
-        - parent: a dictionnary
+        - parent: a dictionary
         - created_by: a string
         - created_on: a string
         - last_modified_by: a string
@@ -1153,8 +1137,8 @@ class SquashTM:
         - actual_end_date: a string
         - actual_start_auto: a string
         - actual_end_auto: a string
-        - custom_fields: a list of dictionnaries
-        - test_suites: a list of dictionnaries
+        - custom_fields: a list of dictionaries
+        - test_suites: a list of dictionaries
         - attachments: a string
         - _links: a dictionary
 

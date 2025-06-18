@@ -280,7 +280,7 @@ class GitHub:
         # Optional parameters
 
         - email: a string or None (None by default)
-        - suspended: a boolean (True by default)
+        - suspended: a boolean (False by default)
 
         # Returned value
 
@@ -314,7 +314,7 @@ class GitHub:
         current_username: str,
         new_username: str,
     ) -> Dict[str, Any]:
-        """Update the username for a user on Github Enterprise.
+        """Update the username for a user on GitHub Enterprise.
 
         # Required parameters
 
@@ -344,15 +344,11 @@ class GitHub:
 
     @api_call
     def delete_user(self, username: str) -> None:
-        """Delete a user from Github Entreprise
+        """Delete a user from GitHub Enterprise
 
         # Required parameters
 
         - username: a string
-
-        # Returned value
-
-        - None
         """
 
         ensure_nonemptystring('username')
@@ -945,7 +941,7 @@ class GitHub:
         - organization_name: a non-empty string
         - user: a non-empty string, the login of the user
 
-        # Returned Value
+        # Returned value
 
         A boolean.  True if the user has been removed from the
         organization.
@@ -1162,24 +1158,24 @@ class GitHub:
     def list_repository_workflows(
         self,
         organization_name: str,
-        repo_name: str,
+        repository_name: str,
     ) -> List[Dict[str, Any]]:
         """Return the list of workflows for a repository.
 
         # Required parameters
 
         - organization_name: a non-empty string
-        - repo_name: a non-empty string
+        - repository_name: a non-empty string
 
         # Returned value
 
         A list of _workflows_.  Each workflow is a dictionary.
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('repository_name')
 
         response = self._get(
-            f'repos/{organization_name}/{repo_name}/actions/workflows'
+            f'repos/{organization_name}/{repository_name}/actions/workflows'
         ).json()
         return response['workflows']
 
@@ -1187,7 +1183,7 @@ class GitHub:
     def create_workflow_dispatch_event(
         self,
         organization_name: str,
-        repo_name: str,
+        repository_name: str,
         workflow_id: str,
         ref: str,
         inputs: Optional[Dict[str, Any]] = None,
@@ -1197,7 +1193,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - repo_name: a non-empty string
+        - repository_name: a non-empty string
         - workflow_id: a non-empty string (or the workflow file name)
         - ref: a non-empty string
 
@@ -1210,7 +1206,7 @@ class GitHub:
         A boolean.  True if the workflow dispatch event was created.
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('repository_name')
         ensure_nonemptystring('workflow_id')
         ensure_nonemptystring('ref')
         ensure_noneorinstance('inputs', dict)
@@ -1219,7 +1215,7 @@ class GitHub:
         add_if_specified(data, 'inputs', inputs)
         return (
             self._post(
-                f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}/dispatches',
+                f'repos/{organization_name}/{repository_name}/actions/workflows/{workflow_id}/dispatches',
                 json=data,
             ).status_code
             == 204
@@ -1229,7 +1225,7 @@ class GitHub:
     def get_workflow(
         self,
         organization_name: str,
-        repo_name: str,
+        repository_name: str,
         workflow_id: str,
     ) -> Dict[str, Any]:
         """Return the workflow details.
@@ -1237,7 +1233,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - repo_name: a non-empty string
+        - repository_name: a non-empty string
         - workflow_id: a non-empty string
 
         # Returned value
@@ -1256,18 +1252,18 @@ class GitHub:
         - badge_url: a string
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('repository_name')
         ensure_nonemptystring('workflow_id')
 
         return self._get(
-            f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}'
+            f'repos/{organization_name}/{repository_name}/actions/workflows/{workflow_id}'
         )
 
     @api_call
     def list_workflow_runs(
         self,
         organization_name: str,
-        repo_name: str,
+        repository_name: str,
         workflow_id: str,
         actor: Optional[str] = None,
         branch: Optional[str] = None,
@@ -1283,7 +1279,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - repo_name: a non-empty string
+        - repository_name: a non-empty string
         - workflow_id: a non-empty string
         - actor: a string or None (None by default)
         - branch: a string or None (None by default)
@@ -1303,7 +1299,7 @@ class GitHub:
         """
 
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('repository_name')
         ensure_nonemptystring('workflow_id')
         ensure_noneorinstance('actor', str)
         ensure_noneorinstance('branch', str)
@@ -1327,7 +1323,7 @@ class GitHub:
         add_if_specified(params, 'head_sha', head_sha)
 
         response = self._get(
-            f'repos/{organization_name}/{repo_name}/actions/workflows/{workflow_id}/runs',
+            f'repos/{organization_name}/{repository_name}/actions/workflows/{workflow_id}/runs',
             params=params,
         ).json()
         return response['workflow_runs']
@@ -1336,7 +1332,7 @@ class GitHub:
     def get_workflow_run(
         self,
         organization_name: str,
-        repo_name: str,
+        repository_name: str,
         run_id: int,
     ) -> Dict[str, Any]:
         """Return the workflow run details.
@@ -1344,7 +1340,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - repo_name: a non-empty string
+        - repository_name: a non-empty string
         - run_id: an integer
 
         # Returned value
@@ -1386,11 +1382,11 @@ class GitHub:
         - head_repository: a dictionary
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repo_name')
+        ensure_nonemptystring('repository_name')
         ensure_instance('run_id', int)
 
         return self._get(
-            f'repos/{organization_name}/{repo_name}/actions/runs/{run_id}'
+            f'repos/{organization_name}/{repository_name}/actions/runs/{run_id}'
         )
 
     ####################################################################
@@ -1972,7 +1968,7 @@ class GitHub:
         A list of lists. Each item in the list is a list with the
         following three values, in order:
 
-        - week: an integer (a unix timestamp)
+        - week: an integer (a Unix timestamp)
         - additions: an integer
         - deletions: an integer
         """
@@ -2013,7 +2009,7 @@ class GitHub:
 
         Each item in `weeks` has the following entries:
 
-        - w: a string (a unix timestamp)
+        - w: a string (a Unix timestamp)
         - a: an integer (number of additions)
         - d: an integer (number of deletions)
         - c: an integer (number of commits)
@@ -2054,7 +2050,7 @@ class GitHub:
         - until: a non-empty string (an ISO 8601 timestamp) or None
           (None by default)
 
-        # Return value
+        # Returned value
 
         A list of _commits_.  Each commit is a dictionary.
         """
@@ -2372,7 +2368,7 @@ class GitHub:
         - repository_name: a non-empty string
         - path: a string
         - message: a string
-        - content: a string (Base64-encoded)
+        - content: a string (base64-encoded)
 
         # Optional parameters
 
@@ -2440,7 +2436,7 @@ class GitHub:
         - repository_name: a non-empty string
         - path: a string
         - message: a string
-        - content: a string (Base64-encoded)
+        - content: a string (base64-encoded)
         - sha: a non-empty string
 
         # Optional parameters
@@ -2532,10 +2528,7 @@ class GitHub:
 
     @api_call
     def get_branch(
-        self,
-        organization_name: str,
-        repository_name: str,
-        branch_name: str,
+        self, organization_name: str, repository_name: str, branch_name: str
     ) -> Dict[str, Any]:
         """Get branch.
 
@@ -2580,10 +2573,7 @@ class GitHub:
 
     @api_call
     def list_pullrequests(
-        self,
-        organization_name: str,
-        repository_name: str,
-        state: str = 'all',
+        self, organization_name: str, repository_name: str, state: str = 'all'
     ) -> List[Dict[str, Any]]:
         """List pull requests.
 
@@ -2914,10 +2904,7 @@ class GitHub:
 
     @api_call
     def delete_repository_reference(
-        self,
-        organization_name: str,
-        repository_name: str,
-        ref: str,
+        self, organization_name: str, repository_name: str, ref: str
     ) -> None:
         """Delete a reference.
 
@@ -2927,10 +2914,6 @@ class GitHub:
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
           with `refs` and having at least two slashed)
-
-        # Returned value
-
-        No content.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -3004,10 +2987,7 @@ class GitHub:
 
     @api_call
     def get_repository_reference(
-        self,
-        organization_name: str,
-        repository_name: str,
-        ref: str,
+        self, organization_name: str, repository_name: str, ref: str
     ) -> Dict[str, Any]:
         """Get a repository reference.
 
@@ -3047,10 +3027,7 @@ class GitHub:
 
     @api_call
     def get_repository_references(
-        self,
-        organization_name: str,
-        repository_name: str,
-        ref: str,
+        self, organization_name: str, repository_name: str, ref: str
     ) -> Dict[str, Any]:
         """Get a repository references.
 
@@ -3124,7 +3101,7 @@ class GitHub:
         - url: a string
 
         If `truncated` is `True`, the number of items in the `tree` list
-        exceeds githubs' internal limits (100k entries with a maximum
+        exceeds GitHubs' internal limits (100k entries with a maximum
         size of 7 MB).  If you need to fetch more items, use the
         non-recursive method of fetching trees, and fetch one sub-tree
         at a time.
@@ -3164,7 +3141,7 @@ class GitHub:
     def list_hooks(
         self, organization_name: str, repository_name: str
     ) -> List[Dict[str, Any]]:
-        """List webhooks for repository.
+        """List web hooks for repository.
 
         # Required parameters
 
@@ -3211,7 +3188,7 @@ class GitHub:
 
     @api_call
     def list_global_hooks(self) -> List[Dict[str, Any]]:
-        """List global webhooks.
+        """List global web hooks.
 
         # Returned value
 
@@ -3242,7 +3219,7 @@ class GitHub:
     def list_organization_hooks(
         self, organization_name: str
     ) -> List[Dict[str, Any]]:
-        """List organization webhooks.
+        """List organization web hooks.
 
         # Required parameters
 
@@ -3280,7 +3257,7 @@ class GitHub:
     def get_organization_hook(
         self, organization_name: str, hook_id: int
     ) -> Dict[str, Any]:
-        """Return an organization webhook.
+        """Return an organization web hook.
 
         # Required parameters
 
@@ -3307,7 +3284,7 @@ class GitHub:
         events: Optional[List[str]] = None,
         active: bool = True,
     ) -> Dict[str, Any]:
-        """Create a webhook.
+        """Create a web hook.
 
         # Required parameters
 
@@ -3369,7 +3346,7 @@ class GitHub:
         events: Optional[List[str]] = None,
         active: bool = True,
     ) -> Dict[str, Any]:
-        """Create a global webhook.
+        """Create a global web hook.
 
         # Required parameters
 
@@ -3427,7 +3404,7 @@ class GitHub:
         events: Optional[List[str]] = None,
         active: bool = True,
     ) -> Dict[str, Any]:
-        """Create an organization webhook.
+        """Create an organization web hook.
 
         # Required parameters
 
@@ -3481,7 +3458,7 @@ class GitHub:
     def delete_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
-        """Delete a webhook.
+        """Delete a web hook.
 
         # Required parameters
 
@@ -3504,7 +3481,7 @@ class GitHub:
 
     @api_call
     def delete_global_hook(self, hook_id: int) -> bool:
-        """Delete a global webhook.
+        """Delete a global web hook.
 
         # Required parameters
 
@@ -3523,7 +3500,7 @@ class GitHub:
     def delete_organization_hook(
         self, organization_name: str, hook_id: int
     ) -> bool:
-        """Delete an organization webhook.
+        """Delete an organization web hook.
 
         # Required parameters
 
@@ -3544,7 +3521,7 @@ class GitHub:
     def ping_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
-        """Ping a webhook.
+        """Ping a web hook.
 
         # Required parameters
 
@@ -3567,7 +3544,7 @@ class GitHub:
 
     @api_call
     def ping_global_hook(self, hook_id: int) -> bool:
-        """Ping a global webhook.
+        """Ping a global web hook.
 
         # Required parameters
 
@@ -3586,7 +3563,7 @@ class GitHub:
     def ping_organization_hook(
         self, organization_name: str, hook_id: int
     ) -> bool:
-        """Ping an organization webhook.
+        """Ping an organization web hook.
 
         # Required parameters
 
@@ -3623,6 +3600,8 @@ class GitHub:
         - total_seats_consumed: an integer
         - total_seats_purchased: an integer
         """
+        ensure_nonemptystring('enterprise_name')
+
         response = self.session().get(
             join_url(
                 self.url,
@@ -3806,7 +3785,9 @@ class GitHub:
 
     ####################################################################
     # GitHub GraphQL
+    #
     # post_graphql_query
+
     @api_call
     def post_graphql_query(
         self,

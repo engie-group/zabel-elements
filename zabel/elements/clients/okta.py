@@ -62,7 +62,7 @@ class Okta(Base):
 
     """
 
-    def add_users_to_group(self, group: str, users: Iterable[str]):
+    def add_users_to_group(self, group: str, users: Iterable[str]) -> None:
         """Add users to Okta group.
 
         This method retrieve Okta groupId and userIds and after this
@@ -94,7 +94,9 @@ class Okta(Base):
             )
         )
 
-    def remove_users_from_group(self, group: str, users: Iterable[str]):
+    def remove_users_from_group(
+        self, group: str, users: Iterable[str]
+    ) -> None:
         """Remove users from Okta group.
 
         This method retrieve Okta groupId and userIds and after this
@@ -103,8 +105,7 @@ class Okta(Base):
         # Required parameters
 
         - group: a non-empty string
-        - users: an list of strings
-
+        - users: a list of strings
         """
         okta_group = self.get_group_by_name(group)
         okta_group_id = okta_group['id']
@@ -138,27 +139,29 @@ class Okta(Base):
 
         # Returned value
 
-        Return a list of users. Refer to #get_user_info() for more information.
+        A list of _users_.  Refer to #get_user_info() for more
+        information.
         """
 
         okta_group = self.get_group_by_name(group_name)
 
         return self.list_users_by_group_id(okta_group['id'])
 
-    def list_user_groups(self, user_login: str):
+    def list_user_groups(self, user_login: str) -> List[Dict[str, Any]]:
         """List user groups by login
 
         # Required parameters
 
         - user_login: a non-empty string
 
-        # Raised exceptions
-
-        Raises an _ApiError_ exception if error is throw by Okta.
-
         # Returned value
 
-        Return a list of groups. Refer to #get_group_by_name() for more information.
+        A list of _groups_.  Refer to #get_group_by_name() for more
+        information.
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if an error is throw by Okta.
         """
         try:
             user = self.get_user_info(user_login)
