@@ -458,6 +458,27 @@ class GitHubCloud:
         )
 
     @api_call
+    def list_organization_outside_collaborators(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return the list of organization outside collaborators.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _members_ (outside collaborators).  Each member is a
+        dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(
+            f'orgs/{organization_name}/outside_collaborators'
+        )
+
+    @api_call
     def add_organization_membership(
         self, organization: str, username: str, role: Optional[str] = 'member'
     ):
@@ -1297,10 +1318,53 @@ class GitHubCloud:
     ####################################################################
     # GitHubCloud billing
     #
+    # list_consumed_licenses
     # list_enterprise_billing_usage
     # get_enterprise_billing_actions
     # list_organization_billing_usage
     # get_organization_billing_actions
+
+    @api_call
+    def list_consumed_licenses_users(
+        self, enterprise_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return consumed licenses.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries, one per user.  Each dictionary has the
+        following entries:
+
+        - github_com_login: a string
+        - github_com_name: a string
+        - enterprise_server_user_ids: a list of strings
+        - github_com_user: a boolean
+        - enterprise_server_user: a boolean
+        - visual_studio_subscription_user: a boolean
+        - license_type: a string
+        - github_com_profile: a string
+        - github_com_member_roles: a list of strings
+        - github_com_enterprise_roles: a list of strings
+        - github_com_verified_domain_emails: a list of strings
+        - github_com_saml_name_id: a string
+        - github_com_orgs_with_pending_invites: a list of strings
+        - github_com_two_factor_auth: a boolean
+        - github_com_two_factor_auth_required_by_date: a datetime as a
+          string
+        - enterprise_server_primary_emails: a list of stringsF
+        - visual_studio_license_status: a string
+        - visual_studio_subscription_email: a string
+        - total_user_accounts: an integer
+        """
+        ensure_nonemptystring('enterprise_name')
+
+        return self._collect_data(
+            f'enterprises/{enterprise_name}/consumed-licenses', key='users'
+        )
 
     @api_call
     def list_enterprise_billing_usage(
@@ -1582,7 +1646,7 @@ class GitHubCloud:
 
         json_data = {'query': query}
         add_if_specified(json_data, 'variables', variables)
-        
+
         response = self._post('graphql', json=json_data)
         return response.json()
 
