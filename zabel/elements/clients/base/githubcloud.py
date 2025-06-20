@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Martin Lafaix (martin.lafaix@external.engie.com)
+# Copyright (c) 2024 Martin Lafaix (martin.lafaix@external.engie.com)
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
@@ -14,7 +14,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Dict, List, Optional, Mapping, Union, Any
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import requests
 
@@ -60,10 +60,10 @@ class GitHubCloud:
     ```
     """
 
-    def __init__(self, url: str, bearer_auth: str):
+    def __init__(self, url: str, bearer_auth: str) -> None:
         """Create a GitHubCloud instance object.
 
-        # Required parameters:
+        # Required parameters
 
         - url: The URL of the GitHub Cloud instance
         - bearer_auth: The bearer token to authenticate the user
@@ -193,18 +193,17 @@ class GitHubCloud:
     def list_organizations(self, enterprise_name: str) -> List[Dict[str, Any]]:
         """List the organizations in an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
         - enterprise_name: a string
 
-        # Return value:
+        # Returned value
 
-        - a list of organizations
+        A list of _organizations_.
         """
-
         ensure_nonemptystring('enterprise_name')
 
-        query = """
+        query = '''
         query($enterprise: String!, $after: String) {
             enterprise(slug: $enterprise) {
                 organizations(first: 100, after: $after) {
@@ -225,7 +224,7 @@ class GitHubCloud:
                 }
             }
         }
-        """
+        '''
 
         after = None
         collected = []
@@ -250,36 +249,35 @@ class GitHubCloud:
     @api_call
     def create_organization(
         self,
-        organization: str,
+        organization_name: str,
         enterprise_id: str,
         admins: List[str],
         billing_email: str,
-        profile_name: Optional[str] = '',
-    ):
+        profile_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Create an organization in an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
         - enterprise_id: a non-empty string
         - admins: a list of strings
         - billing_email: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
-        - profile_name: a string
+        - profile_name: a string or None (None by default)
 
         # Returned value
 
         An _organization_. An organization is a dictionary.
-
         """
 
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('enterprise_id')
         ensure_instance('admins', list)
         ensure_nonemptystring('billing_email')
-        ensure_instance('profile_name', str)
+        ensure_noneorinstance('profile_name', str)
 
         query = '''
         mutation($organization:CreateEnterpriseOrganizationInput!) {
@@ -297,19 +295,19 @@ class GitHubCloud:
             'adminLogins': admins,
             'billingEmail': billing_email,
             'enterpriseId': enterprise_id,
-            'login': organization,
+            'login': organization_name,
         }
 
         add_if_specified(organization, 'profileName', profile_name)
         return self.post_graphql_query(query, {'organization': organization})
 
     @api_call
-    def get_organization(self, organization: str) -> Dict[str, Any]:
+    def get_organization(self, organization_name: str) -> Dict[str, Any]:
         """Return extended information on organization.
 
         # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
         # Returned value
 
@@ -375,9 +373,9 @@ class GitHubCloud:
         - secret_scanning_push_protection_custom_link_enabled
         - secret_scanning_validity_checks_enabled_for_new_repositories
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
 
-        return self._get(f'orgs/{organization}')  # type: ignore
+        return self._get(f'orgs/{organization_name}')  # type: ignore
 
     @api_call
     def get_organization_membership(
@@ -416,45 +414,46 @@ class GitHubCloud:
 
     @api_call
     def list_organization_repositories(
-        self, organization: str
+        self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """List the repositories in an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
-        - a list of repositories
+        A list of _repositories_.
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
 
-        return self._collect_data(f'orgs/{organization}/repos')
+        return self._collect_data(f'orgs/{organization_name}/repos')
 
     @api_call
     def list_organization_members(
-        self, organization: str, role='all'
+        self, organization_name: str, role: str = 'all'
     ) -> List[Dict[str, Any]]:
         """List the members of an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
         # Optional parameters
 
         - role: a non-empty string, one of 'all', 'member', or 'admin'
           ('all' by default)
 
-        # Returned value:
+        # Returned value
 
-        - a list of members
+        A list of _members_.  Members are dictionaries.
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_in('role', ('all', 'member', 'admin'))
+
         return self._collect_data(
-            f'orgs/{organization}/members', params={'role': role}
+            f'orgs/{organization_name}/members', params={'role': role}
         )
 
     @api_call
@@ -480,54 +479,65 @@ class GitHubCloud:
 
     @api_call
     def add_organization_membership(
-        self, organization: str, username: str, role: Optional[str] = 'member'
-    ):
+        self,
+        organization_name: str,
+        user_name: str,
+        role: Optional[str] = 'member',
+    ) -> None:
         """Add a user to an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - username: a non-empty string
+        - organization_name: a non-empty string
+        - user_name: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
-        - role: a string, either 'member' or 'admin'
-
+        - role: a string, either 'member' or 'admin' ('member' by
+          default)
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('username')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('user_name')
         ensure_in('role', ['member', 'admin'])
 
         return self._put(
-            f'orgs/{organization}/memberships/{username}', json={'role': role}
+            f'orgs/{organization_name}/memberships/{user_name}',
+            json={'role': role},
         )
 
     @api_call
-    def rm_organization_membership(self, organization: str, username: str):
+    def rm_organization_membership(
+        self, organization_name: str, user_name: str
+    ) -> bool:
         """Remove a user from an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - username: a non-empty string
+        - organization_name: a non-empty string
+        - user_name: a non-empty string
 
+        # Returned value
+
+        A boolean.  True if the user was removed from the organization.
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('username')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('user_name')
 
-        result = self._delete(f'orgs/{organization}/memberships/{username}')
+        result = self._delete(
+            f'orgs/{organization_name}/memberships/{user_name}'
+        )
         return (result.status_code // 100) == 2
 
     @api_call
     def add_organization_outsidecollaborator(
-        self, organization_name: str, user: str
+        self, organization_name: str, user_name: str
     ) -> bool:
         """Add outside collaborator to organization.
 
         # Required parameters
 
         - organization_name: a non-empty string
-        - user: a non-empty string, the login of the user
+        - user_name: a non-empty string, the login of the user
 
         # Returned value
 
@@ -535,23 +545,23 @@ class GitHubCloud:
         organization.
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('user')
+        ensure_nonemptystring('user_name')
 
         result = self._put(
-            f'orgs/{organization_name}/outside_collaborators/{user}'
+            f'orgs/{organization_name}/outside_collaborators/{user_name}'
         )
         return (result.status_code // 100) == 2
 
     @api_call
     def remove_organization_outsidecollaborator(
-        self, organization_name: str, user: str
+        self, organization_name: str, user_name: str
     ) -> bool:
         """Remove outside collaborator from organization.
 
         # Required parameters
 
         - organization_name: a non-empty string
-        - user: a non-empty string, the login of the user
+        - user_name: a non-empty string, the login of the user
 
         # Returned value
 
@@ -559,24 +569,24 @@ class GitHubCloud:
         the organization.
         """
         ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('user')
+        ensure_nonemptystring('user_name')
 
         result = self._delete(
-            f'orgs/{organization_name}/outside_collaborators/{user}'
+            f'orgs/{organization_name}/outside_collaborators/{user_name}'
         )
         return (result.status_code // 100) == 2
 
     @api_call
     def list_organization_saml_identities(
-        self, organization: str
+        self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """List the SAML identities of an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         A list of _external identities_.  Each external identity is a
         dictionary with the following entries:
@@ -584,8 +594,9 @@ class GitHubCloud:
         - login: a string
         - name_id: a string
         """
-        ensure_nonemptystring('organization')
-        query = """
+        ensure_nonemptystring('organization_name')
+
+        query = '''
         query($login: String!, $after: String) {
             organization(login: $login) {
                 samlIdentityProvider {
@@ -607,14 +618,14 @@ class GitHubCloud:
                     }
                 }
             }
-        }"""
+        }'''
         after = None
         collected = []
         more = True
 
         while more:
             result = self.post_graphql_query(
-                query, {'login': organization, 'after': after}
+                query, {'login': organization_name, 'after': after}
             )
             external_identities = result['data']['organization'][
                 'samlIdentityProvider'
@@ -675,7 +686,7 @@ class GitHubCloud:
 
     @api_call
     def list_organization_copilot_seats(
-        self, organization_name
+        self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return the list of all Copilot seat assignments for an organization
 
@@ -685,7 +696,8 @@ class GitHubCloud:
 
         # Returned value
 
-        A list of seat assignments. Each seat is a dictionary with the following entries:
+        A list of seat assignments. Each seat is a dictionary with the
+        following entries:
 
         - total_seats: an integer
         - created_at: a string
@@ -745,12 +757,14 @@ class GitHubCloud:
     # delete_organization_secret
 
     @api_call
-    def list_organization_secrets(self, organization: str) -> Dict[str, Any]:
+    def list_organization_secrets(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
         """Return the organization's secrets.
 
         # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
         # Returned value
 
@@ -767,9 +781,11 @@ class GitHubCloud:
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
 
-        api_url = join_url(self.url, f'orgs/{organization}/actions/secrets')
+        api_url = join_url(
+            self.url, f'orgs/{organization_name}/actions/secrets'
+        )
         org_secrets = {'total_count': 0, 'secrets': []}
         while True:
             response = self.session().get(api_url)
@@ -789,12 +805,14 @@ class GitHubCloud:
         return org_secrets
 
     @api_call
-    def get_organization_public_key(self, organization: str) -> Dict[str, Any]:
+    def get_organization_public_key(
+        self, organization_name: str
+    ) -> Dict[str, Any]:
         """Return the organization's public key.
 
         # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
 
         # Returned value
 
@@ -803,19 +821,21 @@ class GitHubCloud:
         - key_id: a string
         - key: a string
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
 
-        return self._get(f'orgs/{organization}/actions/secrets/public-key')
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/public-key'
+        )
 
     @api_call
     def get_organization_secret(
-        self, organization: str, secret_name: str
+        self, organization_name: str, secret_name: str
     ) -> Dict[str, Any]:
         """Return the organization's secret.
 
         # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
         - secret_name: a non-empty string
 
         # Returned value
@@ -828,39 +848,40 @@ class GitHubCloud:
         - visibility: a string
         - selected_repositories_url: a string
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('secret_name')
 
-        return self._get(f'orgs/{organization}/actions/secrets/{secret_name}')
+        return self._get(
+            f'orgs/{organization_name}/actions/secrets/{secret_name}'
+        )
 
     @api_call
     def delete_organization_secret(
-        self, organization: str, secret_name: str
+        self, organization_name: str, secret_name: str
     ) -> bool:
         """Delete the organization's secret.
 
         # Required parameters
 
-        - organization: a non-empty string
+        - organization_name: a non-empty string
         - secret_name: a non-empty string
 
         # Returned value
 
         A boolean.  True if the secret has been deleted.
         """
-        ensure_nonemptystring('organization')
+        ensure_nonemptystring('organization_name')
         ensure_nonemptystring('secret_name')
 
         return (
             self._delete(
-                f'orgs/{organization}/actions/secrets/{secret_name}'
+                f'orgs/{organization_name}/actions/secrets/{secret_name}'
             ).status_code
             == 204
         )
 
     ####################################################################
     # GitHub repositories
-    #
     #
     # get_repository
     # create_repository
@@ -872,14 +893,14 @@ class GitHubCloud:
 
     @api_call
     def get_repository(
-        self, organization: str, repository: str
+        self, organization_name: str, repository_name: str
     ) -> Dict[str, Any]:
         """Return extended information on a repository.
 
         # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
 
         # Returned value
 
@@ -983,16 +1004,16 @@ class GitHubCloud:
         - network_count
         - subscribers_count
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
 
-        return self._get(f'repos/{organization}/{repository}')
+        return self._get(f'repos/{organization_name}/{repository_name}')
 
     @api_call
     def create_repository(
         self,
-        organization: str,
-        repository: str,
+        organization_name: str,
+        repository_name: str,
         description: Optional[str] = None,
         private: bool = False,
         visibility: Optional[str] = None,
@@ -1019,12 +1040,12 @@ class GitHubCloud:
     ) -> Dict[str, Any]:
         """Create a repository in an organization.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
         - description: a string
         - private: a boolean
@@ -1054,8 +1075,8 @@ class GitHubCloud:
 
         A _repository_. See #get_repository() for its content.
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
 
         ensure_noneorinstance('description', str)
         ensure_instance('private', bool)
@@ -1082,7 +1103,7 @@ class GitHubCloud:
         ensure_noneorinstance('custom_properties', dict)
 
         data = {
-            'name': repository,
+            'name': repository_name,
             'private': private,
             'has_issues': has_issues,
             'has_projects': has_projects,
@@ -1113,21 +1134,21 @@ class GitHubCloud:
         add_if_specified(data, 'merge_commit_message', merge_commit_message)
         add_if_specified(data, 'custom_properties', custom_properties)
 
-        result = self._post(f'orgs/{organization}/repos', json=data)
+        result = self._post(f'orgs/{organization_name}/repos', json=data)
         return result
 
     @api_call
     def list_repository_teams(
-        self, organization: str, repository: str
+        self, organization_name: str, repository_name: str
     ) -> List[Dict[str, Any]]:
         """List the teams of a repository.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         A list of _teams_. Each team is a dictionary with the following
         keys:
@@ -1147,23 +1168,25 @@ class GitHubCloud:
         - permissions
         - parent
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
 
-        return self._collect_data(f'repos/{organization}/{repository}/teams')
+        return self._collect_data(
+            f'repos/{organization_name}/{repository_name}/teams'
+        )
 
     @api_call
     def list_repository_collaborators(
-        self, organization: str, repository: str
+        self, organization_name: str, repository_name: str
     ) -> List[Dict[str, Any]]:
         """List the collaborators of a repository.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         A list of _members_.  Each member is a dictionary with the
         following entries:
@@ -1190,67 +1213,67 @@ class GitHubCloud:
         - permissions: a dictionary
         - role_name: a string
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
 
         return self._collect_data(
-            f'repos/{organization}/{repository}/collaborators'
+            f'repos/{organization_name}/{repository_name}/collaborators'
         )
 
     @api_call
     def add_repository_collaborator(
         self,
-        organization: str,
-        repository: str,
-        username: str,
+        organization_name: str,
+        repository_name: str,
+        user_name: str,
         permission: str = 'pull',
     ) -> bool:
         """Add a collaborator to a repository.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
-        - username: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - user_name: a non-empty string
         - permission: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         - a boolean
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
-        ensure_nonemptystring('username')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('user_name')
         ensure_nonemptystring('permission')
 
         result = self._put(
-            f'repos/{organization}/{repository}/collaborators/{username}',
+            f'repos/{organization_name}/{repository_name}/collaborators/{user_name}',
             json={'permission': permission},
         )
         return (result.status_code // 100) == 2
 
     @api_call
     def rm_repository_collaborator(
-        self, organization: str, repository: str, username: str
+        self, organization_name: str, repository_name: str, user_name: str
     ) -> bool:
         """Remove a collaborator from a repository.
 
-        # Required parameters:
+        # Required parameters
 
-        - organization: a non-empty string
-        - repository: a non-empty string
-        - username: a non-empty string
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - user_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
-        - a boolean
+        A boolean.
         """
-        ensure_nonemptystring('organization')
-        ensure_nonemptystring('repository')
-        ensure_nonemptystring('username')
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_nonemptystring('user_name')
 
         result = self._delete(
-            f'repos/{organization}/{repository}/collaborators/{username}'
+            f'repos/{organization_name}/{repository_name}/collaborators/{user_name}'
         )
         return (result.status_code // 100) == 2
 
@@ -1261,17 +1284,20 @@ class GitHubCloud:
     # get_consumed_licenses
 
     @api_call
-    def get_enterprise(self, enterprise_name: str):
+    def get_enterprise(self, enterprise_name: str) -> Dict[str, Any]:
         """Returns the enterprise details
 
-        # Required parameters:
+        # Required parameters
 
         - enterprise_name: a non-empty string
 
+        # Returned value
+
+        An _enterprise_. An enterprise is a dictionary.
         """
         ensure_nonemptystring('enterprise_name')
 
-        query = """
+        query = '''
         query($enterprise: String!) {
             enterprise(slug: $enterprise) {
                 id
@@ -1282,7 +1308,7 @@ class GitHubCloud:
                 billingEmail
                 createdAt
             }
-        }"""
+        }'''
         result = self.post_graphql_query(
             query, {'enterprise': enterprise_name}
         )
@@ -1303,6 +1329,8 @@ class GitHubCloud:
         - total_seats_consumed: an integer
         - total_seats_purchased: an integer
         """
+        ensure_nonemptystring('enterprise_name')
+
         response = self.session().get(
             join_url(
                 self.url, f'enterprises/{enterprise_name}/consumed-licenses'
@@ -1377,18 +1405,18 @@ class GitHubCloud:
     ) -> List[Dict[str, Any]]:
         """List the billing usage of an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
         - enterprise_name: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
         - year: an integer, the year to filter by
         - month: an integer, the month to filter by
         - day: an integer, the day to filter by
         - cost_center_id: a string, the cost center ID to filter by
 
-        # Returned value:
+        # Returned value
 
         A list of dictionaries with the following entries:
 
@@ -1424,16 +1452,15 @@ class GitHubCloud:
 
     @api_call
     def get_enterprise_billing_actions(
-        self,
-        enterprise_name: str,
+        self, enterprise_name: str
     ) -> Dict[str, Any]:
         """Get the billing actions of an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
         - enterprise_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         A dictionary with the following entries:
 
@@ -1474,18 +1501,18 @@ class GitHubCloud:
     ) -> List[Dict[str, Any]]:
         """List the billing usage of an organization.
 
-        # Required parameters:
+        # Required parameters
 
         - organization_name: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
         - year: an integer, the year to filter by
         - month: an integer, the month to filter by
         - day: an integer, the day to filter by
         - cost_center_id: a string, the cost center ID to filter by
 
-        # Returned value:
+        # Returned value
 
         A list of dictionaries with the following entries:
 
@@ -1522,16 +1549,15 @@ class GitHubCloud:
 
     @api_call
     def get_organization_billing_actions(
-        self,
-        organization_name: str,
+        self, organization_name: str
     ) -> Dict[str, Any]:
         """Get the billing actions of an organization.
 
-        # Required parameters:
+        # Required parameters
 
         - organization_name: a non-empty string
 
-        # Returned value:
+        # Returned value
 
         A dictionary with the following entries:
 
@@ -1569,39 +1595,41 @@ class GitHubCloud:
     @api_call
     def list_scim_users(
         self,
-        enterprise: str,
+        enterprise_name: str,
         start_index: int = 1,
         count: int = 100,
-        filter: str = None,
+        filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List SCIM users in an enterprise.
 
-        # Required parameters:
+        # Required parameters
 
-        - enterprise: a non-empty string
+        - enterprise_name: a non-empty string
 
-        # Optional parameters:
+        # Optional parameters
 
         - start_index: an integer, the index of the first user to return
         - count: an integer, the number of users to return
-        - filter: a string, a filter to apply to the list of users. Possible
-            filters are: userName, externalId, id, displayName.
+        - filter: a string, a filter to apply to the list of users.
+          Possible filters are: userName, externalId, id, displayName.
 
-        # Returned value:
+        # Returned value
 
-        A list of SCIM users, each represented as a dictionary with the following
-        entries:
+        A list of SCIM users, each represented as a dictionary with the
+        following entries:
 
         - schemas: a dictionary
         - active: a boolean
-        - emails: a list of dictionaries, each with 'value' and 'primary' keys
+        - emails: a list of dictionaries, each with 'value' and
+          'primary' keys
         - ?externalId: a string
         - userName: a string
-        - name: a dictionary with 'givenName', 'familyName', and 'formatted' keys
+        - name: a dictionary with 'givenName', 'familyName', and
+          'formatted' keys
         - ?displayName: a string
         - roles: a dictionary
         """
-        ensure_nonemptystring('enterprise')
+        ensure_nonemptystring('enterprise_name')
         ensure_instance('start_index', int)
         ensure_instance('count', int)
         ensure_noneorinstance('filter', str)
@@ -1613,31 +1641,30 @@ class GitHubCloud:
         add_if_specified(params, 'filter', filter)
 
         return self._collect_resources_data(
-            f'scim/v2/enterprises/{enterprise}/Users',
+            f'scim/v2/enterprises/{enterprise_name}/Users',
             params=params,
         )
 
     ####################################################################
     # GitHub GraphQL
-    # post_graphql_query
     #
+    # post_graphql_query
+
     @api_call
     def post_graphql_query(
-        self,
-        query: str,
-        variables: Optional[Dict[str, Any]] = None,
+        self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Post a GraphQL query to GitHub.
 
-        # Required parameters:
+        # Required parameters
 
         - query: a non-empty string, the GraphQL query to execute
 
-        # Optional parameters:
+        # Optional parameters
 
         - variables: a dictionary, the variables to pass to the query
 
-        # Returned value:
+        # Returned value
 
         A dictionary with the result of the query.
         """

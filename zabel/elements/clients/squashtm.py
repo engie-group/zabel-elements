@@ -50,10 +50,10 @@ class SquashTM(Base):
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import SquashTM
-    >>>
-    >>> url = 'https://squash-tm.example.com/squash/api/rest/latest/'
-    >>> tm = SquashTM(url, user, token)
-    >>> tm.get_projects()
+    from zabel.elements.clients import SquashTM
+
+    url = 'https://squash-tm.example.com/squash/api/rest/latest/'
+    tm = SquashTM(url, user, token)
+    tm.get_projects()
     ```
     """

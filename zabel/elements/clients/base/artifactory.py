@@ -355,10 +355,6 @@ class Artifactory:
         - disable_ui_access: a boolean (True by default)
         - internal_password_disabled: a boolean (False by default)
         - groups: a list of strings or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
@@ -491,10 +487,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
 
@@ -555,7 +547,7 @@ class Artifactory:
         profile_updatable: Optional[bool] = None,
         disable_ui_access: Optional[bool] = None,
         internal_password_disabled: Optional[bool] = None,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """Update an existing user.
 
         !!! important
@@ -726,10 +718,6 @@ class Artifactory:
 
         - auth: a (string, string) tuple or None (None by default)
 
-        # Return value
-
-        None.
-
         # Raised exceptions
 
         If the specified credentials are invalid, raises an _ApiError_
@@ -754,7 +742,7 @@ class Artifactory:
 
         - auth: a (string, string) tuple or None (None by default)
 
-        # Return value
+        # Returned value
 
         A string.
         """
@@ -901,10 +889,6 @@ class Artifactory:
         - admin_priviledge: a boolean (False by default)
         - realm: a non-empty string or None (None by default)
         - realm_attributes: a non-empty string or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
 
@@ -968,10 +952,6 @@ class Artifactory:
         - realm_attributes: a non-empty string or None (None by default)
         - external_id: a non-empty string or None (None by default)
         - members : a list of strings or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1027,10 +1007,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1094,10 +1070,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1585,10 +1557,6 @@ class Artifactory:
         }
         ```
 
-        # Returned value
-
-        None if successful.
-
         # Raised exceptions
 
         An _ApiError_ exception is raised if the repository creation
@@ -1670,10 +1638,6 @@ class Artifactory:
 
         - repository_name: a non-empty string
         - json: a dictionary
-
-        # Returned value
-
-        None if successful.
 
         # Raised exceptionx
 
@@ -1791,10 +1755,6 @@ class Artifactory:
 
         Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy, `'n'`=annotate,
         `'r'`=read.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('permission_name')
 

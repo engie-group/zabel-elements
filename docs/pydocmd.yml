@@ -1,5 +1,7 @@
 site_name: Zabel Elements
 
+sort: name
+
 generate:
   - clients.md:
     - zabel.elements.clients++
@@ -9,6 +11,8 @@ generate:
     - zabel.elements.clients.Confluence@
   - clients/github.md:
     - zabel.elements.clients.GitHub@
+  - clients/githubcloud.md:
+    - zabel.elements.clients.GitHubCloud@
   - clients/jenkins.md:
     - zabel.elements.clients.CloudBeesJenkins@
   - clients/jira.md:
@@ -35,6 +39,7 @@ pages:
         - CloudBeesJenkins: clients/jenkins.md
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
+        - GitHubCloud: clients/githubcloud.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
         - Jira: clients/jira.md
