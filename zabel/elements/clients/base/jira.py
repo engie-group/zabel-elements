@@ -5239,6 +5239,31 @@ class Jira:
         )
         return result  # type: ignore
 
+    def add_request_participant(
+        self, request_id_or_key: str, participants: list[str]
+    ) -> Dict[str, Any]:
+        """Add one or more participants to a request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        - participants: A list of usernames to add as participants
+        """
+        ensure_nonemptystring('request_id_or_key')
+        ensure_noneorinstance('participants', list)
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/participant',
+            ),
+            json={'usernames': [participants]},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result
+
     @api_call
     def get_bundledfield_definition(
         self, context_id: str, customfield_id: str
