@@ -1362,7 +1362,7 @@ class GitHubCloud:
     ####################################################################
     # GitHubCloud billing
     #
-    # list_enterprise_consumedlicenses
+    # list_enterprise_consumedlicenses_users
     # list_enterprise_billing_usage
     # get_enterprise_billing_actions
     # list_organization_billing_usage
