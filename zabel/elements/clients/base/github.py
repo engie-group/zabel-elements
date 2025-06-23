@@ -254,15 +254,17 @@ class GitHub:
         """Get the list of organizations for a specific user.
 
         # Required parameters
+
         - login: the login identifier of the user.
 
         # Returned value
+
         A dictionary containing the organizations the user belongs to.
         """
         ensure_nonemptystring('login')
 
         response = self._get(f'users/{login}/orgs')
-        return response
+        return response  # type: ignore
 
     @api_call
     def create_user(
@@ -306,7 +308,7 @@ class GitHub:
         }
 
         result = self._post('admin/users', data)
-        return result
+        return result  # type: ignore
 
     @api_call
     def update_user(
@@ -323,8 +325,7 @@ class GitHub:
 
         # Returned value
 
-        A user object.  A user is a dictionary with the
-        following keys:
+        A _user_.  A user is a dictionary with the following keys:
 
         - login: a string
         - id: an integer
@@ -333,14 +334,13 @@ class GitHub:
         - active: a boolean
         - local: a boolean
         """
-
         ensure_nonemptystring('current_username')
         ensure_nonemptystring('new_username')
 
         data = {'login': new_username}
 
         resultat = self._patch(f'admin/users/{current_username}', data)
-        return resultat
+        return resultat  # type: ignore
 
     @api_call
     def delete_user(self, username: str) -> None:
@@ -350,10 +350,10 @@ class GitHub:
 
         - username: a string
         """
-
         ensure_nonemptystring('username')
+
         result = self._delete(f'admin/users/{username}')
-        return result
+        return result  # type: ignore
 
     @api_call
     def suspend_user(self, user_name: str) -> bool:
@@ -453,6 +453,7 @@ class GitHub:
     # list_organization_invitations
     #
     # Part of enterprise administration
+    #
     # create_organization
     # TODO rename_organization
 
@@ -542,7 +543,7 @@ class GitHub:
 
         # Returned value
 
-        An invitation object.  An invitation is a dictionary with the
+        An _invitation_.  An invitation is a dictionary with the
         following keys:
 
         - id: an integer
@@ -702,7 +703,8 @@ class GitHub:
 
         # Returned value
 
-        A dictionary with the following keys:
+        An _organization_.  An organization is a dictionary with the
+        following keys:
 
         - login
         - id
@@ -777,7 +779,7 @@ class GitHub:
         admin: str,
         profile_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Create GitHub organization.
+        """Create a GitHub organization.
 
         # Required parameters
 
@@ -1265,6 +1267,7 @@ class GitHub:
         organization_name: str,
         repository_name: str,
         workflow_id: str,
+        *,
         actor: Optional[str] = None,
         branch: Optional[str] = None,
         event: Optional[str] = None,
@@ -1284,9 +1287,10 @@ class GitHub:
         - actor: a string or None (None by default)
         - branch: a string or None (None by default)
         - event: a string or None (None by default)
-        - status: a string or None (None by default). Can be one of: `completed`, `action_required`,
-          `cancelled`, `failure`, `neutral`, `skipped`, `stale`, `success`, `timed_out`,
-            `in_progress`, `queued`, `requested`, `waiting`, `pending`.
+        - status: a string or None (None by default). Can be one of:
+          `completed`, `action_required`, `cancelled`, `failure`,
+          `neutral`, `skipped`, `stale`, `success`, `timed_out`,
+          `in_progress`, `queued`, `requested`, `waiting`, `pending`
         - created: a string or None (None by default)
         - exclude_pull_requests: a boolean or None (None by default)
         - check_suite_id: an integer or None (None by default)
@@ -1297,7 +1301,6 @@ class GitHub:
         A list of _run details_.  Each run details is a dictionary.
         Refer to #get_workflow_run() for its structure.
         """
-
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('workflow_id')
@@ -1346,6 +1349,7 @@ class GitHub:
         # Returned value
 
         A dictionary with the following entries:
+
         - id: an integer
         - name: a string
         - node_id: a string
@@ -1451,8 +1455,6 @@ class GitHub:
         - updated_at: a string
         - single_file_name: a string
         """
-        # ensure_nonemptystring('organization_name')
-
         return self._collect_data('app/installations')
 
     @api_call
@@ -2063,6 +2065,7 @@ class GitHub:
         add_if_specified(params, 'author', author)
         add_if_specified(params, 'since', since)
         add_if_specified(params, 'until', until)
+
         result = self._get(
             f'repos/{organization_name}/{repository_name}/commits',
             params=params,
@@ -2126,7 +2129,10 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        return self._get(f'repos/{organization_name}/{repository_name}/teams')  # type: ignore
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/teams'
+        )
+        return result  # type: ignore
 
     @api_call
     def list_repository_collaborators(
@@ -2166,7 +2172,10 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        return self._collect_data(f'repos/{organization_name}/{repository_name}/collaborators')  # type: ignore
+        result = self._collect_data(
+            f'repos/{organization_name}/{repository_name}/collaborators'
+        )
+        return result  # type: ignore
 
     @api_call
     def add_repository_collaborator(
@@ -2235,7 +2244,7 @@ class GitHub:
 
         # Returned value
 
-        Return a dictionary with following keys:
+        A dictionary with following keys:
 
         - permission: a string
         - user: a dictionary
@@ -2376,6 +2385,10 @@ class GitHub:
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
+        # Returned value
+
+        A dictionary.
+
         # Usage
 
         If `author` is omitted, the `committer` is used.  If `committer`
@@ -2388,10 +2401,6 @@ class GitHub:
         - email: a string
 
         They may have a `date` entry (a string).
-
-        # Returned value
-
-        A dictionary.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -2445,6 +2454,10 @@ class GitHub:
         - committer: a dictionary or None (None by default)
         - author: a dictionary or None (None by default)
 
+        # Returned value
+
+        A dictionary.
+
         # Usage
 
         If `author` is omitted, the `committer` is used.  If `committer`
@@ -2457,10 +2470,6 @@ class GitHub:
         - email: a string
 
         They may have a `date` entry (a string).
-
-        # Returned value
-
-        A dictionary.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -2652,8 +2661,8 @@ class GitHub:
         maintainer_can_modify: bool = True,
         draft: bool = False,
         issue: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        """List branches.
+    ) -> Dict[str, Any]:
+        """Create a new pull request.
 
         # Required parameters
 
@@ -2722,6 +2731,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_instance('pull_number', int)
+
         return (
             self._get(
                 f'repos/{organization_name}/{repository_name}/pulls/{pull_number}/merge'
@@ -2862,7 +2872,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashed)
+          with `refs` and having at least two slashes)
         - sha: a non-empty string
 
         # Optional parameters
@@ -2897,6 +2907,7 @@ class GitHub:
 
         data = {'ref': ref, 'sha': sha}
         add_if_specified(data, 'key', key)
+
         result = self._post(
             f'repos/{organization_name}/{repository_name}/git/refs', json=data
         )
@@ -2913,7 +2924,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashed)
+          with `refs` and having at least two slashes)
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -2922,6 +2933,7 @@ class GitHub:
             raise ValueError(
                 'ref must start with "refs" and contains at least two slashes.'
             )
+
         result = self._delete(
             f'repos/{organization_name}/{repository_name}/git/{ref}'
         )
@@ -2980,6 +2992,7 @@ class GitHub:
             'type': type_,
         }
         add_if_specified(data, 'tagger', tagger)
+
         result = self._post(
             f'repos/{organization_name}/{repository_name}/git/tags', json=data
         )
@@ -3017,6 +3030,7 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('ref')
+
         if not (ref.startswith('heads/') or ref.startswith('tags/')):
             raise ValueError('ref must start with "heads/" or "tags/".')
 
@@ -3026,10 +3040,10 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def get_repository_references(
+    def list_repository_references(
         self, organization_name: str, repository_name: str, ref: str
-    ) -> Dict[str, Any]:
-        """Get a repository references.
+    ) -> List[Dict[str, Any]]:
+        """List a repository references.
 
         # Required parameters
 
@@ -3113,6 +3127,7 @@ class GitHub:
 
         params = {'recursive': 'true'} if recursive else None
         headers = {'Accept': 'application/vnd.github+json'}
+
         result = self._get(
             f'repos/{organization_name}/{repository_name}/git/trees/{tree_sha}',
             params=params,
@@ -3298,6 +3313,10 @@ class GitHub:
         - events: a list of strings (`['push']` by default)
         - active: a boolean (True by default)
 
+        # Returned value
+
+        A _hook_.  See #list_hooks() for its format.
+
         # Usage
 
         The `config` dictionary must contain the following entry:
@@ -3309,10 +3328,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Returned value
-
-        A _hook_.  See #list_hooks() for its format.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -3323,6 +3338,7 @@ class GitHub:
         ensure_instance('active', bool)
         if 'url' not in config:
             raise ValueError('config must contain an "url" entry.')
+
         if events is None:
             events = ['push']
 
@@ -3359,6 +3375,10 @@ class GitHub:
           default)
         - active: a boolean (True by default)
 
+        # Returned value
+
+        A _hook_.  See #list_global_hooks() for its format.
+
         # Usage
 
         The `config` dictionary must contain the following entry:
@@ -3370,18 +3390,16 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Returned value
-
-        A _hook_.  See #list_global_hooks() for its format.
         """
         if name != 'web':
             raise ValueError('name must be "web".')
         ensure_instance('config', dict)
         ensure_noneorinstance('events', list)
         ensure_instance('active', bool)
+
         if 'url' not in config:
             raise ValueError('config must contain an "url" entry.')
+
         if events is None:
             events = ['user', 'organization']
 
@@ -3417,6 +3435,10 @@ class GitHub:
         - events: a list of strings (`['push']` by default)
         - active: a boolean (True by default)
 
+        # Returned value
+
+        A _hook_.  See #list_organization_hooks() for its format.
+
         # Usage
 
         The `config` dictionary must contain the following entry:
@@ -3428,10 +3450,6 @@ class GitHub:
         - content_type: a string
         - secret: a string
         - insecure_ssl: a string
-
-        # Returned value
-
-        A _hook_.  See #list_organization_hooks() for its format.
         """
         ensure_nonemptystring('organization_name')
         if name != 'web':
@@ -3441,6 +3459,7 @@ class GitHub:
         ensure_instance('active', bool)
         if 'url' not in config:
             raise ValueError('config must contain an "url" entry.')
+
         if events is None:
             events = ['push']
 
@@ -3586,7 +3605,9 @@ class GitHub:
     # get_consumed_licenses
 
     @api_call
-    def get_consumed_licenses(self, enterprise_name: str) -> Dict[str, Any]:
+    def get_enterprise_consumedlicenses(
+        self, enterprise_name: str
+    ) -> Dict[str, Any]:
         """Return consumed licenses.
 
         # Required parameters
@@ -3614,6 +3635,8 @@ class GitHub:
             'total_seats_consumed': data['total_seats_consumed'],
             'total_seats_purchased': data['total_seats_purchased'],
         }
+
+    get_consumed_licenses = get_enterprise_consumedlicenses
 
     ####################################################################
     # GitHub copilot (Enterprise cloud)
