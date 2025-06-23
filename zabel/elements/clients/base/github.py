@@ -1284,6 +1284,9 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - workflow_id: a non-empty string
+
+        # Optional parameters
+
         - actor: a string or None (None by default)
         - branch: a string or None (None by default)
         - event: a string or None (None by default)
