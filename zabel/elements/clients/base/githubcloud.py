@@ -457,7 +457,7 @@ class GitHubCloud:
         )
 
     @api_call
-    def list_organization_outside_collaborators(
+    def list_organization_outsidecollaborators(
         self, organization_name: str
     ) -> List[Dict[str, Any]]:
         """Return the list of organization outside collaborators.
