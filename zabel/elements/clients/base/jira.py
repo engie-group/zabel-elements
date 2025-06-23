@@ -5240,7 +5240,7 @@ class Jira:
         return result  # type: ignore
 
     def add_request_participant(
-        self, request_id_or_key: str, participants: list[str]
+        self, request_id_or_key: str, participants: List[str]
     ) -> Dict[str, Any]:
         """Add one or more participants to a request.
 
@@ -5257,7 +5257,7 @@ class Jira:
                 self.SERVICEDESK_BASE_URL,
                 f'request/{request_id_or_key}/participant',
             ),
-            json={'usernames': [participants]},
+            json={'usernames': participants},
             auth=self.auth,
             verify=self.verify,
             timeout=TIMEOUT,
