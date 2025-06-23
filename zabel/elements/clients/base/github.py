@@ -2172,10 +2172,9 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        result = self._collect_data(
+        return self._collect_data(
             f'repos/{organization_name}/{repository_name}/collaborators'
         )
-        return result  # type: ignore
 
     @api_call
     def add_repository_collaborator(
@@ -3196,10 +3195,9 @@ class GitHub:
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
 
-        result = self._collect_data(
+        return self._collect_data(
             f'repos/{organization_name}/{repository_name}/hooks'
         )
-        return result  # type: ignore
 
     @api_call
     def list_global_hooks(self) -> List[Dict[str, Any]]:
