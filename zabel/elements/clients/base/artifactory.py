@@ -88,23 +88,30 @@ INCOMPATIBLE_PARAM = '%s cannot be specified when json is provided'
 
 
 class Artifactory:
-    """Artifactory Base-Level Wrapper.
+    """Artifactory Low-Level Wrapper.
 
-    # Reference URLs
+    There can be as many Artifactory instances as needed.
 
-    <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
-    <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel.commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    # Reference URL
+
+    - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
+    - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
     # Implemented features
 
-    - users
+    - artefacts
+    - builds
     - groups
-    - repositories
     - permission
-    - storageinfo
+    - repositories
     - token
-    - ping
-    - xray indexing
+    - users
+    - misc. features (storageinfo, version, ping, ...)
 
     # Sample use
 
@@ -112,7 +119,7 @@ class Artifactory:
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
-    af = Artifactory(url, user, token)
+    af = Artifactory(url, basic_auth=(user, token))
     af.list_users()
     ```
     """
@@ -120,6 +127,7 @@ class Artifactory:
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         bearer_auth: Optional[str] = None,
         xray_url: Optional[str] = None,
@@ -133,13 +141,15 @@ class Artifactory:
         - basic_auth: a strings tuple (user, token)
         - bearer_auth: a string
 
-        `url` is the top-level API endpoint.  For example,
-        `'https://artifactory.example.com/artifactory/api/'`
-
         # Optional parameters
 
         - xray_url: a string or None (None by default)
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` is the top-level API endpoint.  For example,
+        `'https://artifactory.example.com/artifactory/api/'`
 
         `xray_url`, if specified, is the top-level jfrog-xray API
         endpoint.  If not specified, will be as `url` with the

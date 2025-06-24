@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Confluence.
+"""Confluence Server and Data Center.
 
-A class wrapping Confluence APIs.
+A class wrapping Confluence Server and Data Center APIs.
 
 There can be as many Confluence instances as needed.
 
@@ -27,7 +27,7 @@ from .base.confluence import Confluence as Base
 
 
 class Confluence(Base):
-    """Confluence Low-Level Wrapper.
+    """Confluence Server and Data Center Low-Level Wrapper.
 
     There can be as many Confluence instances as needed.
 
@@ -57,6 +57,7 @@ class Confluence(Base):
     - pages
     - search
     - spaces
+    - misc. features (index,long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
@@ -69,7 +70,7 @@ class Confluence(Base):
     from zabel.elements.clients import Confluence
 
     url = 'https://confluence.example.com'
-    confluence = Confluence(url, user, token)
+    confluence = Confluence(url, basic_auth=(user, token))
     confluence.list_users()
     ```
     """

@@ -40,9 +40,9 @@ pages:
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
+        - Jira: clients/jira.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
-        - Jira: clients/jira.md
         - SonarQube: clients/sonarqube.md
         - SquashTM: clients/squashtm.md
     - Images:

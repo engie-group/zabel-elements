@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Jira.
+"""Jira Server and Data Center.
 
-A class wrapping Jira APIs.
+A class wrapping Jira Server and Data Center APIs.
 
 There can be as many Jira instances as needed.
 
@@ -89,7 +89,17 @@ def _get_scheme_id(
 
 
 class Jira:
-    """JIRA Low-Level Wrapper.
+    """JIRA Server and Data Center Low-Level Wrapper.
+
+    There can be as many Jira instances as needed.
+
+    This class depends on the public **requests** and **jira.JIRA**
+    libraries.  It also depends on two **zabel-commons** modules,
+    #::zabel.commons.exceptions and #::zabel.commons.utils.
+
+    !!! note
+        This class reuses the JIRA library whenever possible, but always
+        returns 'raw' values (dictionaries, ..., not classes).
 
     # Reference URLs
 
@@ -114,22 +124,78 @@ class Jira:
 
     # Implemented features
 
-    - search
-    - groups
-    - permissionschemes
-    - projects
-    - users
+    - anonymization
     - boards
-    - sprints
+    - components
+    - fieldconfigurationschemes
+    - groups
     - issues
-    - servicedesk
-    - misc. features (reindexing, plugins, xray, & server info)
+    - issuetypeschemes
+    - issuetypescreenschemes
+    - notificationschemes
+    - permissionschemes
+    - priorityschemes
+    - projects
+    - roles
+    - screens
+    - screenschemes
+    - search
+    - sprints
+    - users
+    - versions
+    - workflows
+    - workflowschemes
+    - service desk
+    - misc. features (reindexing, plugins, xray, server info, ...)
 
     Works with basic authentication, bearer token authentication, as
     well as OAuth authentication.
 
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
+
+    # Expansion
+
+    The Jira REST API uses resource expansion.  This means the API will
+    only return parts of the resource when explicitly requested.
+
+    Many query methods have an `expand` parameter, a comma-separated
+    list of entities that are to be expanded, identifying each of them
+    by name.
+
+    Here are the default values for the main Jira entities:
+
+    | Entity                    | Default value                        |
+    | ------------------------- | ------------------------------------ |
+    | ISSUETYPESCHEMES_EXPAND   | schemes.issueTypes,
+                                  schemes.defaultIssueType             |
+    | NOTIFICATIONSCHEME_EXPAND | notificationSchemeEvents,
+                                  user, group, projectRole, field, all |
+    | PERMISSIONSCHEME_EXPAND   | permissions, user, group,
+                                  projectRole, field, all              |
+    | PRIORITYSCHEMES_EXPAND    | schemes.projectKeys                  |
+    | PROJECT_EXPAND            | description, lead, url, projectKeys  |
+    | USER_EXPAND               | groups, applicationRoles             |
+
+    To discover the identifiers for each entity, look at the `expand`
+    properties in the parent object.  In the example below, the
+    resource declares _widgets_ as being expandable:
+
+    ```json
+    {
+      "expand": "widgets",
+      "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
+      "widgets": {
+        "widgets": [],
+        "size": 5
+      }
+    }
+    ```
+
+    The dot notation allows to specify expansion of entities within
+    another entity.  For example, `expand='widgets.fringels'` would
+    expand the widgets collection and also the _fringel_ property of
+    each widget.
 
     # Sample use
 
@@ -140,21 +206,18 @@ class Jira:
     jc = Jira(url, basic_auth=(user, token))
     jc.list_users()
     ```
-
-    !!! note
-        Reuse the JIRA library whenever possible, but always returns
-        'raw' values (dictionaries, ..., not classes).
     """
 
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
         bearer_auth: Optional[str] = None,
         verify: bool = True,
     ) -> None:
-        """Create Jira instance object.
+        """Create a Jira instance object.
 
         You can only specify either `basic_auth`, `oauth`, or
         `bearer_auth`.
@@ -171,6 +234,9 @@ class Jira:
         - verify: a boolean (True by default)
 
         # Usage
+
+        `url` must be the URL of the Jira instance, e.g.,
+        `https://jira.example.com`.
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -5184,10 +5250,6 @@ class Jira:
 
         - request_id_or_key: a non-empty string
         - participants: a list of strings
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('request_id_or_key')
         ensure_instance('participants', list)
@@ -5202,7 +5264,7 @@ class Jira:
             verify=self.verify,
             timeout=TIMEOUT,
         )
-        return result
+        return result  # type: ignore
 
     @api_call
     def get_bundledfield_definition(
