@@ -4951,6 +4951,7 @@ class Jira:
     # get_request
     # list_request_comments
     # add_request_comment
+    # add_request_participant
     # get_bundledfield_definition
     # list_queues
     # list_queue_issues
@@ -5173,6 +5174,35 @@ class Jira:
             timeout=TIMEOUT,
         )
         return result  # type: ignore
+
+    def add_request_participant(
+        self, request_id_or_key: str, participants: List[str]
+    ) -> None:
+        """Add one or more participants to a request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        - participants: a list of strings
+
+        # Returned value
+
+        None.
+        """
+        ensure_nonemptystring('request_id_or_key')
+        ensure_instance('participants', list)
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/participant',
+            ),
+            json={'usernames': participants},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result
 
     @api_call
     def get_bundledfield_definition(
