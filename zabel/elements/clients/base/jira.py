@@ -5018,6 +5018,7 @@ class Jira:
     # get_request
     # list_request_comments
     # add_request_comment
+    # add_request_participant
     # get_bundledfield_definition
     # list_queues
     # list_queue_issues
@@ -5241,16 +5242,20 @@ class Jira:
 
     def add_request_participant(
         self, request_id_or_key: str, participants: List[str]
-    ) -> Dict[str, Any]:
+    ) -> None:
         """Add one or more participants to a request.
 
         # Required parameters
 
         - request_id_or_key: a non-empty string
-        - participants: A list of usernames to add as participants
+        - participants: a list of strings
+
+        # Returned value
+
+        None.
         """
         ensure_nonemptystring('request_id_or_key')
-        ensure_noneorinstance('participants', list)
+        ensure_instance('participants', list)
 
         result = requests.post(
             join_url(
