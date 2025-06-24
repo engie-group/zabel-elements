@@ -188,10 +188,6 @@ class GitHub(Base):
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - branch: a non-empty string
-
-        # Returned value
-
-        No content.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -401,10 +397,10 @@ class GitHub(Base):
     ####################################################################
     # GitHub license (Enterprise cloud)
     #
-    # list_consumed_licenses_users
+    # list_enterprise_consumedlicenses_users
 
     @api_call
-    def list_consumed_licenses_users(
+    def list_enterprise_consumedlicenses_users(
         self, enterprise_name: str
     ) -> List[Dict[str, Any]]:
         """Return consumed licenses.
@@ -439,6 +435,8 @@ class GitHub(Base):
         - visual_studio_subscription_email: a string
         - total_user_accounts: an integer
         """
+        ensure_nonemptystring('enterprise_name')
+
         api_url = join_url(
             self.url, f'enterprises/{enterprise_name}/consumed-licenses'
         )
@@ -458,6 +456,8 @@ class GitHub(Base):
                 break
 
         return collected
+
+    list_consumed_licenses_users = list_enterprise_consumedlicenses_users
 
     ####################################################################
     # GitHub organization secret

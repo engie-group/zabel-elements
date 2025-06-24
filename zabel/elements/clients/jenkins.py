@@ -249,10 +249,6 @@ class CloudBeesJenkins(Base):
         - plugins: a list of non-empty strings
 
         Items in `plugins` are plugin short names.
-
-        # Returned value
-
-        Returns None.
         """
         ensure_nonemptystring('managedmaster_url')
 
@@ -306,6 +302,11 @@ class CloudBeesJenkins(Base):
         # Optional parameters
 
         - force: a boolean (False by default)
+
+        # Returned value
+
+        A string containing the response from the managed master
+        script.
         """
         ensure_nonemptystring('managedmaster_url')
         ensure_instance('force', bool)

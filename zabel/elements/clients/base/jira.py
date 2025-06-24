@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Jira.
+"""Jira Server and Data Center.
 
-A class wrapping Jira APIs.
+A class wrapping Jira Server and Data Center APIs.
 
 There can be as many Jira instances as needed.
 
@@ -89,7 +89,17 @@ def _get_scheme_id(
 
 
 class Jira:
-    """JIRA Low-Level Wrapper.
+    """JIRA Server and Data Center Low-Level Wrapper.
+
+    There can be as many Jira instances as needed.
+
+    This class depends on the public **requests** and **jira.JIRA**
+    libraries.  It also depends on two **zabel-commons** modules,
+    #::zabel.commons.exceptions and #::zabel.commons.utils.
+
+    !!! note
+        This class reuses the JIRA library whenever possible, but always
+        returns 'raw' values (dictionaries, ..., not classes).
 
     # Reference URLs
 
@@ -114,22 +124,78 @@ class Jira:
 
     # Implemented features
 
-    - search
-    - groups
-    - permissionschemes
-    - projects
-    - users
+    - anonymization
     - boards
-    - sprints
+    - components
+    - fieldconfigurationschemes
+    - groups
     - issues
-    - servicedesk
-    - misc. features (reindexing, plugins, xray, & server info)
+    - issuetypeschemes
+    - issuetypescreenschemes
+    - notificationschemes
+    - permissionschemes
+    - priorityschemes
+    - projects
+    - roles
+    - screens
+    - screenschemes
+    - search
+    - sprints
+    - users
+    - versions
+    - workflows
+    - workflowschemes
+    - service desk
+    - misc. features (reindexing, plugins, xray, server info, ...)
 
     Works with basic authentication, bearer token authentication, as
     well as OAuth authentication.
 
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
+
+    # Expansion
+
+    The Jira REST API uses resource expansion.  This means the API will
+    only return parts of the resource when explicitly requested.
+
+    Many query methods have an `expand` parameter, a comma-separated
+    list of entities that are to be expanded, identifying each of them
+    by name.
+
+    Here are the default values for the main Jira entities:
+
+    | Entity                    | Default value                        |
+    | ------------------------- | ------------------------------------ |
+    | ISSUETYPESCHEMES_EXPAND   | schemes.issueTypes,
+                                  schemes.defaultIssueType             |
+    | NOTIFICATIONSCHEME_EXPAND | notificationSchemeEvents,
+                                  user, group, projectRole, field, all |
+    | PERMISSIONSCHEME_EXPAND   | permissions, user, group,
+                                  projectRole, field, all              |
+    | PRIORITYSCHEMES_EXPAND    | schemes.projectKeys                  |
+    | PROJECT_EXPAND            | description, lead, url, projectKeys  |
+    | USER_EXPAND               | groups, applicationRoles             |
+
+    To discover the identifiers for each entity, look at the `expand`
+    properties in the parent object.  In the example below, the
+    resource declares _widgets_ as being expandable:
+
+    ```json
+    {
+      "expand": "widgets",
+      "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
+      "widgets": {
+        "widgets": [],
+        "size": 5
+      }
+    }
+    ```
+
+    The dot notation allows to specify expansion of entities within
+    another entity.  For example, `expand='widgets.fringels'` would
+    expand the widgets collection and also the _fringel_ property of
+    each widget.
 
     # Sample use
 
@@ -140,21 +206,18 @@ class Jira:
     jc = Jira(url, basic_auth=(user, token))
     jc.list_users()
     ```
-
-    !!! note
-        Reuse the JIRA library whenever possible, but always returns
-        'raw' values (dictionaries, ..., not classes).
     """
 
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
         bearer_auth: Optional[str] = None,
         verify: bool = True,
     ) -> None:
-        """Create Jira instance object.
+        """Create a Jira instance object.
 
         You can only specify either `basic_auth`, `oauth`, or
         `bearer_auth`.
@@ -171,6 +234,9 @@ class Jira:
         - verify: a boolean (True by default)
 
         # Usage
+
+        `url` must be the URL of the Jira instance, e.g.,
+        `https://jira.example.com`.
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -936,10 +1002,6 @@ class Jira:
 
         - scheme_id_or_name: an integer or a non-empty string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         _ApiError_ if `scheme_id_or_name` is invalid or something wrong
@@ -1026,10 +1088,6 @@ class Jira:
 
         - scheme_id_or_name: an integer or a string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         _ApiError_ if `scheme_id_or_name` is invalid or the scheme is
@@ -1096,10 +1154,6 @@ class Jira:
         # Required parameters
 
         - screen_id_or_name: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_instance('screen_id_or_name', (int, str))
 
@@ -1147,10 +1201,6 @@ class Jira:
         # Required parameters
 
         - scheme_id_or_name: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_instance('scheme_id_or_name', (int, str))
 
@@ -1258,10 +1308,6 @@ class Jira:
         # Required parameters
 
         - scheme_id: either an integer or a string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1422,10 +1468,6 @@ class Jira:
 
         - scheme_id: either an integer or a string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         _ApiError_ if the scheme does not exist.
@@ -1515,10 +1557,6 @@ class Jira:
 
         - scheme_id: either an integer or a string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         _ApiError_ if the scheme does not exist.
@@ -1585,10 +1623,6 @@ class Jira:
         # Required parameters
 
         - conf_id: either an integer or a string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1662,10 +1696,6 @@ class Jira:
 
         - workflow_name: a non-empty string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         _ApiError_ if the workflow does not exist or is attached to a
@@ -1727,10 +1757,6 @@ class Jira:
         # Required parameters
 
         - scheme_id_or_name: an integer or a non-empty string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1961,7 +1987,7 @@ class Jira:
         return result  # type: ignore
 
     @api_call
-    def list_projectoverviews(self):
+    def list_projectoverviews(self) -> List[Dict[str, Any]]:
         """Return the list of all project overviews.
 
         # Returned value
@@ -2275,7 +2301,7 @@ class Jira:
 
         `scheme_id_or_name` is either the scheme ID or the scheme name.
 
-        # Returned value.
+        # Returned value
 
         A dictionary.  See #list_projects() for details on its
         structure.
@@ -2515,10 +2541,6 @@ class Jira:
 
         - project_id_or_key: an integer or a string
         - workflowscheme: a non-empty string
-
-        # Returned value
-
-        None.
         """
         # No API for that, using forms...
         #
@@ -2597,10 +2619,6 @@ class Jira:
         - project_id_or_key: an integer or a string
         - scheme: a non-empty string
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         Raises an _ApiError_ if the scheme does not exist.
@@ -2662,10 +2680,6 @@ class Jira:
 
         - project_id_or_key: an integer or a string
         - scheme: a non-empty string
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -2902,10 +2916,6 @@ class Jira:
         - role_id: an integer or a string
         - group: a string
         - user: a string
-
-        # Returned value
-
-        None.
         """
         ensure_instance('project_id_or_key', (str, int))
         ensure_instance('role_id', (str, int))
@@ -3588,10 +3598,6 @@ class Jira:
 
         - board_id: an integer
 
-        # Returned value
-
-        None if successful.
-
         # Raised exceptions
 
         An _ApiError_ is raised if the board does not exist or if
@@ -3814,10 +3820,6 @@ class Jira:
         - board_id: an integer
         - days_in_column: a boolean
 
-        # Returned value
-
-        None if successful.
-
         # Raised exceptions
 
         An _ApiError_ is raised if something went wrong while setting
@@ -4015,10 +4017,6 @@ class Jira:
         - inward_issue_id_or_key: a non-empty string
         - type_: a non-empty string
         - outward_issue_id_or_key: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('inward_issue_id_or_key')
         ensure_nonemptystring('type_')
@@ -4110,10 +4108,6 @@ class Jira:
 
         - issue_id_or_key: a non-empty string
         - path: a list of strings
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('issue_id_or_key')
         ensure_instance('path', list)
@@ -4239,7 +4233,7 @@ class Jira:
             Requires issue assign permission, which is different from
             issue editing permission.
 
-        # Required parameter
+        # Required parameters
 
         - issue_id_or_key: a non-empty string
         - assignee: a non-empty string
@@ -4272,10 +4266,6 @@ class Jira:
         `fields` is a dictionary with one entry per issue field to
         update.  The key is the field name, and the value is the new
         field value.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('issue_id_or_key')
         ensure_instance('fields', dict)
@@ -4483,10 +4473,6 @@ class Jira:
         - complete_date: a string or None (None by default)
         - origin_board_id: an integer or None (None by default)
         - goal: a string or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_instance('sprint_id', int)
         ensure_noneorinstance('name', str)
@@ -4541,10 +4527,6 @@ class Jira:
 
         - sprint_id: an integer
         - issue_keys: a list of strings
-
-        # Returned value
-
-        None.
         """
         ensure_instance('sprint_id', int)
         ensure_instance('issue_keys', list)
@@ -4748,10 +4730,6 @@ class Jira:
 
         - version_id: a string or an integer
         - fields: a dictionary
-
-        # Returned value
-
-        None.
         """
         ensure_instance('version_id', (str, int))
         ensure_instance('fields', dict)
@@ -4765,6 +4743,10 @@ class Jira:
         # Required parameters
 
         - version_id: a string or an integer
+
+        # Returned value
+
+        A boolean.  True if the deletion was successful.
         """
 
         ensure_instance('version_id', (str, int))
@@ -5035,6 +5017,7 @@ class Jira:
     # get_request
     # list_request_comments
     # add_request_comment
+    # add_request_participant
     # get_bundledfield_definition
     # list_queues
     # list_queue_issues
@@ -5252,6 +5235,31 @@ class Jira:
                 f'request/{request_id_or_key}/comment',
             ),
             json={'body': body, 'public': public},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result  # type: ignore
+
+    def add_request_participant(
+        self, request_id_or_key: str, participants: List[str]
+    ) -> None:
+        """Add one or more participants to a request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        - participants: a list of strings
+        """
+        ensure_nonemptystring('request_id_or_key')
+        ensure_instance('participants', list)
+
+        result = requests.post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/participant',
+            ),
+            json={'usernames': participants},
             auth=self.auth,
             verify=self.verify,
             timeout=TIMEOUT,

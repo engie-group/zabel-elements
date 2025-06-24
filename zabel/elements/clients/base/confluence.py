@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Confluence.
+"""Confluence Server and Data Center.
 
-A class wrapping Confluence APIs.
+A class wrapping Confluence Server and Data Center APIs.
 
 There can be as many Confluence instances as needed.
 
@@ -47,7 +47,14 @@ CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
 
 
 class Confluence:
-    """Confluence Low-Level Wrapper.
+    """Confluence Server and Data Center Low-Level Wrapper.
+
+    There can be as many Confluence instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URL
 
@@ -66,10 +73,11 @@ class Confluence:
 
     # Implemented features
 
-    - search
     - groups&users
     - pages
+    - search
     - spaces
+    - misc. features (index,long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
@@ -83,13 +91,14 @@ class Confluence:
 
     url = 'https://confluence.example.com'
     confluence = Confluence(url, basic_auth=(user, token))
-    confluence.get_users()
+    confluence.list_users()
     ```
     """
 
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
         bearer_auth: Optional[str] = None,
@@ -99,14 +108,6 @@ class Confluence:
 
         You can only specify either `basic_auth`, `bearer_auth`, or
         `oauth`.
-
-        The `oauth` dictionary is expected to have the following
-        entries:
-
-        - access_token: a string
-        - access_token_secret: a string
-        - consumer_key: a string
-        - key_cert: a string
 
         Please note that the `bearer_auth` support does not give access
         to JSON-RPC methods.
@@ -121,6 +122,19 @@ class Confluence:
         # Optional parameters
 
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` must be the URL of the Confluence instance, e.g.,
+        `https://confluence.example.com`.
+
+        The `oauth` dictionary is expected to have the following
+        entries:
+
+        - access_token: a string
+        - access_token_secret: a string
+        - consumer_key: a string
+        - key_cert: a string
 
         `verify` can be set to False if disabling certificate checks for
         Confluence communication is required.  Tons of warnings will
@@ -1947,16 +1961,17 @@ class Confluence:
 
         # Returned value
 
-        A list of _restrictions_ . Restrictions are structured as follow :
+        A list of _restrictions_. Restrictions are structured as follow:
 
-        - `type`: str, either "Edit" or "View"
+        - `type`: string, either "Edit" or "View"
         - `contentPermissions`: a dictionary structured as follow
-            * `type`: str, either "Edit" or "View"
-            * `userName`: str, or None if groupName is set,
-            * `groupName`: str, or None if userName is set
+            * `type`: string, either "Edit" or "View"
+            * `userName`: string, or None if groupName is set,
+            * `groupName`: string, or None if userName is set
         ```
 
         # See
+
         <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """
         ensure_instance('page_id', (str, int))
@@ -1978,54 +1993,69 @@ class Confluence:
         permission_type: str,
         restrictions: List[Dict[str, Any]],
     ) -> bool:
-        """
-        Will set the restrictions on a page given its id. The permission_type is either 'View' or 'Edit'.
+        """Set restrictions on a page.
+
+        `permission_type` is either 'View' or 'Edit'.
 
         # Required parameters
 
         - `page_id`: integer or string
-        - `permission_type`: str, either "View" or "Edit"
+        - `permission_type`: a string, either "View" or "Edit"
         - `restrictions`: a list of dictionaries structured as follow :
            * `type`: string, either "Edit", "View" or None.
                      If set, must be consistent with `permission_type`.
                      If None, will inherit `permission_type`.
-           * `userName`: str, or None if `groupName` is set
-           * `groupName`: str, or None if `userName` is set
+           * `userName`: string, or None if `groupName` is set
+           * `groupName`: string, or None if `userName` is set
+
+        # Returned value
+
+        A boolean.
 
         # Example
 
-        These rules means that this invocation :
+        These rules means that this invocation
+
         ```python
-            self.set_page_restrictions('page_id', 'Edit', [{'userName': 'bob'}, {'groupName': 'ATeam'}])
+        self.set_page_restrictions(
+            'page_id',
+            'Edit',
+            [{'userName': 'bob'}, {'groupName': 'ATeam'}]
+        )
         ```
-        Is equivalent to the fully formed data as expected by the json-rpc API :
+
+        is equivalent to the fully formed data as expected by the
+        json-rpc API:
+
         ```python
-            self.set_page_restrictions(
-                'page_id',
-                'Edit',
-                [{'type': 'Edit', 'userName': 'bob', 'groupName': None},
-                {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
-            )
+        self.set_page_restrictions(
+            'page_id',
+            'Edit',
+            [{'type': 'Edit', 'userName': 'bob', 'groupName': None},
+            {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
+        )
         ```
 
         # Behavior rules
 
-        You may have noticed that permissions 'View' and 'Edit' are managed separately, but they need to be thought of together
-        when designing restrictions schemes. The default behavior when no permissions are set are the following:
+        You may have noticed that permissions 'View' and 'Edit' are
+        managed separately, but they need to be thought of together
+        when designing restrictions schemes. The default behavior when
+        no permissions are set are the following:
+
         - when no restrictions is set for type 'View' -> anyone can view the page.
         - when no restrictions is set for type 'Edit' -> anyone can edit the page.
 
-        So if you want to absolutely restrict access to a particular user or group, be user to specify both 'View' and 'Edit'
-        restrictions (setting restrictions on 'Edit' only won't necessarily imply that 'View' restrictions will be set as well).
-        As a result you will often have to call this method twice in a row.
+        So if you want to absolutely restrict access to a particular
+        user or group, be user to specify both 'View' and 'Edit'
+        restrictions (setting restrictions on 'Edit' only won't
+        necessarily imply that 'View' restrictions will be set as well).
+        As a result you will often have to call this method twice in a
+        row.
 
         # See
-        <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
 
-        :param page_id:
-        :param permission_type:
-        :param restrictions:
-        :return:
+        <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """
         ensure_instance('page_id', (str, int))
         ensure_in('permission_type', ('Edit', 'View'))

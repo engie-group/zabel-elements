@@ -88,23 +88,30 @@ INCOMPATIBLE_PARAM = '%s cannot be specified when json is provided'
 
 
 class Artifactory:
-    """Artifactory Base-Level Wrapper.
+    """Artifactory Low-Level Wrapper.
 
-    # Reference URLs
+    There can be as many Artifactory instances as needed.
 
-    <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
-    <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel.commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    # Reference URL
+
+    - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
+    - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
     # Implemented features
 
-    - users
+    - artefacts
+    - builds
     - groups
-    - repositories
     - permission
-    - storageinfo
+    - repositories
     - token
-    - ping
-    - xray indexing
+    - users
+    - misc. features (storageinfo, version, ping, ...)
 
     # Sample use
 
@@ -112,7 +119,7 @@ class Artifactory:
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
-    af = Artifactory(url, user, token)
+    af = Artifactory(url, basic_auth=(user, token))
     af.list_users()
     ```
     """
@@ -120,6 +127,7 @@ class Artifactory:
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         bearer_auth: Optional[str] = None,
         xray_url: Optional[str] = None,
@@ -133,13 +141,15 @@ class Artifactory:
         - basic_auth: a strings tuple (user, token)
         - bearer_auth: a string
 
-        `url` is the top-level API endpoint.  For example,
-        `'https://artifactory.example.com/artifactory/api/'`
-
         # Optional parameters
 
         - xray_url: a string or None (None by default)
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` is the top-level API endpoint.  For example,
+        `'https://artifactory.example.com/artifactory/api/'`
 
         `xray_url`, if specified, is the top-level jfrog-xray API
         endpoint.  If not specified, will be as `url` with the
@@ -355,10 +365,6 @@ class Artifactory:
         - disable_ui_access: a boolean (True by default)
         - internal_password_disabled: a boolean (False by default)
         - groups: a list of strings or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
@@ -491,10 +497,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
 
@@ -555,7 +557,7 @@ class Artifactory:
         profile_updatable: Optional[bool] = None,
         disable_ui_access: Optional[bool] = None,
         internal_password_disabled: Optional[bool] = None,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """Update an existing user.
 
         !!! important
@@ -726,10 +728,6 @@ class Artifactory:
 
         - auth: a (string, string) tuple or None (None by default)
 
-        # Return value
-
-        None.
-
         # Raised exceptions
 
         If the specified credentials are invalid, raises an _ApiError_
@@ -754,7 +752,7 @@ class Artifactory:
 
         - auth: a (string, string) tuple or None (None by default)
 
-        # Return value
+        # Returned value
 
         A string.
         """
@@ -901,10 +899,6 @@ class Artifactory:
         - admin_priviledge: a boolean (False by default)
         - realm: a non-empty string or None (None by default)
         - realm_attributes: a non-empty string or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
 
@@ -968,10 +962,6 @@ class Artifactory:
         - realm_attributes: a non-empty string or None (None by default)
         - external_id: a non-empty string or None (None by default)
         - members : a list of strings or None (None by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1027,10 +1017,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1094,10 +1080,6 @@ class Artifactory:
 
         If an optional parameter is not specified, or is None, its
         existing value will be preserved.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('name')
         ensure_noneornonemptystring('description')
@@ -1585,10 +1567,6 @@ class Artifactory:
         }
         ```
 
-        # Returned value
-
-        None if successful.
-
         # Raised exceptions
 
         An _ApiError_ exception is raised if the repository creation
@@ -1670,10 +1648,6 @@ class Artifactory:
 
         - repository_name: a non-empty string
         - json: a dictionary
-
-        # Returned value
-
-        None if successful.
 
         # Raised exceptionx
 
@@ -1791,10 +1765,6 @@ class Artifactory:
 
         Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy, `'n'`=annotate,
         `'r'`=read.
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('permission_name')
 

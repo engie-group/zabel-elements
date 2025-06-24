@@ -1,5 +1,6 @@
 site_name: Zabel Elements
 
+sort: name
 external_links:
   zabel.commons.exceptions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/exceptions
   zabel.commons.sessions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/sessions
@@ -46,9 +47,9 @@ pages:
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
+        - Jira: clients/jira.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
-        - Jira: clients/jira.md
         - SonarQube: clients/sonarqube.md
         - SquashTM: clients/squashtm.md
     - Images:

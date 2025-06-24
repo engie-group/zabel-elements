@@ -65,11 +65,11 @@ class CloudBeesJenkins:
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
 
     ```python
-    >>> from zabel.elements.clients import Jenkins
-    >>>
-    >>> url = 'https://pse.example.com'
-    >>> jenkins = Jenkins(url, user, token)
-    >>> jenkins.list_oc_managedmasters()
+    from zabel.elements.clients import Jenkins
+
+    url = 'https://pse.example.com'
+    jenkins = Jenkins(url, user, token)
+    jenkins.list_oc_managedmasters()
     ```
     """
 
@@ -1002,10 +1002,6 @@ class CloudBeesJenkins:
         The `config` dictionary must follow the 'XML' dictionary
         conventions.
 
-        # Returned value
-
-        None.
-
         # Raised exceptions
 
         An _ApiError_ exception is raised if a job or folder with the
@@ -1067,10 +1063,6 @@ class CloudBeesJenkins:
 
         - project_url: a non-empty string
         - group: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('project_url')
         ensure_nonemptystring('group')
@@ -1103,10 +1095,6 @@ class CloudBeesJenkins:
 
         - offset: an integer (0 by default)
         - inherited: a boolean (False by default)
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('project_url')
         ensure_nonemptystring('group')
@@ -1130,10 +1118,6 @@ class CloudBeesJenkins:
 
         - project_url: a non-empty string
         - role: a non-empty string
-
-        # Returned value
-
-        None.
         """
         ensure_nonemptystring('project_url')
         ensure_nonemptystring('role')
@@ -1229,10 +1213,6 @@ class CloudBeesJenkins:
 
         Non-system domains are located in the 'folder' store.  System
         domains are located in the 'system' store.
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 
@@ -1344,10 +1324,6 @@ class CloudBeesJenkins:
         ```
 
         TODO: check password validity (spaces striped? ...)
-
-        # Returned value
-
-        None.
 
         # Raised exceptions
 

@@ -118,7 +118,7 @@ class Artifactory(clients.Artifactory, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -186,7 +186,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -280,7 +280,7 @@ class Confluence(clients.Confluence, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -349,7 +349,7 @@ class GitHub(clients.GitHub, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -522,7 +522,7 @@ class Jira(clients.Jira, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -580,7 +580,7 @@ class SonarQube(clients.SonarQube, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
@@ -642,7 +642,7 @@ class SquashTM(clients.SquashTM, ManagedService):
     def list_members(self) -> Dict[str, Dict[str, Any]]:
         """Return the members on the service.
 
-        # Returned values
+        # Returned value
 
         A dictionary.  The keys are the canonical IDs and the values are
         the representations of a user for the service.
