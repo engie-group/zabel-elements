@@ -37,13 +37,14 @@ class Artifactory(Base):
 
     # Implemented features
 
-    - users
+    - artefacts
+    - builds
     - groups
-    - repositories
     - permission
-    - storageinfo
+    - repositories
     - token
-    - ping
+    - users
+    - misc. features (storageinfo, version, ping, ...)
 
     # Sample use
 
@@ -51,8 +52,8 @@ class Artifactory(Base):
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
-    af = Artifactory(url, user, token)
-    af.get_users()
+    af = Artifactory(url, basic_auth=(user, token))
+    af.list_users()
     ```
     """
 

@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Confluence.
+"""Confluence Server and Data Center.
 
-A class wrapping Confluence APIs.
+A class wrapping Confluence Server and Data Center APIs.
 
 There can be as many Confluence instances as needed.
 
@@ -47,7 +47,14 @@ CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
 
 
 class Confluence:
-    """Confluence Low-Level Wrapper.
+    """Confluence Server and Data Center Low-Level Wrapper.
+
+    There can be as many Confluence instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
     # Reference URL
 
@@ -66,10 +73,11 @@ class Confluence:
 
     # Implemented features
 
-    - search
     - groups&users
     - pages
+    - search
     - spaces
+    - misc. features (index,long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
@@ -83,13 +91,14 @@ class Confluence:
 
     url = 'https://confluence.example.com'
     confluence = Confluence(url, basic_auth=(user, token))
-    confluence.get_users()
+    confluence.list_users()
     ```
     """
 
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Optional[Tuple[str, str]] = None,
         oauth: Optional[Dict[str, str]] = None,
         bearer_auth: Optional[str] = None,
@@ -99,14 +108,6 @@ class Confluence:
 
         You can only specify either `basic_auth`, `bearer_auth`, or
         `oauth`.
-
-        The `oauth` dictionary is expected to have the following
-        entries:
-
-        - access_token: a string
-        - access_token_secret: a string
-        - consumer_key: a string
-        - key_cert: a string
 
         Please note that the `bearer_auth` support does not give access
         to JSON-RPC methods.
@@ -121,6 +122,19 @@ class Confluence:
         # Optional parameters
 
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` must be the URL of the Confluence instance, e.g.,
+        `https://confluence.example.com`.
+
+        The `oauth` dictionary is expected to have the following
+        entries:
+
+        - access_token: a string
+        - access_token_secret: a string
+        - consumer_key: a string
+        - key_cert: a string
 
         `verify` can be set to False if disabling certificate checks for
         Confluence communication is required.  Tons of warnings will

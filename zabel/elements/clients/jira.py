@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Jira.
+"""Jira Server and Data Center.
 
-A class wrapping Jira APIs.
+A class wrapping Jira Server and Data Center APIs.
 
 There can be as many Jira instances as needed.
 
@@ -28,13 +28,17 @@ from .base.jira import Jira as Base
 
 
 class Jira(Base):
-    """JIRA Low-Level Wrapper.
+    """JIRA Server and Data Center Low-Level Wrapper.
 
     There can be as many Jira instances as needed.
 
     This class depends on the public **requests** and **jira.JIRA**
     libraries.  It also depends on two **zabel-commons** modules,
     #::zabel.commons.exceptions and #::zabel.commons.utils.
+
+    !!! note
+        This class reuses the JIRA library whenever possible, but always
+        returns 'raw' values (dictionaries, ..., not classes).
 
     # Reference URLs
 
@@ -59,7 +63,9 @@ class Jira(Base):
 
     # Implemented features
 
+    - anonymization
     - boards
+    - components
     - fieldconfigurationschemes
     - groups
     - issues
@@ -69,13 +75,16 @@ class Jira(Base):
     - permissionschemes
     - priorityschemes
     - projects
+    - roles
     - screens
     - screenschemes
     - search
     - sprints
     - users
+    - versions
     - workflows
     - workflowschemes
+    - service desk
     - misc. features (reindexing, plugins, xray, server info, ...)
 
     Works with basic authentication, bearer token authentication, as
@@ -113,12 +122,12 @@ class Jira(Base):
 
     ```json
     {
-        "expand": "widgets",
-        "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
-        "widgets": {
-            "widgets": [],
-            "size": 5
-        }
+      "expand": "widgets",
+      "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
+      "widgets": {
+        "widgets": [],
+        "size": 5
+      }
     }
     ```
 
@@ -134,12 +143,8 @@ class Jira(Base):
 
     url = 'https://jira.example.com'
     jc = Jira(url, basic_auth=(user, token))
-    jc.get_users()
+    jc.list_users()
     ```
-
-    !!! note
-        Reuse the JIRA library whenever possible, but always returns
-        'raw' values (dictionaries, ..., not classes).
     """
 
     @api_call
