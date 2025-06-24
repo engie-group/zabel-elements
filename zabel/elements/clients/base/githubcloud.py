@@ -92,9 +92,9 @@ class GitHubCloud:
     def list_users(self) -> List[Dict[str, Any]]:
         """Return the list of users.
 
-        This API returns users, bots and organizations.  Use the `type` entry
-        in the returned items to distinguish (`'User'` or
-        `'Organization'` or `'Bot'`).
+        This API returns users, bots and organizations.  Use the `type`
+        entry in the returned items to distinguish (`User` or
+        `Organization` or `Bot`).
 
         # Returned value
 
@@ -183,7 +183,7 @@ class GitHubCloud:
     # list_organization_repositories
     # list_organization_members
     # add_organization_membership
-    # rm_organization_membership
+    # remove_organization_membership
     # add_organization_outsidecollaborator
     # remove_organization_outsidecollaborator
     # list_organization_saml_identities
@@ -442,8 +442,8 @@ class GitHubCloud:
 
         # Optional parameters
 
-        - role: a non-empty string, one of 'all', 'member', or 'admin'
-          ('all' by default)
+        - role: a non-empty string, one of `all`, `member`, or `admin`
+          (`all` by default)
 
         # Returned value
 
@@ -454,6 +454,27 @@ class GitHubCloud:
 
         return self._collect_data(
             f'orgs/{organization_name}/members', params={'role': role}
+        )
+
+    @api_call
+    def list_organization_outsidecollaborators(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return the list of organization outside collaborators.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _members_ (outside collaborators).  Each member is a
+        dictionary.
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(
+            f'orgs/{organization_name}/outside_collaborators'
         )
 
     @api_call
@@ -472,12 +493,12 @@ class GitHubCloud:
 
         # Optional parameters
 
-        - role: a string, either 'member' or 'admin' ('member' by
+        - role: a string, either `member` or `admin` (`member` by
           default)
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('user_name')
-        ensure_in('role', ['member', 'admin'])
+        ensure_in('role', ('member', 'admin'))
 
         return self._put(
             f'orgs/{organization_name}/memberships/{user_name}',
@@ -485,7 +506,7 @@ class GitHubCloud:
         )
 
     @api_call
-    def rm_organization_membership(
+    def remove_organization_membership(
         self, organization_name: str, user_name: str
     ) -> bool:
         """Remove a user from an organization.
@@ -506,6 +527,8 @@ class GitHubCloud:
             f'orgs/{organization_name}/memberships/{user_name}'
         )
         return (result.status_code // 100) == 2
+
+    rm_organization_membership = remove_organization_membership
 
     @api_call
     def add_organization_outsidecollaborator(
@@ -723,6 +746,7 @@ class GitHubCloud:
 
         """
         ensure_nonemptystring('organization_name')
+
         return self._collect_data(
             f'orgs/{organization_name}/copilot/billing/seats', key='seats'
         )
@@ -867,7 +891,7 @@ class GitHubCloud:
     # list_reporitory_teams
     # list_repository_collaborators
     # add_repository_collaborator
-    # rm_repository_collaborator
+    # remove_repository_collaborator
     # list_repository_permissions_user
 
     @api_call
@@ -993,6 +1017,7 @@ class GitHubCloud:
         self,
         organization_name: str,
         repository_name: str,
+        *,
         description: Optional[str] = None,
         private: bool = False,
         visibility: Optional[str] = None,
@@ -1026,9 +1051,13 @@ class GitHubCloud:
 
         # Optional parameters
 
+        The optional parameters, if specified, must be keyword
+        arguments.
+
         - description: a string
         - private: a boolean
-        - visibility: a string, one of 'public', 'private', or 'internal'
+        - visibility: a string, one of `public`, `private`, or
+          `internal`
         - has_issues: a boolean
         - has_projects: a boolean
         - has_wiki: a boolean
@@ -1214,16 +1243,22 @@ class GitHubCloud:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - user_name: a non-empty string
-        - permission: a non-empty string
+
+        # Optional parameters
+
+        - permission: a non-empty string, one of `pull`, `triage`,
+          `push`, `maintain`, or `admin` (`pull` by default)
 
         # Returned value
 
-        - a boolean
+        A boolean.  True when successful.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('user_name')
-        ensure_nonemptystring('permission')
+        ensure_in(
+            'permission', ('pull', 'triage', 'push', 'maintain', 'admin')
+        )
 
         result = self._put(
             f'repos/{organization_name}/{repository_name}/collaborators/{user_name}',
@@ -1232,7 +1267,7 @@ class GitHubCloud:
         return (result.status_code // 100) == 2
 
     @api_call
-    def rm_repository_collaborator(
+    def remove_repository_collaborator(
         self, organization_name: str, repository_name: str, user_name: str
     ) -> bool:
         """Remove a collaborator from a repository.
@@ -1245,7 +1280,7 @@ class GitHubCloud:
 
         # Returned value
 
-        A boolean.
+        A boolean.  True when successful.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1255,6 +1290,8 @@ class GitHubCloud:
             f'repos/{organization_name}/{repository_name}/collaborators/{user_name}'
         )
         return (result.status_code // 100) == 2
+
+    rm_repository_collaborator = remove_repository_collaborator
 
     ####################################################################
     # GitHubCloud enterprise
@@ -1325,10 +1362,53 @@ class GitHubCloud:
     ####################################################################
     # GitHubCloud billing
     #
+    # list_enterprise_consumedlicenses_users
     # list_enterprise_billing_usage
     # get_enterprise_billing_actions
     # list_organization_billing_usage
     # get_organization_billing_actions
+
+    @api_call
+    def list_enterprise_consumedlicenses_users(
+        self, enterprise_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return consumed licenses.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries, one per user.  Each dictionary has the
+        following entries:
+
+        - github_com_login: a string
+        - github_com_name: a string
+        - enterprise_server_user_ids: a list of strings
+        - github_com_user: a boolean
+        - enterprise_server_user: a boolean
+        - visual_studio_subscription_user: a boolean
+        - license_type: a string
+        - github_com_profile: a string
+        - github_com_member_roles: a list of strings
+        - github_com_enterprise_roles: a list of strings
+        - github_com_verified_domain_emails: a list of strings
+        - github_com_saml_name_id: a string
+        - github_com_orgs_with_pending_invites: a list of strings
+        - github_com_two_factor_auth: a boolean
+        - github_com_two_factor_auth_required_by_date: a datetime as a
+          string
+        - enterprise_server_primary_emails: a list of stringsF
+        - visual_studio_license_status: a string
+        - visual_studio_subscription_email: a string
+        - total_user_accounts: an integer
+        """
+        ensure_nonemptystring('enterprise_name')
+
+        return self._collect_data(
+            f'enterprises/{enterprise_name}/consumed-licenses', key='users'
+        )
 
     @api_call
     def list_enterprise_billing_usage(
@@ -1403,7 +1483,8 @@ class GitHubCloud:
         - total_minutes_used: an integer
         - total_paid_minutes_used: an integer
         - included_minutes: an integer
-        - minutes_used_breakdown: a dictionary with the following entries:
+        - minutes_used_breakdown: a dictionary with the following
+          entries:
             - UBUNTU: an integer
             - WINDOWS: an integer
             - MACOS: an integer
@@ -1500,7 +1581,8 @@ class GitHubCloud:
         - total_minutes_used: an integer
         - total_paid_minutes_used: an integer
         - included_minutes: an integer
-        - minutes_used_breakdown: a dictionary with the following entries:
+        - minutes_used_breakdown: a dictionary with the following
+          entries:
             - UBUNTU: an integer
             - WINDOWS: an integer
             - MACOS: an integer
