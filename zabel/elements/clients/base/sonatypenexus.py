@@ -21,7 +21,7 @@ on three **zabel-commons** modules, #::zabel.commons.exceptions,
 #::zabel.commons.sessions, and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import requests
 
@@ -55,9 +55,19 @@ class SonatypeNexus:
     - <https://help.sonatype.com/en/api-reference.html>
     - <https://pypi.org/project/nexus_api_client/>
 
+    !!! note
+        Does not use the **nexus_api_client** library, as it fails on
+        components and assets validation on some supported versions
+        (PRO 3.70.4-02)
+
     # Implemented features
 
-    - ...
+    - repositories
+    - tags
+    - users
+    - roles
+    - privileges
+    - misc. features (sources, metrics, ...)
 
     # Sample use
 
@@ -66,25 +76,20 @@ class SonatypeNexus:
     from zabel.elements.clients import SonatypeNexus
 
     url = 'https://nexus.example.com/nexus/service/rest'
-    nx = SonatypeNexus(url, access_token=access_token)
-    nx.list_project_protectedbranches()
+    nx = SonatypeNexus(url, bearer_token=access_token)
+    nx.list_repositories()
     ```
-
-    !!! note
-        Reuse the nexus_api_client library whenever possible, but always
-        returns 'raw' values (dictionaries, ..., not classes).
     """
 
     def __init__(
         self,
         url: str,
         *,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        access_token: Optional[str] = None,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        bearer_token: Optional[str] = None,
         verify: Union[bool, str] = True,
     ) -> None:
-        """Create a GitLab instance object.
+        """Create a Sonatype Nexus instance object.
 
         You can only specify either `access_token` or both `username`
         and `password`.
@@ -95,9 +100,8 @@ class SonatypeNexus:
 
         and one of
 
-        - username: a non-empty string or None (None by default)
-        - password: a non-empty string or None (None by default)
-        - access_token: a non-empty string or None (None by default)
+        - basic_auth: a strings tuple (user, token)
+        - bearer_token: a non-empty string
 
         # Optional parameters
 
@@ -108,20 +112,16 @@ class SonatypeNexus:
         if this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_noneorinstance('username', str)
-        ensure_noneorinstance('password', str)
-        ensure_noneorinstance('access_token', str)
-        if access_token and (username or password):
-            raise ValueError(
-                'You can only specify either "access_token" or both "username" and "password".'
-            )
+        ensure_noneorinstance('basic_auth', tuple)
+        ensure_noneorinstance('bearer_token', str)
+        ensure_onlyone('basic_auth', 'bearer_token')
         ensure_instance('verify', (bool, str))
 
         self.url = url
-        if access_token:
-            self.auth = BearerAuth(access_token)
+        if bearer_token:
+            self.auth = BearerAuth(bearer_token)
         else:
-            self.auth = (username, password)
+            self.auth = basic_auth
         self.verify = verify
         self.session = prepare_session(self.auth, verify=self.verify)
 
@@ -137,6 +137,8 @@ class SonatypeNexus:
     # list_repositories
     # list_repositorysettings
     # get_repository
+    # list_repository_assets
+    # list_repository_components
 
     @api_call
     def list_repositories(self) -> List[Dict[str, Any]]:
@@ -144,7 +146,7 @@ class SonatypeNexus:
 
         # Returned value
 
-        A list of _repositories_.  Each _repository_ is a dictionary
+        A list of _repositories_.  Each repository is a dictionary
         containing the following keys:
 
         - name: a string
@@ -162,7 +164,7 @@ class SonatypeNexus:
 
         # Returned value
 
-        A list of _repository settings_.  Each _repository setting_ is a
+        A list of _repository settings_.  Each repository setting is a
         dictionary containing the following keys:
 
         - name: a string
@@ -197,11 +199,6 @@ class SonatypeNexus:
         result = self._get(f'v1/repositories/{repository_name}')
         return result  # type: ignore
 
-    ####################################################################
-    # Assets
-    #
-    # list_repository_assets
-
     @api_call
     def list_repository_assets(
         self, repository_name: str
@@ -214,7 +211,7 @@ class SonatypeNexus:
 
         # Returned value
 
-        A list of _assets_.  Each _asset_ is a dictionary containing the
+        A list of _assets_.  Each asset is a dictionary containing the
         following keys:
 
         - downloadUrl: a string
@@ -252,7 +249,7 @@ class SonatypeNexus:
 
         # Returned value
 
-        A list of _components_.  Each _component_ is a dictionary
+        A list of _components_.  Each component is a dictionary
         containing the following keys:
 
         - id: a string
@@ -281,7 +278,7 @@ class SonatypeNexus:
 
         # Returned value
 
-        A list of _tags_.  Each _tag_ is a dictionary containing the
+        A list of _tags_.  Each tag is a dictionary containing the
         following keys:
 
         - name: a string
@@ -290,6 +287,227 @@ class SonatypeNexus:
         - lastUpdated: a string ('2025-03-01T00:00:00Z')
         """
         return self._collect_data('v1/tags')
+
+    ####################################################################
+    # Users
+    #
+    # create_user
+    # list_users
+
+    @api_call
+    def create_user(
+        self,
+        user_id: str,
+        first_name: str,
+        last_name: str,
+        email_address: str,
+        password: str,
+        status: str,
+        roles: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Create a user.
+
+        # Required parameters
+
+        - user_id: a non-empty string
+        - first_name: a non-empty string
+        - last_name: a non-empty string
+        - email_address: a non-empty string
+        - password: a non-empty string
+        - status: a non-empty string (one of `active`, `locked`,
+         `disabled`, or `changepassword`)
+
+        # Optional parameters
+
+        - roles: a list of strings (default None)
+
+        # Returned value
+
+        A dictionary containing the created user data.
+        """
+        ensure_nonemptystring('user_id')
+        ensure_nonemptystring('first_name')
+        ensure_nonemptystring('last_name')
+        ensure_nonemptystring('email_address')
+        ensure_nonemptystring('password')
+        ensure_in('status', ('active', 'locked', 'disabled', 'changepassword'))
+        ensure_noneorinstance('roles', list)
+
+        data = {
+            'userId': user_id,
+            'firstName': first_name,
+            'lastName': last_name,
+            'emailAddress': email_address,
+            'password': password,
+            'status': status,
+            'roles': roles or [],
+        }
+
+        return self._post('v1/security/users', data)  # type: ignore
+
+    @api_call
+    def list_users(
+        self, source: Optional[str] = None, user_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return the list of users.
+
+        # Optional parameters
+
+        - source: a non-empty string or None
+        - user_id: a non-empty string or None
+
+        # Returned value
+
+        A list of _users_.  Each user is a dictionary containing the
+        following keys:
+
+        - userId: a string
+        - firstName: a string
+        - lastName: a string
+        - emailAddress: a string
+        - source: a string
+        - status: a string ('active')
+        - readOnly: a boolean
+        - roles: a list of strings
+        - externalRoles: a list of strings
+        """
+        ensure_noneornonemptystring('source')
+        ensure_noneornonemptystring('user_id')
+
+        params = {}
+        add_if_specified(params, 'source', source)
+        add_if_specified(params, 'userId', user_id)
+
+        return self._get('v1/security/users', params=params)  # type: ignore
+
+    ####################################################################
+    # Roles
+    #
+    # list_roles
+    # get_role
+
+    @api_call
+    def list_roles(self, source: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Return the list of roles.
+
+        # Optional parameters
+
+        - source: a non-empty string or None (None by default)
+
+        # Returned value
+
+         A list of _roles_.  Each role is a dictionary containing the
+         following keys:
+
+        - id: a string
+        - source: a string
+        - name: a string
+        - description: a string
+        - readOnly: a boolean
+        - privileges: a list of strings
+        - roles: a list of strings
+        """
+        ensure_noneornonemptystring('source')
+
+        params = {}
+        add_if_specified(params, 'source', source)
+
+        return self._get('v1/security/roles', params=params)  # type: ignore
+
+    @api_call
+    def get_role(
+        self, role_id: str, source: str = 'default'
+    ) -> Dict[str, Any]:
+        """Get role details.
+
+         # Required parameters
+
+         - role_id: a non-empty string
+
+         # Optional parameters
+
+         - source: a non-empty string (`default` by default)
+
+         # Returned value
+
+         A _role_.  A role is a dictionary containing the following
+         keys:
+
+        - id: a string
+        - source: a string
+        - name: a string
+        - description: a string
+        - readOnly: a boolean
+        - privileges: a list of strings
+        - roles: a list of strings
+        """
+        ensure_nonemptystring('role_id')
+        ensure_nonemptystring('source')
+
+        return self._get(f'v1/security/roles/{role_id}', params={'source': source})  # type: ignore
+
+    ####################################################################
+    # Privileges
+    #
+    # list_privileges
+    # get_privilege
+
+    @api_call
+    def list_privileges(self) -> List[Dict[str, Any]]:
+        """Return the list of privileges.
+
+        # Returned value
+
+         A list of _privileges_.  Each privilege is a dictionary
+         containing the following keys:
+
+        - type: a string
+        - name: a string
+        - description: a string
+        - readOnly: a boolean
+        """
+        return self._get('v1/security/privileges')  # type: ignore
+
+    @api_call
+    def get_privilege(self, privilege_id: str) -> Dict[str, Any]:
+        """Get privilege details.
+
+         # Required parameters
+
+         - privilege_id: a non-empty string
+
+         # Returned value
+
+         A _privilege_.  A privilege is a dictionary containing the
+         following keys:
+
+        - type: a string
+        - name: a string
+        - description: a string
+        - readOnly: a boolean
+        """
+        ensure_nonemptystring('privilege_id')
+
+        return self._get(f'v1/security/privileges/{privilege_id}')  # type: ignore
+
+    ####################################################################
+    # User sources
+    #
+    # list_sources
+
+    @api_call
+    def list_sources(self) -> List[Dict[str, str]]:
+        """Return the list of user sources.
+
+        # Returned value
+
+        A list of _user source_.  A user source is a dictionary with
+        the following keys:
+
+        - id: a string
+        - name: a string
+        """
+        return self._get('v1/security/user-sources')  # type: ignore
 
     ####################################################################
     # Miscellaneous
@@ -362,3 +580,15 @@ class SonatypeNexus:
                 break
 
         return collected
+
+    def _post(
+        self,
+        api: str,
+        json: Optional[Mapping[str, Any]] = None,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        api_url = join_url(self.url, api)
+        return self.session().post(
+            api_url, json=json, params=params, headers=headers
+        )
