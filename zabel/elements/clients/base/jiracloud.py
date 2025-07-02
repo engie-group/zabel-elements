@@ -24,6 +24,7 @@ from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     ensure_noneorinstance,
+    ensure_instance,
     join_url,
     add_if_specified,
 )
@@ -34,12 +35,10 @@ from zabel.commons.utils import (
 TIMEOUT = 60
 PROJECT_EXPAND = 'description,lead,url,projectKeys,issueTypes'
 
-class JiraCloud:
 
+class JiraCloud:
     def __init__(
-        self,
-        url: str,
-        basic_auth: Optional[Tuple[str, str]] = None,
+        self, url: str, basic_auth: Optional[Tuple[str, str]] = None
     ) -> None:
         """Create a JiraCloud instance object.
 
@@ -134,6 +133,60 @@ class JiraCloud:
 
         return self._collect_data('project/search', params=params)
 
+    ### Groups
+
+    @api_call
+    def list_groups(
+        self, max_results: int = 9999, query: Optional[str] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        List groups.
+        
+        # Required parameters
+        
+        - max_results: an integer (default: 9999)
+        
+        # Optional parameters
+        
+        - query: a string (optional, used for filtering group names)
+        
+        # Return Value
+            A dictionary where keys are group names and values are dictionaries
+        
+        """
+        ensure_noneorinstance('query', str)
+        ensure_instance('max_results', int)
+
+        params = {'maxResults': max_results}
+        add_if_specified(params, 'query', query)
+
+        response = self._get('groups/picker', params=params)
+        groups = response.json().get('groups', [])
+
+        if not groups:
+            return {}
+
+        return {group['name']: group for group in groups}
+
+    @api_call
+    def create_group(self, group_name: str) -> bool:
+
+        """ Create new group.
+        
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        
+        """
+        ensure_instance('group_name', str)
+        response = self._post('group', json={'name': group_name})
+
+        return response.status_code == 201
+
     def _get(
         self,
         uri: str,
@@ -148,8 +201,12 @@ class JiraCloud:
             timeout=TIMEOUT,
         )
 
-    def _get_url(self, api: str) -> str:
-        return self._client()._get_url(api)
+    def _post(
+        self, api: str, json: Optional[Mapping[str, Any]] = None
+    ) -> requests.Response:
+        return requests.post(
+            join_url(self.url, api), json=json, auth=self.auth, timeout=TIMEOUT
+        )
 
     def _collect_data(
         self,
