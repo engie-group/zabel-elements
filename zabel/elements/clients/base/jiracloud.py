@@ -33,7 +33,8 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 TIMEOUT = 60
-PROJECT_EXPAND = 'description,lead,url,projectKeys,issueTypes'
+PROJECTS_EXPAND = 'description,lead,url,projectKeys,issueTypes'
+PROJECT_EXPAND = 'description,lead,projectKeys,issueTypes,issueTypeHierarchy'
 
 
 class JiraCloud:
@@ -78,7 +79,7 @@ class JiraCloud:
     @api_call
     def list_projects(
         self,
-        expand: str = PROJECT_EXPAND,
+        expand: str = PROJECTS_EXPAND,
         query: Optional[str] = None,
         order_by: Optional[str] = None,
         start_at: Optional[int] = None,
@@ -133,6 +134,130 @@ class JiraCloud:
 
         return self._collect_data('project/search', params=params)
 
+    @api_call
+    def get_project(
+        self, project_key: str, expand: str = PROJECT_EXPAND
+    ) -> Dict[str, Any]:
+        """Get a project by its key.
+        
+        # Required parameters
+        
+        - project_key: a non-empty string
+        
+        # Optional parameters
+
+        - expand: a string (`PROJECT_EXPAND` by default)
+
+        # Returned value
+
+        A dictionary.  See #list_projects() for details on its
+        structure.
+        """
+        ensure_nonemptystring('project_key')
+        ensure_nonemptystring('expand')
+
+        params = {'expand': expand}
+        response = self._get(f'project/{project_key}', params=params)
+        response.raise_for_status()
+
+        return response.json()
+
+    @api_call
+    def create_project(
+        self,
+        key: str,
+        project_type_key: str,
+        name: str,
+        lead_account_id: str = None,
+        url: Optional[str] = None,
+        assignee_type: Optional[str] = None,
+        avatar_id: Optional[int] = None,
+        category_id: Optional[int] = None,
+        description: Optional[str] = None,
+        field_configuration_scheme: Optional[int] = None,
+        issue_security_scheme: Optional[int] = None,
+        issue_type_scheme: Optional[int] = None,
+        issue_type_screen_scheme: Optional[int] = None,
+        notification_scheme: Optional[int] = None,
+        permission_scheme: Optional[int] = None,
+        project_template_key: Optional[str] = None,
+        workflow_scheme: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Create a new project.
+        
+        # Required parameters
+        
+        - key: a non-empty string (the project key)
+        - project_type_key: a string (project type key, e.g., 'business', 'software', 'service_desk')
+        - name: a non-empty string (the project name)
+        - lead_account_id: a string (the project lead account ID, if different from username)
+
+        # Optional parameters
+        
+        - url: a string (the project URL)
+        - assignee_type: a string (e.g., 'PROJECT_LEAD')
+        - avatar_id: an integer (the avatar ID)
+        - category_id: an integer (the category ID)
+        - description: a string (the project description)
+        - field_configuration_scheme: an integer (field configuration scheme ID)
+        - issue_security_scheme: an integer (issue security scheme ID)
+        - issue_type_scheme: an integer (issue type scheme ID)
+        - issue_type_screen_scheme: an integer (issue type screen scheme ID)
+        - notification_scheme: an integer (notification scheme ID)
+        - permission_scheme: an integer (permission scheme ID)
+        - project_template_key: a string (project template key, e.g., 'com.atlassian.jira-core-project-templates:jira-core-simplified')
+        - workflow_scheme: an integer (workflow scheme ID)
+
+        # Return Value
+
+            A dictionary representing the created project.
+        
+        """
+        ensure_nonemptystring('key')
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('project_type_key')
+        ensure_noneorinstance('lead_account_id', str)
+        ensure_noneorinstance('url', str)
+        ensure_noneorinstance('assignee_type', str)
+        ensure_noneorinstance('avatar_id', int)
+        ensure_noneorinstance('category_id', int)
+        ensure_noneorinstance('description', str)
+        ensure_noneorinstance('field_configuration_scheme', int)
+        ensure_noneorinstance('issue_security_scheme', int)
+        ensure_noneorinstance('issue_type_scheme', int)
+        ensure_noneorinstance('issue_type_screen_scheme', int)
+        ensure_noneorinstance('notification_scheme', int)
+        ensure_noneorinstance('permission_scheme', int)
+        ensure_noneorinstance('project_template_key', str)
+        ensure_noneorinstance('workflow_scheme', int)
+
+        params = {
+            'key': key,
+            'name': name,
+            'leadAccountId': lead_account_id,
+            'projectTypeKey': project_type_key,
+        }
+        add_if_specified(params, 'url', url)
+        add_if_specified(params, 'assigneeType', assignee_type)
+        add_if_specified(params, 'avatarId', avatar_id)
+        add_if_specified(params, 'categoryId', category_id)
+        add_if_specified(params, 'description', description)
+        add_if_specified(
+            params, 'fieldConfigurationScheme', field_configuration_scheme
+        )
+        add_if_specified(params, 'issueSecurityScheme', issue_security_scheme)
+        add_if_specified(params, 'issueTypeScheme', issue_type_scheme)
+        add_if_specified(
+            params, 'issueTypeScreenScheme', issue_type_screen_scheme
+        )
+        add_if_specified(params, 'notificationScheme', notification_scheme)
+        add_if_specified(params, 'permissionScheme', permission_scheme)
+        add_if_specified(params, 'projectTemplateKey', project_template_key)
+        add_if_specified(params, 'workflowScheme', workflow_scheme)
+
+        response = self._post('project', json=params)
+        return response.json()
+
     ### Groups
 
     @api_call
@@ -186,6 +311,79 @@ class JiraCloud:
         response = self._post('group', json={'name': group_name})
 
         return response.status_code == 201
+
+    ### Schemes ###
+
+    @api_call
+    def list_issuetypescreenschemes(
+        self,
+        start_at: int = 0,
+        max_results: int = 50,
+        id: Optional[List[int]] = None,
+        query: Optional[str] = None,
+        order_by: Optional[str] = None,
+        expand: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        List issue type screen schemes.
+        
+        # Optional parameters   
+        - start_at: an integer (default: 0)
+        - max_results: an integer (default: 50, maximum: 100)
+        - id: a list of integers (optional, used for filtering by scheme IDs)
+        - query: a string (optional, used for filtering by scheme name)
+        - order_by: a string (optional, used for ordering results)
+        - expand: a string (optional, used for expanding additional fields)
+        
+        # Return Value
+        A list of dictionaries, each representing an issue type screen scheme.
+        
+        """
+        ensure_instance('start_at', int)
+        ensure_instance('max_results', int)
+        ensure_noneorinstance('id', list)
+        ensure_noneorinstance('query', str)
+        ensure_noneorinstance('order_by', str)
+        ensure_noneorinstance('expand', str)
+
+        params = {'startAt': start_at, 'maxResults': max_results}
+        add_if_specified(params, 'id', id)
+        add_if_specified(params, 'query', query)
+        add_if_specified(params, 'order_by', order_by)
+        add_if_specified(params, 'expand', expand)
+
+        return self._collect_data('issuetypescreenscheme', params=params)
+
+    ### Roles ###
+
+    def list_roles(self) -> List[Dict[str, Any]]:
+        """Return the list of all roles.
+
+        # Returned value
+
+        A list of _roles_.  Each role is a dictionary  with the
+        following entries:
+
+        - self: a string (an URL)
+        - name: a string
+        - id: an integer
+        - scope : a list of dictionaries
+        - description: a string (optional)
+        - actors: a list of dictionaries
+
+        `actors` entries have the following entries:
+        
+        - id: an integer
+        - displayName: a string
+        - type: a string
+        - name: a string
+        - avatarUrl: a string
+
+        The `actors` entry may be missing.
+        """
+        response = self._get('role')
+
+        return response.json()
 
     def _get(
         self,
