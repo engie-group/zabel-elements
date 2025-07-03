@@ -44,7 +44,7 @@ from zabel.commons.utils import (
 ########################################################################
 ########################################################################
 
-# Sonatype Nexus low-level api
+# Sonatype Nexus low-level API
 
 
 class SonatypeNexus:

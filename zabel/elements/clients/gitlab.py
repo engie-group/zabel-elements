@@ -6,14 +6,28 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""GitHub.
+"""GitLab.
 
-A class wrapping GitHub APIs.
+A class wrapping GitLab APIs.
 
-There can be as many GitHub instances as needed.
+There can be as many GitLab instances as needed.
 
-This module depends on the #::.base.github module.
+This module depends on the #::.base.gitlab module.
 """
+
+from typing import Any, Dict, List, Optional
+
+
+from zabel.commons.utils import (
+    add_if_specified,
+    api_call,
+    ensure_in,
+    ensure_instance,
+    ensure_nonemptystring,
+    ensure_noneorinstance,
+    ensure_noneornonemptystring,
+    ensure_onlyone,
+)
 
 from .base.gitlab import GitLab as Base
 
@@ -21,40 +35,57 @@ from .base.gitlab import GitLab as Base
 class GitLab(Base):
     """GitLab Low-Level Wrapper.
 
-    There can be as many GitLab instances as needed.
+    # Reference URL
 
-    This class depends on the public **requests** library.  It also
-    depends on three **zabel-commons** modules,
-    #::zabel.commons.exceptions, #::zabel.commons.sessions,
-    and #::zabel.commons.utils.
-
-    # Reference URLs
-
-    - <https://developer.github.com/v3/>
-    - <https://developer.github.com/enterprise/2.20/v3>
-    - <https://stackoverflow.com/questions/10625190>
+    - <https://docs.gitlab.com/api/rest/>
+    - <https://docs.gitlab.com/api/api_resources/>
+    - <https://python-gitlab.readthedocs.io/en/stable/>
 
     # Implemented features
 
-    - hooks
-    - organizations
-    - repositories
-    - users
-    - misc. operations (version, staff reports & stats)
+    - namespaces
+    - groups
+    - projects
+    - members
 
     # Sample use
 
     ```python
-    >>> from zabel.elements.clients import GitHub
-    >>>
-    >>> # standard use
-    >>> url = 'https://github.example.com/api/v3/'
-    >>> gh = GitHub(url, user, token)
-    >>> gh.get_users()
+    # standard use
+    from zabel.elements.clients import GitLab
 
-    >>> # enabling management features
-    >>> mngt = 'https://github.example.com/'
-    >>> gh = GitHub(url, user, token, mngt)
-    >>> gh.create_organization('my_organization', 'admin')
+    url = 'https://gitlab.com/'
+    gl = GitLab(url, private_token)
+    gl.list_project_protectedbranches()
     ```
+
+    !!! note
+        Reuse the **python-gitlab** library whenever possible, but
+        always returns 'raw' values (dictionaries, ..., not classes).
     """
+
+    def list_namespace_projects(
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """List all namespace projects."""
+        ensure_noneornonemptystring('group_name')
+        ensure_noneorinstance('group_id', int)
+        ensure_onlyone('group_name', 'group_id')
+
+        all_projects = self.list_group_projects(
+            group_name=group_name, group_id=group_id
+        )
+        print(len(all_projects))
+        for grp in self.list_group_subgroups(
+            group_name=group_name,
+            group_id=group_id,
+        ):
+            print(grp)
+            all_projects.extend(
+                self.list_namespace_projects(group_id=grp['id'])
+            )
+
+        return all_projects

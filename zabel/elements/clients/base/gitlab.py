@@ -39,8 +39,8 @@ from zabel.commons.utils import (
 
 # GitLab low-level api
 
-ISSUES_STATE = ['all', 'opened', 'closed']
-MR_STATE = ['all', 'opened', 'closed', 'merged', 'locked']
+ISSUES_STATE = ('all', 'opened', 'closed')
+MR_STATE = ('all', 'opened', 'closed', 'merged', 'locked')
 
 
 class GitLab:
@@ -57,6 +57,7 @@ class GitLab:
     - namespaces
     - groups
     - projects
+    - members
 
     # Sample use
 
@@ -70,8 +71,8 @@ class GitLab:
     ```
 
     !!! note
-        Reuse the python-gitlab library whenever possible, but always
-        returns 'raw' values (dictionaries, ..., not classes).
+        Reuse the **python-gitlab** library whenever possible, but
+        always returns 'raw' values (dictionaries, ..., not classes).
     """
 
     def __init__(
@@ -142,6 +143,22 @@ class GitLab:
         return self.client
 
     ####################################################################
+    # GitLab member roles
+    #
+    # list_memberroles
+
+    @api_call
+    def list_memberroles(self) -> List[Dict[str, Any]]:
+        """List all available member roles.
+
+        # Returned value
+
+        A list of _memberroles_.
+        """
+        roles = self._client().member_roles.list(iterator=True)
+        return [role.asdict() for role in roles]
+
+    ####################################################################
     # GitLab namespaces (users or groups)
     #
     # list_namespaces
@@ -168,7 +185,8 @@ class GitLab:
         A _namespace_ dictionary.  The namespace's `kind` entry may be
         either `user` or `group`.
         """
-        ensure_nonemptystring('namespace')
+        ensure_nonemptystring('name')
+
         ns = self._client().namespaces.get(name)
         return ns.asdict()
 
@@ -184,7 +202,7 @@ class GitLab:
 
         A boolean indicating whether the namespace is available.
         """
-        ensure_nonemptystring('namespace')
+        ensure_nonemptystring('name')
 
         return self._client().namespaces.exists(name).exists
 
@@ -196,10 +214,16 @@ class GitLab:
     # list_group_issues
     # list_group_epics
     # list_group_mergerequests
+    # list_group_memberroles
+    # list_group_directmembers
+    # list_group_members
 
     @api_call
     def list_group_projects(
-        self, *, group_name: Optional[str], group_id: Optional[int]
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """List all projects in a group.
 
@@ -230,7 +254,10 @@ class GitLab:
 
     @api_call
     def list_group_subgroups(
-        self, *, group_name: Optional[str], group_id: Optional[int]
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """List all direct subgroups in a group.
 
@@ -264,8 +291,8 @@ class GitLab:
     def list_group_issues(
         self,
         *,
-        group_name: Optional[str],
-        group_id: Optional[int],
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
         state: str = 'all',
         **filter,
     ) -> List[Dict[str, Any]]:
@@ -281,6 +308,7 @@ class GitLab:
         # Optional parameters
 
         - state: a string (default: 'all')
+        - filter: additional filters
 
         # Returned value
 
@@ -307,8 +335,8 @@ class GitLab:
     def list_group_epics(
         self,
         *,
-        group_name: Optional[str],
-        group_id: Optional[int],
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
         state: str = 'opened',
         **filter,
     ) -> List[Dict[str, Any]]:
@@ -324,6 +352,7 @@ class GitLab:
         # Optional parameters
 
         - state: a string (default: 'opened')
+        - filter: additional filters
 
         # Returned value
 
@@ -350,8 +379,8 @@ class GitLab:
     def list_group_mergerequests(
         self,
         *,
-        group_name: Optional[str],
-        group_id: Optional[int],
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
         state: str = 'opened',
         **filter,
     ) -> List[Dict[str, Any]]:
@@ -367,6 +396,7 @@ class GitLab:
         # Optional parameters
 
         - state: a string (default: 'opened')
+        - filter: additional filters
 
         # Returned value
 
@@ -391,6 +421,129 @@ class GitLab:
             )
         ]
 
+    @api_call
+    def list_group_directmembers(
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
+        **filter,
+    ) -> List[Dict[str, Any]]:
+        """List all direct members in a group.
+
+        # Required parameters
+
+        Either `group_name` or `group_id` must be specified.
+
+        - group_name: a non-empty string or None (None by default)
+        - group_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _members_.
+        """
+        ensure_noneornonemptystring('group_name')
+        ensure_noneorinstance('group_id', int)
+        ensure_onlyone('group_name', 'group_id')
+
+        client = self._client()
+        if group_name:
+            group = client.groups.get(group_name)
+        else:
+            group = client.groups.get(group_id)
+
+        extra = filter or {}
+        return [
+            member.asdict()
+            for member in group.members.list(iterator=True, **extra)
+        ]
+
+    @api_call
+    def list_group_members(
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
+        **filter: Any,
+    ) -> List[Dict[str, Any]]:
+        """List all members in a group.
+
+        # Required parameters
+
+        Either `group_name` or `group_id` must be specified.
+
+        - group_name: a non-empty string or None (None by default)
+        - group_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _members_.
+        """
+        ensure_noneornonemptystring('group_name')
+        ensure_noneorinstance('group_id', int)
+        ensure_onlyone('group_name', 'group_id')
+
+        client = self._client()
+        if group_name:
+            group = client.groups.get(group_name)
+        else:
+            group = client.groups.get(group_id)
+
+        extra = filter or {}
+        return [
+            member.asdict()
+            for member in group.members_all.list(iterator=True, **extra)
+        ]
+
+    @api_call
+    def list_group_memberroles(
+        self,
+        *,
+        group_name: Optional[str] = None,
+        group_id: Optional[int] = None,
+        **filter,
+    ) -> List[Dict[str, Any]]:
+        """List all member roles in a group.
+
+        # Required parameters
+
+        Either `group_name` or `group_id` must be specified.
+
+        - group_name: a non-empty string or None (None by default)
+        - group_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _member roles_.
+        """
+        ensure_noneornonemptystring('group_name')
+        ensure_noneorinstance('group_id', int)
+        ensure_onlyone('group_name', 'group_id')
+
+        client = self._client()
+        if group_name:
+            group = client.groups.get(group_name)
+        else:
+            group = client.groups.get(group_id)
+
+        extra = filter or {}
+        return [
+            role.asdict()
+            for role in group.member_roles.list(iterator=True, **extra)
+        ]
+
     ####################################################################
     # GitLab projects
     #
@@ -399,6 +552,9 @@ class GitLab:
     # list_project_packages
     # list_project_issues
     # list_project_mergerequests
+    # list_project_directmembers
+    # list_project_members
+    # list_project_releases
 
     @api_call
     def get_project(
@@ -451,7 +607,7 @@ class GitLab:
         # Optional parameters
 
         - status: a string or None (None by default)
-        - {other}: additional filters
+        - filter: additional filters
 
         # Returned value
 
@@ -529,7 +685,7 @@ class GitLab:
         # Optional parameters
 
         - state: a string (default: 'opened')
-        - {other}: additional filters
+        - filter: additional filters
 
         # Returned value
 
@@ -574,7 +730,7 @@ class GitLab:
         # Optional parameters
 
         - state: a string (default: 'opened')
-        - {other}: additional filters
+        - filter: additional filters
 
         # Returned value
 
@@ -597,4 +753,124 @@ class GitLab:
             for mr in project.mergerequests.list(
                 iterator=True, state=state, **extra
             )
+        ]
+
+    @api_call
+    def list_project_directmembers(
+        self,
+        project_name: Optional[str] = None,
+        project_id: Optional[int] = None,
+        **filter,
+    ) -> List[Dict[str, Any]]:
+        """List all direct members in a project.
+
+        # Required parameters
+
+        Either `project_name` or `project_id` must be specified.
+
+        - project_name: a non-empty string or None (None by default)
+        - project_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _members_.
+        """
+        ensure_noneornonemptystring('project_name')
+        ensure_noneorinstance('project_id', int)
+        ensure_onlyone('project_name', 'project_id')
+
+        client = self._client()
+        if project_name:
+            project = client.projects.get(project_name)
+        else:
+            project = client.projects.get(project_id)
+
+        extra = filter or {}
+        return [
+            member.asdict()
+            for member in project.members.list(iterator=True, **extra)
+        ]
+
+    @api_call
+    def list_project_members(
+        self,
+        project_name: Optional[str] = None,
+        project_id: Optional[int] = None,
+        **filter: Any,
+    ) -> List[Dict[str, Any]]:
+        """List all members in a project.
+
+        # Required parameters
+
+        Either `project_name` or `project_id` must be specified.
+
+        - project_name: a non-empty string or None (None by default)
+        - project_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _members_.
+        """
+        ensure_noneornonemptystring('project_name')
+        ensure_noneorinstance('project_id', int)
+        ensure_onlyone('project_name', 'project_id')
+
+        client = self._client()
+        if project_name:
+            project = client.projects.get(project_name)
+        else:
+            project = client.projects.get(project_id)
+
+        extra = filter or {}
+        return [
+            member.asdict()
+            for member in project.members_all.list(iterator=True, **extra)
+        ]
+
+    @api_call
+    def list_project_releases(
+        self,
+        project_name: Optional[str] = None,
+        project_id: Optional[int] = None,
+        **filter,
+    ) -> List[Dict[str, Any]]:
+        """List all releases in a project.
+
+        # Required parameters
+
+        Either `project_name` or `project_id` must be specified.
+
+        - project_name: a non-empty string or None (None by default)
+        - project_id: an integer or None (None by default)
+
+        # Optional parameters
+
+        - filter: additional filters
+
+        # Returned value
+
+        A list of _releases_.
+        """
+        ensure_noneornonemptystring('project_name')
+        ensure_noneorinstance('project_id', int)
+        ensure_onlyone('project_name', 'project_id')
+
+        client = self._client()
+        if project_name:
+            project = client.projects.get(project_name)
+        else:
+            project = client.projects.get(project_id)
+
+        extra = filter or {}
+        return [
+            release.asdict()
+            for release in project.releases.list(iterator=True, **extra)
         ]
