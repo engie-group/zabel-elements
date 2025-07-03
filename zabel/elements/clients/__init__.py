@@ -81,11 +81,13 @@ from .artifactory import Artifactory
 from .jenkins import CloudBeesJenkins
 from .confluence import Confluence
 from .github import GitHub
+from .githubcloud import GitHubCloud
+from .gitlab import GitLab
 from .jira import Jira
 from .kubernetes import Kubernetes
 from .sonarqube import SonarQube
+from .sonatypenexus import SonatypeNexus
 from .squashtm import SquashTM
 from .okta import Okta
 from .base.okta import OktaException
-from .githubcloud import GitHubCloud
 from .base.atlassian import Atlassian
