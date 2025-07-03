@@ -122,6 +122,9 @@ class SonarQube:
     as they are not used directly, the library can be used with the
     Community edition too.
 
+    When using SonarCloud, the `organization_key` parameter must be
+    specified for methods that declare it.
+
     Tested on SonarQube v9.9.
 
     # Conventions
@@ -142,7 +145,15 @@ class SonarQube:
 
     url = 'https://sonar.example.com/sonar/api/'
     sq = SonarQube(url, token)
-    sq.search_users()
+    sq.list_projects()
+    ```
+
+    ```python
+    from zabel.elements.clients import SonarQube
+
+    url = 'https://sonarcloud.io/api/'
+    sq = SonarQube(url, token)
+    sq.list_projects(organization_key='my_organization')
     ```
     """
 
@@ -297,7 +308,10 @@ class SonarQube:
 
     @api_call
     def list_components(
-        self, qualifiers: str, language: Optional[str] = None
+        self,
+        qualifiers: str,
+        language: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, str]]:
         """Return the matching components list.
 
@@ -314,6 +328,7 @@ class SonarQube:
         # Optional parameters
 
         - language: a non-empty string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -329,9 +344,11 @@ class SonarQube:
         """
         ensure_nonemptystring('qualifiers')
         ensure_noneornonemptystring('language')
+        ensure_noneornonemptystring('organization_key')
 
         params = {'qualifiers': qualifiers}
         add_if_specified(params, 'language', language)
+        add_if_specified(params, 'organization', organization_key)
 
         return self._collect_data('components/search', 'components', params)
 
@@ -589,6 +606,7 @@ class SonarQube:
         name: str,
         description: Optional[str] = None,
         project_key_pattern: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new permissions template.
 
@@ -603,6 +621,7 @@ class SonarQube:
 
         - description: a string or None (None by default)
         - project_key_pattern: a string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -619,17 +638,21 @@ class SonarQube:
         ensure_nonemptystring('name')
         ensure_noneorinstance('description', str)
         ensure_noneorinstance('project_key_pattern', str)
+        ensure_noneornonemptystring('organization_key')
 
         data = {'name': name}
         add_if_specified(data, 'description', description)
         add_if_specified(data, 'projectKeyPattern', project_key_pattern)
+        add_if_specified(data, 'organization', organization_key)
 
         result = self._post('permissions/create_template', data)
         return result  # type: ignore
 
     @api_call
     def list_permissionstemplates(
-        self, query: Optional[str] = None
+        self,
+        query: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List the matching permissions templates.
 
@@ -639,6 +662,7 @@ class SonarQube:
         # Optional parameters
 
         - query: a string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -662,11 +686,16 @@ class SonarQube:
         - withProjectCreator: a boolean
         """
         ensure_noneorinstance('query', str)
+        ensure_noneornonemptystring('organization_key')
+
+        params = {}
+        add_if_specified(params, 'organization', organization_key)
+        add_if_specified(params, 'q', query)
 
         return self._collect_data(
             'permissions/search_templates',
             'permissionTemplates',
-            None if query is None else {'q': query},
+            params,
         )
 
     @api_call
@@ -853,6 +882,7 @@ class SonarQube:
         login: str,
         selected: str = 'selected',
         query: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List the groups a user belongs to.
 
@@ -864,6 +894,7 @@ class SonarQube:
 
         - selected: a string (`'selected'` by default)
         - query: a string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -879,9 +910,11 @@ class SonarQube:
         ensure_nonemptystring('login')
         ensure_instance('selected', str)
         ensure_noneorinstance('query', str)
+        ensure_noneornonemptystring('organization_key')
 
         params = {'login': login, 'selected': selected}
         add_if_specified(params, 'q', query)
+        add_if_specified(params, 'organization', organization_key)
 
         return self._collect_data('users/groups', 'groups', params)
 
@@ -1054,12 +1087,18 @@ class SonarQube:
     # TODO set_project_qualitygate (?)
 
     @api_call
-    def create_qualitygate(self, name: str) -> Dict[str, Any]:
+    def create_qualitygate(
+        self, name: str, organization_key: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Create a new quality gate.
 
         # Required parameters
 
         - name: a non-empty string
+
+        # Optional parameters
+
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1074,17 +1113,27 @@ class SonarQube:
         _ApiError_ exception is raised.
         """
         ensure_nonemptystring('name')
+        ensure_noneornonemptystring('organization_key')
 
-        result = self._post('qualitygates/create', {'name': name})
+        params = {'name': name}
+        add_if_specified(params, 'organization', organization_key)
+
+        result = self._post('qualitygates/create', params)
         return result  # type: ignore
 
     @api_call
-    def delete_qualitygate(self, name: str) -> None:
+    def delete_qualitygate(
+        self, name: str, organization_key: Optional[str] = None
+    ) -> None:
         """Delete a quality gate.
 
         # Required parameters
 
         - name: a string
+
+        # Optional parameters
+
+        - organization_key: a non-empty string or None (None by default)
 
         # Raised exceptions
 
@@ -1092,13 +1141,23 @@ class SonarQube:
         exist.
         """
         ensure_instance('name', str)
+        ensure_noneornonemptystring('organization_key')
 
-        result = self._post('qualitygates/destroy', {'name': name})
+        params = {'name': name}
+        add_if_specified(params, 'organization', organization_key)
+
+        result = self._post('qualitygates/destroy', params)
         return result  # type: ignore
 
     @api_call
-    def list_qualitygates(self) -> List[Dict[str, Any]]:
+    def list_qualitygates(
+        self, organization_key: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Return a list of existing quality gates.
+
+        # Optional parameters
+
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1108,7 +1167,14 @@ class SonarQube:
         - id: an integer
         - name: a string
         """
-        return self._collect_data('qualitygates/list', 'qualitygates')
+        ensure_noneornonemptystring('organization_key')
+
+        if organization_key:
+            params = {'organization': organization_key}
+        else:
+            params = None
+
+        return self._collect_data('qualitygates/list', 'qualitygates', params)
 
     ####################################################################
     # SonarQube qualityprofiles
@@ -1122,7 +1188,10 @@ class SonarQube:
 
     @api_call
     def create_qualityprofile(
-        self, profile_name: str, language: str
+        self,
+        profile_name: str,
+        language: str,
+        organization_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new quality profile.
 
@@ -1132,6 +1201,10 @@ class SonarQube:
         - language: a non-empty string
 
         `language` must be a valid language.
+
+        # Optional parameters
+
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1151,10 +1224,13 @@ class SonarQube:
         """
         ensure_nonemptystring('profile_name')
         ensure_in('language', [l['key'] for l in self.list_languages()])
+        ensure_noneornonemptystring('organization_key')
 
+        params = {'name': profile_name, 'language': language}
+        add_if_specified(params, 'organization', organization_key)
         result = self._post(
             'qualityprofiles/create',
-            {'name': profile_name, 'language': language},
+            params,
         )
         return result  # type: ignore
 
@@ -1165,6 +1241,7 @@ class SonarQube:
         language: Optional[str] = None,
         project_key: Optional[str] = None,
         profile_name: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return a list of matching quality profiles.
 
@@ -1174,6 +1251,7 @@ class SonarQube:
         - language: a string or None (None by default)
         - project_key: a string or None (None by default)
         - profile_name: a string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1197,6 +1275,7 @@ class SonarQube:
         ensure_noneornonemptystring('language')
         ensure_noneornonemptystring('project_key')
         ensure_noneornonemptystring('profile_name')
+        ensure_noneornonemptystring('organization_key')
         if language is not None:
             ensure_in('language', [l['key'] for l in self.list_languages()])
 
@@ -1204,13 +1283,18 @@ class SonarQube:
         add_if_specified(params, 'language', language)
         add_if_specified(params, 'project', project_key)
         add_if_specified(params, 'qualityProfile', profile_name)
+        add_if_specified(params, 'organization', organization_key)
 
         result = self._get('qualityprofiles/search', params=params).json()
         return result['profiles']  # type: ignore
 
     @api_call
     def add_qualityprofile_project(
-        self, profile_name: str, language: str, project_key: str
+        self,
+        profile_name: str,
+        language: str,
+        project_key: str,
+        organization_key: Optional[str] = None,
     ) -> None:
         """Associate quality profile to project.
 
@@ -1222,6 +1306,10 @@ class SonarQube:
         - language: a non-empty string
         - project_key: a non-empty string
 
+        # Optional parameters
+
+        - organization_key: a non-empty string or None (None by default)
+
         # Raised exceptions
 
         An _ApiError_ exception is raised if `profile_key` or
@@ -1230,14 +1318,18 @@ class SonarQube:
         ensure_nonemptystring('profile_name')
         ensure_nonemptystring('language')
         ensure_nonemptystring('project_key')
+        ensure_noneornonemptystring('organization_key')
+
+        params = {
+            'qualityProfile': profile_name,
+            'language': language,
+            'project': project_key,
+        }
+        add_if_specified(params, 'organization', organization_key)
 
         result = self._post(
             'qualityprofiles/add_project',
-            {
-                'qualityProfile': profile_name,
-                'language': language,
-                'project': project_key,
-            },
+            params,
         )
         return result  # type: ignore
 
@@ -1407,8 +1499,11 @@ class SonarQube:
         on_provisioned_only: bool = False,
         projects: Optional[str] = None,
         qualifiers: str = 'TRK',
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return a list of matching projects.
+
+        `organization_key` is required querying a SonarCloud instance.
 
         # Optional parameters
 
@@ -1417,6 +1512,7 @@ class SonarQube:
         - on_provisioned_only: a boolean (False by default)
         - projects: a string (comma-separated list of project keys) or
           None (None by default)
+        - organization_key: a non-empty string or None (None by default)
         - qualifiers: a string (comma-separated list, `'TRK'` by
           default)
 
@@ -1437,6 +1533,7 @@ class SonarQube:
         ensure_noneorinstance('on_provisioned_only', bool)
         ensure_noneornonemptystring('projects')
         ensure_nonemptystring('qualifiers')
+        ensure_noneornonemptystring('organization_key')
 
         params = {
             'onProvisionedOnly': 'true' if on_provisioned_only else 'false',
@@ -1444,6 +1541,7 @@ class SonarQube:
         }
         add_if_specified(params, 'analyzedBefore', analyze_before)
         add_if_specified(params, 'projects', projects)
+        add_if_specified(params, 'organization', organization_key)
 
         return self._collect_data('projects/search', 'components', params)
 
@@ -1456,6 +1554,7 @@ class SonarQube:
         - `project_key` : a string
         """
         ensure_nonemptystring(project_key)
+
         return self._post('projects/delete', {'project': project_key})
 
     ####################################################################
@@ -1607,7 +1706,10 @@ class SonarQube:
 
     @api_call
     def create_usergroup(
-        self, name: str, description: Optional[str] = None
+        self,
+        name: str,
+        description: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new group.
 
@@ -1618,6 +1720,7 @@ class SonarQube:
         # Optional parameters
 
         - description: a string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1636,9 +1739,11 @@ class SonarQube:
         """
         ensure_nonemptystring('name')
         ensure_noneorinstance('description', str)
+        ensure_noneornonemptystring('organization_key')
 
         data = {'name': name}
         add_if_specified(data, 'description', description)
+        add_if_specified(data, 'organization', organization_key)
 
         result = self._post('user_groups/create', data)
         return result  # type: ignore
@@ -1742,7 +1847,10 @@ class SonarQube:
 
     @api_call
     def list_usergroups(
-        self, query: Optional[str] = None, fields: Optional[str] = None
+        self,
+        query: Optional[str] = None,
+        fields: Optional[str] = None,
+        organization_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return the complete list of groups from SonarQube instance.
 
@@ -1750,6 +1858,7 @@ class SonarQube:
 
         - query: a non-empty string or None (None by default)
         - fields: a non-empty string or None (None by default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1764,10 +1873,12 @@ class SonarQube:
         """
         ensure_noneornonemptystring('query')
         ensure_noneornonemptystring('fields')
+        ensure_noneornonemptystring('organization_key')
 
         params: Dict[str, str] = {}
         add_if_specified(params, 'q', query)
         add_if_specified(params, 'f', fields)
+        add_if_specified(params, 'organization', organization_key)
 
         return self._collect_data(
             'user_groups/search', 'groups', params if params else None
