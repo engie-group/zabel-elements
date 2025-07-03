@@ -27,6 +27,7 @@ from zabel.commons.utils import (
     ensure_instance,
     join_url,
     add_if_specified,
+    ensure_onlyone,
 )
 
 
@@ -257,6 +258,113 @@ class JiraCloud:
 
         response = self._post('project', json=params)
         return response.json()
+    
+    @api_call
+    def get_project_role(
+        self, project_id_or_key: Union[int, str], role_id: Union[int, str]
+    ) -> Dict[str, Any]:
+        """Return the project role details.
+        
+        # Required parameters
+        
+        - project_id_or_key: an integer or a string
+        - role_id: an integer or a string
+        
+        # Return Value
+        
+        A project _role_.  Project roles are dictionaries with the
+        following entries:
+
+        - self: a string (an URL)
+        - name: a string
+        - id: an integer
+        - description: a string (optional)
+        - actors: a list of dictionaries
+        - scope: a dictionary with the following entries:
+            - type: a string (e.g., 'PROJECT')
+            - project: a dictionary
+
+        `actors` entries have the following entries:
+
+        - id: an integer
+        - displayName: a string
+        - type: a string
+        - name: a string (for actorGroup)
+        - avatarUrl: a string
+        
+        """
+        ensure_nonemptystring('project_key')
+        ensure_instance('role_id', int)
+
+        response = self._get(f'project/{project_id_or_key}/role/{role_id}')
+        return response.json()
+    
+    @api_call
+    def add_project_role_actors(
+        self,
+        project_id_or_key: Union[int, str],
+        role_id: Union[int, str],
+        groups: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Add an actor (group or user) to a project role.
+
+        You can only specify either `groups` or `users`.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+        - role_id: an integer or a string
+        - groups: a list of strings
+        - users: a list of strings (account IDs)
+
+        # Returned value
+
+        A project _role_.  Refer to #get_project_role() for details.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+        ensure_instance('role_id', (str, int))
+        ensure_onlyone('groups', 'users')
+        ensure_noneorinstance('groups', list)
+        ensure_noneorinstance('users', list)
+
+        if groups is not None:
+            data = {'group': groups}
+        else:
+            data = {'user': users} 
+        result = self._post(f'project/{project_id_or_key}/role/{role_id}',json=data,)
+        return result
+
+    @api_call
+    def remove_project_role_actor(
+        self,
+        project_id_or_key: Union[int, str],
+        role_id: Union[int, str],
+        group: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> None:
+        """Remove an actor from project role.
+
+        You can only specify either `group` or `user`.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+        - role_id: an integer or a string
+        - group: a string
+        - user: a string
+        """
+        ensure_instance('project_id_or_key', (str, int))
+        ensure_instance('role_id', (str, int))
+        ensure_onlyone('group', 'user')
+        ensure_noneorinstance('group', str)
+        ensure_noneorinstance('user', str)
+
+        if group is not None:
+            params = {'group': group}
+        else:
+            params = {'user': user}  # type: ignore
+        self._delete(f'project/{project_id_or_key}/role/{role_id}',params=params,)
 
     ### Groups
 
@@ -404,6 +512,22 @@ class JiraCloud:
     ) -> requests.Response:
         return requests.post(
             join_url(self.url, api), json=json, auth=self.auth, timeout=TIMEOUT
+        )
+    
+    def _delete(
+        self,
+        api: str,
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+    ) -> requests.Response:
+        return requests.delete(
+            join_url(self.url, api),
+            json=json_data,
+            params=params,
+            auth=self.auth,
+            timeout=TIMEOUT,
         )
 
     def _collect_data(
