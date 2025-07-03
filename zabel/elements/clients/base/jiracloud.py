@@ -11,10 +11,9 @@
 A class wrapping Jira Cloud APIs.
 
 There can be as many Jira instances as needed.
-https://support.atlassian.com/jira/kb/how-to-update-board-administrators-through-rest-api/
 
-This module depends on the public **requests** and **jira.JIRA**
-libraries.  It also depends on two **zabel-commons** modules,
+This module depends on the public **requests**library.
+It also depends on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 from typing import Optional, Tuple, Union, Mapping, Iterable, List, Any, Dict
@@ -41,6 +40,49 @@ PROJECT_EXPAND = 'description,lead,projectKeys,issueTypes,issueTypeHierarchy'
 
 
 class JiraCloud:
+    """JIRA Cloud Low-Level Wrapper.
+
+    There can be as many Jira instances as needed.
+
+    This class depends on the public **requests** library.
+    It also depends on two **zabel-commons** modules,
+    #::zabel.commons.exceptions and #::zabel.commons.utils.
+
+    # Reference URLs
+
+    - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
+    
+    # Agile references
+
+    - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>
+    - <https://support.atlassian.com/jira/kb/how-to-update-board-administrators-through-rest-api/>
+
+    # Implemented features
+
+    - boards
+    - filters
+    - groups
+    - projects
+    - users
+
+    Works with basic authentication.
+
+    It is the responsibility of the user to be sure the provided
+    authentication has enough rights to perform the requested operation.
+
+    # Sample usage
+
+    ```python
+    from zabel.elements.clients.jiracloud import JiraCloud
+
+    url = 'https://your-domain.atlassian.net'
+    jc = JiraCloud(
+        url,
+        basic_auth=(user, token),
+    )
+    jc.list_projects()
+    ```
+    """
     def __init__(
         self,
         url: str,
@@ -57,24 +99,35 @@ class JiraCloud:
 
         - url: a string
         - basic_auth: a strings tuple (user, token)
+
+        # Optional parameters
+
+        - verify: a boolean (True by default)
+
         # Usage
 
         `url` must be the URL of the JiraCloud instance, e.g.,
         `https://jira.atlassian.net`.
 
-
+        `verify` can be set to False if disabling certificate checks for
+        Jira communication is required.  Tons of warnings will occur if
+        this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_noneorinstance('basic_auth', tuple)
+        ensure_instance('verify', bool)
+
 
         self.url = url
         self.basic_auth = basic_auth
+
+        self.client = None
+        self.verify = verify
         self.REST_BASE_URL = join_url(url, 'rest/api/3/')
         self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
         self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
-        self.client = None
+
         self.auth = basic_auth
-        self.verify = verify
         self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
@@ -85,7 +138,159 @@ class JiraCloud:
             rep = self.basic_auth[0]
 
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
+    
+    ####################################################################
+    # JIRA CLOUD groups
+    #
+    # list_groups
+    # create_group
+    # list_group_users
+    # add_group_user
+    # remove_group_user
 
+    @api_call
+    def list_groups(
+        self, max_results: int = 9999, query: Optional[str] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        List groups.
+
+        # Optional parameters
+
+        - query: a string (optional, used for filtering group names)
+        - max_results: an integer (default: 9999)
+
+        # Returned value
+
+        A dictionary where keys are group names and values are dictionaries
+          with following entries:
+          
+        - name: a string
+        - html: a string
+        - labels: a list of strings
+        - groupId: a string
+        """
+        ensure_noneorinstance('query', str)
+        ensure_instance('max_results', int)
+
+        params = {'maxResults': max_results}
+        add_if_specified(params, 'query', query)
+
+        response = self._get('groups/picker', params=params).json()
+        groups = response.get('groups', [])
+        return {group['name']: group for group in groups}
+
+    @api_call
+    def create_group(self, group_name: str) -> bool:
+        """Create new group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('group_name', str)
+        response = self._post('group', json={'name': group_name})
+
+        return response.status_code == 201
+
+    @api_call
+    def list_group_users(self, group_name: str, include_inactive_users: bool = False) -> Dict[str, Any]:
+        """List users in a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Optional parameters
+
+        - include_inactive_users: a boolean (default: False)
+
+        # Returned value
+        A list of dictionaries.  Each dictionary has the following keys:
+
+        - accountId: a string
+        - accountType: a string
+        - active: a boolean
+        - avatarUrls: a dictionary
+        - displayName: a string
+        - emailAddress: a string
+        - self: a string
+        - timeZone: a string
+        """
+        ensure_nonemptystring('group_name')
+        ensure_instance('include_inactive_users', bool)
+
+        params = {
+            'groupname': group_name,
+        }
+        add_if_specified(
+            params, 'includeInactiveUsers', include_inactive_users
+        )
+        return self._collect_data(
+            'group/member', params={'groupname': group_name}
+        )
+
+    @api_call
+    def add_group_user(self, group_name: str, account_id: str) -> bool:
+        """Add a user to a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+        - account_id: a non-empty string
+
+        # Returned value
+        
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('account_id')
+
+        response = self._post(
+            f'group/user',
+            params={'groupname': group_name},
+            json={'accountId': account_id},
+        )
+        return response.status_code == 204
+
+    @api_call
+    def remove_group_user(self, group_name: str, account_id: str) -> bool:
+        """Remove a user from a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string (the group name)
+        - account_id: a non-empty string (the user's account ID)
+
+        # Returned value
+        
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('account_id')
+
+        response = self._delete(
+            f'group/user={group_name}',
+            params={'accountId': account_id, 'groupname': group_name},
+        )
+        return response.status_code == 204
+
+    ####################################################################
+    # JIRA Cloud projects
+    #
+    # list_projects
+    # get_project
+    # create_project
+    # get_project_role
+    # list_project_boards
+    # create_project_board
+    # add_project_role_actors
+    # remove_project_role_actor
+    
     @api_call
     def list_projects(
         self,
@@ -451,116 +656,7 @@ class JiraCloud:
 
     ### Groups
 
-    @api_call
-    def list_groups(
-        self, max_results: int = 9999, query: Optional[str] = None
-    ) -> Dict[str, Dict[str, Any]]:
-        """
-        List groups.
-
-        # Required parameters
-
-        - max_results: an integer (default: 9999)
-
-        # Optional parameters
-
-        - query: a string (optional, used for filtering group names)
-
-        # Return Value
-            A dictionary where keys are group names and values are dictionaries
-
-        """
-        ensure_noneorinstance('query', str)
-        ensure_instance('max_results', int)
-
-        params = {'maxResults': max_results}
-        add_if_specified(params, 'query', query)
-
-        response = self._get('groups/picker', params=params)
-        groups = response.json().get('groups', [])
-
-        if not groups:
-            return {}
-
-        return {group['name']: group for group in groups}
-
-    @api_call
-    def create_group(self, group_name: str) -> bool:
-        """Create new group.
-
-        # Required parameters
-
-        - group_name: a non-empty string
-
-        # Returned value
-
-        A boolean.  True if successful, False otherwise.
-
-        """
-        ensure_instance('group_name', str)
-        response = self._post('group', json={'name': group_name})
-
-        return response.status_code == 201
-
-    @api_call
-    def list_group_users(self, group_name: str) -> List[Dict[str, Any]]:
-        """List users in a group.
-
-        # Required parameters
-
-        - group_name: a non-empty string (the group name)
-
-        # Return Value
-            A list of dictionaries, each representing a user in the group.
-        """
-        ensure_nonemptystring('group_name')
-
-        return self._collect_data(
-            'group/member', params={'groupname': group_name}
-        )
-
-    @api_call
-    def add_user_to_group(self, group_name: str, account_id: str) -> bool:
-        """Add a user to a group.
-
-        # Required parameters
-
-        - group_name: a non-empty string (the group name)
-        - account_id: a non-empty string (the user's account ID)
-
-        # Return Value
-            A boolean.  True if successful, False otherwise.
-        """
-        ensure_nonemptystring('group_name')
-        ensure_nonemptystring('account_id')
-
-        response = self._post(
-            f'group/user',
-            params={'groupname': group_name},
-            json={'accountId': account_id},
-        )
-        return response.status_code == 204
-
-    @api_call
-    def remove_user_from_group(self, group_name: str, account_id: str) -> bool:
-        """Remove a user from a group.
-
-        # Required parameters
-
-        - group_name: a non-empty string (the group name)
-        - account_id: a non-empty string (the user's account ID)
-
-        # Return Value
-            A boolean.  True if successful, False otherwise.
-        """
-        ensure_nonemptystring('group_name')
-        ensure_nonemptystring('account_id')
-
-        response = self._delete(
-            f'group/user={group_name}',
-            params={'accountId': account_id, 'groupname': group_name},
-        )
-        return response.status_code == 204
+    
 
     ### Schemes ###
 
