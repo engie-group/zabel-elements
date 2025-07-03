@@ -43,6 +43,7 @@ class JiraCloud(Base):
     # Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
+    - <https://developer.atlassian.com/cloud/jira/service-desk/rest>
 
     # Using the jira.JIRA python library
 

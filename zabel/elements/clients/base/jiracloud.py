@@ -385,6 +385,158 @@ class JiraCloud:
 
         return response.json()
 
+    ####################################################################
+    # JIRA Service Desk
+    #
+    # list_servicedesks
+    # list_organizations
+    # get_organization
+    # create_organization
+
+    def list_servicedesks(
+        self, start: int = 0, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+
+        """
+        Return the available service desks.
+
+        # Optional parameters
+        
+        - start: an integer (default: 0)
+        - limit: an integer (default: 50)
+        
+        # Returned value
+
+        A list of _service desks_.  Each service desk is a dictionary
+        with the following entries:
+
+        - id: a string
+        - projectId: a string
+        - projectName: a string
+        - projectKey: a string
+        - projectId: a string
+        - _links: a dictionary
+        
+        """
+
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+
+        params = {'start': start, 'limit': limit}
+
+        response = self._collect_sd_data(
+            'servicedeskapi/servicedesk', params=params
+        )
+        return response
+
+    @api_call
+    def list_organizations(
+        self, start: int = 0, limit: int = 50, account_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+
+        """
+        Return the list of all service desk organizations.
+        
+        # Optional parameters
+        
+        - start: an integer (default: 0)
+        - limit: an integer (default: 50)
+        - account_id: a string (optional, used for filtering by account ID)
+
+        # Returned value
+
+        A list of _organizations_.  An organization is a dictionary.
+
+        Refer to #get_organization() for details on its structure.
+        """
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+        ensure_noneorinstance('account_id', str)
+
+        params = {'start': start, 'limit': limit}
+        add_if_specified(params, 'accountId', account_id)
+
+        return self._collect_sd_data(
+            'servicedeskapi/organization', params=params
+        )
+
+    @api_call
+    def get_organization(self, organization_id: int) -> Dict[str, Any]:
+        """
+        Get a specific organization by its ID.
+        
+        # Required parameters
+        
+        - organization_id: a non-empty string (the organization ID)
+        
+        # Returned value
+
+        The _organization_ details, a dictionary, with the following
+        entries:
+
+        - id: a string
+        - name: a string
+        - _links: a dictionary
+        - scimManaged: a boolean (indicating if the organization is managed by SCIM)
+
+        """
+        ensure_instance('organization_id', int)
+
+        response = self._get(f'servicedeskapi/organization/{organization_id}')
+        response.raise_for_status()
+
+        return response.json()
+
+    @api_call
+    def create_organization(self, name: str) -> Dict[str, Any]:
+        """
+        Create a new organization.
+        
+        # Required parameters
+        
+        - name: a non-empty string (the organization name)
+        
+        # Returned value
+
+        The created _organization_ details, a dictionary, with the
+        following entries:
+
+        - id: a string
+        - name: a string
+        - _links: a dictionary
+        - scimManaged: a boolean (indicating if the organization is managed by SCIM)
+
+        """
+        ensure_nonemptystring('name')
+        params = {'name': name}
+
+        response = self._post('servicedeskapi/organization', json=params)
+
+        return response.json()
+
+    @api_call
+    def delete_organization(self, organization_id: int) -> bool:
+        """Delete service desk organization.
+
+        # Required parameters
+
+        - organization_id: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+
+        response = self._delete(
+            f'servicedeskapi/organization/{organization_id}'
+        )
+
+        return response.status_code in [200, 201, 204]
+
+    ####################################################################
+    # JIRA helpers
+
     def _get(
         self,
         uri: str,
@@ -404,6 +556,22 @@ class JiraCloud:
     ) -> requests.Response:
         return requests.post(
             join_url(self.url, api), json=json, auth=self.auth, timeout=TIMEOUT
+        )
+
+    def _delete(
+        self,
+        api: str,
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+    ) -> requests.Response:
+        return requests.delete(
+            join_url(self.url, api),
+            json=json_data,
+            params=params,
+            auth=self.auth,
+            timeout=TIMEOUT,
         )
 
     def _collect_data(
@@ -441,3 +609,17 @@ class JiraCloud:
                     _params[start_at] = workload[start_at] + len(values)
 
         return collected
+
+    def _collect_sd_data(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> List[Any]:
+        return self._collect_data(
+            api,
+            params=params,
+            headers=headers,
+            start_at='start',
+            is_last='isLastPage',
+        )
