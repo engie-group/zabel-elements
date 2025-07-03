@@ -502,6 +502,66 @@ class JiraCloud:
 
         return response.status_code == 201
 
+    @api_call
+    def list_group_users(self, group_name: str) -> List[Dict[str, Any]]:
+        """List users in a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string (the group name)
+
+        # Return Value
+            A list of dictionaries, each representing a user in the group.
+        """
+        ensure_nonemptystring('group_name')
+
+        return self._collect_data(
+            'group/member', params={'groupname': group_name}
+        )
+
+    @api_call
+    def add_user_to_group(self, group_name: str, account_id: str) -> bool:
+        """Add a user to a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string (the group name)
+        - account_id: a non-empty string (the user's account ID)
+
+        # Return Value
+            A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('account_id')
+
+        response = self._post(
+            f'group/user',
+            params={'groupname': group_name},
+            json={'accountId': account_id},
+        )
+        return response.status_code == 204
+
+    @api_call
+    def remove_user_from_group(self, group_name: str, account_id: str) -> bool:
+        """Remove a user from a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string (the group name)
+        - account_id: a non-empty string (the user's account ID)
+
+        # Return Value
+            A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_nonemptystring('account_id')
+
+        response = self._delete(
+            f'group/user={group_name}',
+            params={'accountId': account_id, 'groupname': group_name},
+        )
+        return response.status_code == 204
+
     ### Schemes ###
 
     @api_call
@@ -697,7 +757,6 @@ class JiraCloud:
             join_url(self.AGILE_BASE_URL, 'board'), json=data
         )
         return response.json()
-    
 
     @api_call
     def set_board_admins(
@@ -750,7 +809,7 @@ class JiraCloud:
             timeout=TIMEOUT,
         )
         return result  # type: ignore
-    
+
     @api_call
     def set_board_columns(
         self,
@@ -875,7 +934,7 @@ class JiraCloud:
             timeout=TIMEOUT,
         )
         print(result.status_code)
-        return result 
+        return result
 
     def _get_url(self, uri: str) -> str:
         """Return the full URL for a given URI."""
@@ -897,10 +956,17 @@ class JiraCloud:
         )
 
     def _post(
-        self, uri: str, json: Optional[Mapping[str, Any]] = None
+        self,
+        uri: str,
+        params: Optional[Mapping[str, Any]],
+        json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
         return self.session().post(
-            self._get_url(uri), json=json, auth=self.auth, timeout=TIMEOUT
+            self._get_url(uri),
+            params=params,
+            json=json,
+            auth=self.auth,
+            timeout=TIMEOUT,
         )
 
     def _delete(
