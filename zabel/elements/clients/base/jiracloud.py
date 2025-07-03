@@ -11,6 +11,7 @@
 A class wrapping Jira Cloud APIs.
 
 There can be as many Jira instances as needed.
+https://support.atlassian.com/jira/kb/how-to-update-board-administrators-through-rest-api/
 
 This module depends on the public **requests** and **jira.JIRA**
 libraries.  It also depends on two **zabel-commons** modules,
@@ -20,6 +21,7 @@ from typing import Optional, Tuple, Union, Mapping, Iterable, List, Any, Dict
 import requests
 
 from zabel.commons.exceptions import ApiError
+from zabel.commons.sessions import prepare_session
 from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
@@ -40,9 +42,14 @@ PROJECT_EXPAND = 'description,lead,projectKeys,issueTypes,issueTypeHierarchy'
 
 class JiraCloud:
     def __init__(
-        self, url: str, basic_auth: Optional[Tuple[str, str]] = None
+        self,
+        url: str,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        verify: bool = True,
     ) -> None:
         """Create a JiraCloud instance object.
+
+        https://developer.atlassian.com/cloud/jira/software/rest/intro/#introduction
 
         You can only specify either `basic_auth`.
 
@@ -62,11 +69,13 @@ class JiraCloud:
 
         self.url = url
         self.basic_auth = basic_auth
-
+        self.REST_BASE_URL = join_url(url, 'rest/api/3/')
+        self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
+        self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
         self.client = None
-
-        if basic_auth is not None:
-            self.auth = basic_auth
+        self.auth = basic_auth
+        self.verify = verify
+        self.session = prepare_session(self.auth, verify=verify)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
@@ -92,9 +101,9 @@ class JiraCloud:
         action: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List all projects.
-        
+
         # Optional parameters
-        
+
         - expand: a string (see `PROJECT_EXPAND` constant)
         - query: a string
         - order_by: a string
@@ -105,9 +114,9 @@ class JiraCloud:
         - type_key: a string
         - category_id: an integer
         - action: a string
-        
+
         # Return value
-        
+
         A list of dictionaries, each representing a project.
         """
         ensure_noneorinstance('expand', str)
@@ -140,11 +149,11 @@ class JiraCloud:
         self, project_key: str, expand: str = PROJECT_EXPAND
     ) -> Dict[str, Any]:
         """Get a project by its key.
-        
+
         # Required parameters
-        
+
         - project_key: a non-empty string
-        
+
         # Optional parameters
 
         - expand: a string (`PROJECT_EXPAND` by default)
@@ -185,16 +194,16 @@ class JiraCloud:
         workflow_scheme: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Create a new project.
-        
+
         # Required parameters
-        
+
         - key: a non-empty string (the project key)
         - project_type_key: a string (project type key, e.g., 'business', 'software', 'service_desk')
         - name: a non-empty string (the project name)
         - lead_account_id: a string (the project lead account ID, if different from username)
 
         # Optional parameters
-        
+
         - url: a string (the project URL)
         - assignee_type: a string (e.g., 'PROJECT_LEAD')
         - avatar_id: an integer (the avatar ID)
@@ -212,7 +221,7 @@ class JiraCloud:
         # Return Value
 
             A dictionary representing the created project.
-        
+
         """
         ensure_nonemptystring('key')
         ensure_nonemptystring('name')
@@ -258,20 +267,20 @@ class JiraCloud:
 
         response = self._post('project', json=params)
         return response.json()
-    
+
     @api_call
     def get_project_role(
         self, project_id_or_key: Union[int, str], role_id: Union[int, str]
     ) -> Dict[str, Any]:
         """Return the project role details.
-        
+
         # Required parameters
-        
+
         - project_id_or_key: an integer or a string
         - role_id: an integer or a string
-        
+
         # Return Value
-        
+
         A project _role_.  Project roles are dictionaries with the
         following entries:
 
@@ -291,14 +300,82 @@ class JiraCloud:
         - type: a string
         - name: a string (for actorGroup)
         - avatarUrl: a string
-        
+
         """
         ensure_nonemptystring('project_key')
         ensure_instance('role_id', int)
 
         response = self._get(f'project/{project_id_or_key}/role/{role_id}')
         return response.json()
-    
+
+    def list_project_boards(
+        self, project_id_or_key: Union[int, str]
+    ) -> List[Dict[str, Any]]:
+        """Returns the list of boards attached to project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+
+        # Returned value
+
+        A list of _boards_.  Each board is a dictionary with the
+        following entries:
+
+        - type: a string
+        - id: an integer
+        - name: a string
+        - self: a string
+
+        # Raised exceptions
+
+        Browse project permission required (will raise an _ApiError_
+        otherwise).
+        """
+        ensure_nonemptystring('project_id_or_key')
+
+        return self._collect_agile_data(
+            'board', params={'projectKeyOrId': project_id_or_key}
+        )
+
+    @api_call
+    def create_project_board(
+        self,
+        project_id_or_key: Union[int, str],
+        name: str,
+        type: str,
+        filter_id: Optional[Union[int, str]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new board for a project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+        - name: a non-empty string (the board name)
+        - type: a string (the board type, e.g., 'scrum', 'kanban', 'simple')
+
+        # Optional parameters
+
+        - filter_id: an integer (the filter ID)
+
+        # Returned value
+
+        A dictionary representing the created board.
+        """
+        ensure_nonemptystring('project_id_or_key')
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('type')
+
+        return self.create_board(
+            name=name,
+            type=type,
+            filter_id=filter_id,
+            location={
+                'projectKeyOrId': project_id_or_key,
+                'type': 'project',
+            },
+        )
+
     @api_call
     def add_project_role_actors(
         self,
@@ -331,8 +408,11 @@ class JiraCloud:
         if groups is not None:
             data = {'group': groups}
         else:
-            data = {'user': users} 
-        result = self._post(f'project/{project_id_or_key}/role/{role_id}',json=data,)
+            data = {'user': users}
+        result = self._post(
+            f'project/{project_id_or_key}/role/{role_id}',
+            json=data,
+        )
         return result
 
     @api_call
@@ -364,7 +444,10 @@ class JiraCloud:
             params = {'group': group}
         else:
             params = {'user': user}  # type: ignore
-        self._delete(f'project/{project_id_or_key}/role/{role_id}',params=params,)
+        self._delete(
+            f'project/{project_id_or_key}/role/{role_id}',
+            params=params,
+        )
 
     ### Groups
 
@@ -374,18 +457,18 @@ class JiraCloud:
     ) -> Dict[str, Dict[str, Any]]:
         """
         List groups.
-        
+
         # Required parameters
-        
+
         - max_results: an integer (default: 9999)
-        
+
         # Optional parameters
-        
+
         - query: a string (optional, used for filtering group names)
-        
+
         # Return Value
             A dictionary where keys are group names and values are dictionaries
-        
+
         """
         ensure_noneorinstance('query', str)
         ensure_instance('max_results', int)
@@ -403,9 +486,8 @@ class JiraCloud:
 
     @api_call
     def create_group(self, group_name: str) -> bool:
+        """Create new group.
 
-        """ Create new group.
-        
         # Required parameters
 
         - group_name: a non-empty string
@@ -413,7 +495,7 @@ class JiraCloud:
         # Returned value
 
         A boolean.  True if successful, False otherwise.
-        
+
         """
         ensure_instance('group_name', str)
         response = self._post('group', json={'name': group_name})
@@ -434,18 +516,18 @@ class JiraCloud:
     ) -> List[Dict[str, Any]]:
         """
         List issue type screen schemes.
-        
-        # Optional parameters   
+
+        # Optional parameters
         - start_at: an integer (default: 0)
         - max_results: an integer (default: 50, maximum: 100)
         - id: a list of integers (optional, used for filtering by scheme IDs)
         - query: a string (optional, used for filtering by scheme name)
         - order_by: a string (optional, used for ordering results)
         - expand: a string (optional, used for expanding additional fields)
-        
+
         # Return Value
         A list of dictionaries, each representing an issue type screen scheme.
-        
+
         """
         ensure_instance('start_at', int)
         ensure_instance('max_results', int)
@@ -480,7 +562,7 @@ class JiraCloud:
         - actors: a list of dictionaries
 
         `actors` entries have the following entries:
-        
+
         - id: an integer
         - displayName: a string
         - type: a string
@@ -493,6 +575,313 @@ class JiraCloud:
 
         return response.json()
 
+    @api_call
+    def create_filter(
+        self,
+        name: str,
+        jql: str,
+        share_permissions: Optional[List[Dict[str, Any]]] = None,
+        edit_permissions: Optional[List[Dict[str, Any]]] = None,
+        description: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a new filter.
+
+        # Required parameters
+
+        - name: a non-empty string (the filter name)
+        - jql: a non-empty string (the JQL query)
+
+        # Optional parameters
+
+        - description: a string (the filter description, optional)
+        - share_permissions: a list of dictionaries (optional, used for sharing the filter)
+        - edit_permissions: a list of dictionaries (optional, used for editing permissions)
+
+        # Returned value
+
+        A dictionary representing the created filter.
+        """
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('jql')
+        ensure_noneorinstance('description', str)
+        ensure_noneorinstance('share_permissions', list)
+        ensure_noneorinstance('edit_permissions', list)
+
+        params = {
+            'name': name,
+            'jql': jql,
+        }
+        add_if_specified(params, 'description', description)
+        add_if_specified(params, 'sharePermissions', share_permissions)
+        add_if_specified(params, 'editPermissions', edit_permissions)
+        response = self._post('filter', json=params)
+        return response.json()
+
+    @api_call
+    def list_boards(
+        self, params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Return the list of boards.
+
+        # Optional parameters
+
+        - params: a dictionary or None (None by default)
+
+        # Usage
+
+        `params`, if provided, is a dictionary with at least one of the
+        following entries:
+
+        - accountIdLocation: a string
+        - expand: a string
+        - filterId: an integer
+        - includePrivate: a boolean
+        - maxResults: an integer
+        - name: a string
+        - negateLocationFiltering: a boolean
+        - orderBy: a string
+        - projectKeyOrId: a string
+        - projectLocation: a string
+        - startAt: an integer
+        - type: a string
+
+        # Returned value
+
+        A list of _boards_.  Each board is a dictionary with the
+        following entries:
+
+        - name: a string
+        - type: a string (`'scrum'` or `'kanban'` or `'simple'`)
+        - id: an integer
+        - self: a string (URL)
+        """
+        ensure_noneorinstance('params', dict)
+
+        return self._collect_agile_data('board', params=params)
+
+    @api_call
+    def create_board(
+        self,
+        name: str,
+        type: str,
+        filter_id: Optional[int] = None,
+        location: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new board.
+
+        # Required parameters
+
+        - name: a non-empty string (the board name)
+        - type: a string (the board type, e.g., 'scrum', 'kanban', 'simple')
+
+        # Optional parameters
+
+        - filter_id: an integer (the filter ID)
+        - location: a dictionary (optional, used for specifying the board location)
+
+        # Returned value
+
+        A dictionary representing the created board.
+        """
+        ensure_nonemptystring('name')
+        ensure_nonemptystring('type')
+        ensure_noneorinstance('location', dict)
+
+        data = {'name': name, 'type': type}
+        if filter_id is not None:
+            data['filterId'] = filter_id
+        if location is not None:
+            data['location'] = location
+
+        response = self.session().post(
+            join_url(self.AGILE_BASE_URL, 'board'), json=data
+        )
+        return response.json()
+    
+
+    @api_call
+    def set_board_admins(
+        self, board_id: int, board_admins: Dict[str, List[str]]
+    ) -> Dict[str, List[Dict[str, str]]]:
+        """Set the board administrators.
+
+        # Required parameters
+
+        - board_id: an integer
+        - board_admins: a dictionary
+
+        # Usage
+
+        The `board_admins` dictionary has the following two entries:
+
+        - groupKeys: a list of strings
+        - userKeys: a list of strings
+
+        The lists can be empty.  Their items must be valid group keys
+        or user keys, respectively.
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - groupKeys: a list of dictionaries
+        - userKeys: a list of dictionaries
+
+        The list items are dictionaries with the following two entries:
+
+        - key: a string
+        - displayName: a string
+
+        This returned value has the same format as the `boardAdmins`
+        entry in #get_board_editmodel().
+
+        # Raised exceptions
+
+        Raises an _ApiError_ if a provided key is invalid.
+        """
+        ensure_instance('board_id', int)
+        ensure_instance('board_admins', dict)
+
+        result = requests.put(
+            join_url(self.GREENHOPPER_BASE_URL, 'rapidviewconfig/boardadmins'),
+            json={'id': board_id, 'boardAdmins': board_admins},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result  # type: ignore
+    
+    @api_call
+    def set_board_columns(
+        self,
+        board_id: int,
+        columns_template: List[Dict[str, Any]],
+        statistics_field: str = 'none_',
+    ) -> Dict[str, Any]:
+        """Set the board columns.
+
+        # Required parameters
+
+        - board_id: an integer
+        - columns_template: a list of dictionaries
+
+        # Optional parameters
+
+        - statistics_field: a non-empty string (`'_none'` by default)
+
+        If specified, it must be the ID of a valid statistic field.
+
+        # Usage
+
+        Each item in the `columns_template` list has the following
+        entries:
+
+        - name: a non-empty string
+        - mappedStatuses: a list of string (possibly empty)
+        - isKanPlanColumn: a boolean
+        - min: a string,
+        - max: a string,
+        - id: an integer or None
+
+        `mappedStatuses` entries must be names of existing statuses in
+        the associated project(s) workflow(s).  A given status cannot
+        be mapped to more than one column (but it's fine to have a
+        status not mapped to a column).
+
+        If `id` is None, a new column is created.  If it is not None,
+        the column must already exist, and will be updated if needed.
+
+        # Returned value
+
+        A dictionary.
+
+        # Raised exceptions
+
+        Raises an _ApiError_ if the provided columns definition is
+        invalid.
+        """
+        ensure_instance('board_id', int)
+        ensure_instance('columns_template', list)
+        ensure_nonemptystring('statistics_field')
+
+        model = self.get_board_editmodel(board_id)
+        if statistics_field not in [
+            sf['id'] for sf in model['rapidListConfig']['statisticsFields']
+        ]:
+            raise ApiError(f'Unknown statistics_field {statistics_field}.')
+
+        # collecting known statuses
+        statuses = list(model['rapidListConfig']['unmappedStatuses'])
+        for col in model['rapidListConfig']['mappedColumns']:
+            statuses += col['mappedStatuses']
+        statuses_names = {status['name']: status['id'] for status in statuses}
+
+        mapped_names: List[str] = []
+        columns_definitions = []
+        for col in columns_template:
+            col_statuses = []
+            for name in col['mappedStatuses']:
+                if name in mapped_names:
+                    raise ApiError(f'Status {name} mapped more than once.')
+                if name not in statuses_names:
+                    raise ApiError(f'Unknown status {name}.')
+                mapped_names.append(name)
+                col_statuses.append(name)
+            column_definition = col.copy()
+            column_definition['mappedStatuses'] = [
+                {'id': statuses_names[n]} for n in col_statuses
+            ]
+            columns_definitions.append(column_definition)
+
+        result = requests.put(
+            join_url(self.GREENHOPPER_BASE_URL, 'rapidviewconfig/columns'),
+            json={
+                'currentStatisticsField': {'id': statistics_field},
+                'rapidViewId': board_id,
+                'mappedColumns': columns_definitions,
+            },
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        return result  # type: ignore
+
+    @api_call
+    def set_board_daysincolumn(
+        self, board_id: int, days_in_column: bool
+    ) -> None:
+        """Enable or disable the time spent indicator on cards.
+
+        # Required parameters
+
+        - board_id: an integer
+        - days_in_column: a boolean
+
+        # Raised exceptions
+
+        An _ApiError_ is raised if something went wrong while setting
+        the time spent indicator.
+        """
+        ensure_instance('board_id', int)
+        ensure_instance('days_in_column', bool)
+
+        result = requests.put(
+            join_url(
+                self.GREENHOPPER_BASE_URL, 'rapidviewconfig/showDaysInColumn'
+            ),
+            json={'rapidViewId': board_id, 'showDaysInColumn': days_in_column},
+            auth=self.auth,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        print(result.status_code)
+        return result 
+
+    def _get_url(self, uri: str) -> str:
+        """Return the full URL for a given URI."""
+        ensure_nonemptystring('uri')
+        return join_url(self.REST_BASE_URL, uri)
+
     def _get(
         self,
         uri: str,
@@ -500,30 +889,30 @@ class JiraCloud:
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
     ) -> requests.Response:
-        return requests.get(
-            join_url(self.url, uri),
+        return self.session().get(
+            self._get_url(uri),
             params=params,
             auth=self.auth,
             timeout=TIMEOUT,
         )
 
     def _post(
-        self, api: str, json: Optional[Mapping[str, Any]] = None
+        self, uri: str, json: Optional[Mapping[str, Any]] = None
     ) -> requests.Response:
-        return requests.post(
-            join_url(self.url, api), json=json, auth=self.auth, timeout=TIMEOUT
+        return self.session().post(
+            self._get_url(uri), json=json, auth=self.auth, timeout=TIMEOUT
         )
-    
+
     def _delete(
         self,
-        api: str,
+        uri: str,
         json_data: Optional[Mapping[str, Any]] = None,
         params: Optional[
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
     ) -> requests.Response:
-        return requests.delete(
-            join_url(self.url, api),
+        return self.session().delete(
+            self._get_url(uri),
             json=json_data,
             params=params,
             auth=self.auth,
@@ -532,36 +921,44 @@ class JiraCloud:
 
     def _collect_data(
         self,
-        api: str,
+        uri: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
-        headers: Optional[Mapping[str, str]] = None,
+        base: Optional[str] = None,
         start_at: str = 'startAt',
         is_last: str = 'isLast',
         key: str = 'values',
     ) -> List[Any]:
-        api_url = join_url(self.url, api)
+        api_url = self._get_url(uri) if base is None else join_url(base, uri)
         collected: List[Any] = []
         _params = dict(params or {})
         more = True
-        with requests.Session() as session:
-            session.auth = self.auth
-            session.headers = headers  # type: ignore
-            while more:
-                response = session.get(api_url, params=_params)
-                if response.status_code // 100 != 2:
-                    raise ApiError(response.text)
-                try:
-                    workload = response.json()
-                    values = workload[key]
-                    collected += values
-                except Exception as exception:
-                    raise ApiError(exception)
-                # Some APIs do not provide an 'isLast' field :(
-                if is_last in workload:
-                    more = not workload[is_last]
-                else:
-                    more = workload[start_at] + len(values) < workload['total']
-                if more:
-                    _params[start_at] = workload[start_at] + len(values)
+
+        while more:
+            response = self.session().get(api_url, params=_params)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                workload = response.json()
+                values = workload[key]
+                collected += values
+            except Exception as exception:
+                raise ApiError(exception)
+            # Some APIs do not provide an 'isLast' field :(
+            if is_last in workload:
+                more = not workload[is_last]
+            else:
+                more = workload[start_at] + len(values) < workload['total']
+            if more:
+                _params[start_at] = workload[start_at] + len(values)
 
         return collected
+
+    def _collect_agile_data(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        key: str = 'values',
+    ) -> List[Any]:
+        return self._collect_data(
+            api, params=params, base=self.AGILE_BASE_URL, key=key
+        )
