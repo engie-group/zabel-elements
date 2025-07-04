@@ -389,10 +389,22 @@ class JiraCloud:
     # JIRA Service Desk
     #
     # list_servicedesks
-    # list_organizations
+    # create_request
+    # get_request
+    # list_request_comments
+    # add_request_comment
+    # add_request_participants
+    # list_queues
+    # list_queue_issues
+    # list_requesttypes
+    # list_requesttypes_fields
+    # list_servicedesk_organizations
     # get_organization
     # create_organization
+    # delete_organization
+    # add_servicedesk_organization
 
+    @api_call
     def list_servicedesks(
         self, start: int = 0, limit: int = 50
     ) -> List[Dict[str, Any]]:
@@ -430,7 +442,374 @@ class JiraCloud:
         return response
 
     @api_call
-    def list_organizations(
+    def create_request(
+        self,
+        servicedesk_id: str,
+        request_type_id: str,
+        request_field_values: Dict[str, Any],
+        request_participants: Optional[List[str]] = None,
+        raise_on_behalf_of: Optional[str] = None,
+        form: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+
+        """Create a new request in a service desk.
+        
+        # Required parameters
+        
+        - servicedesk_id: a non-empty string (the service desk ID)
+        - request_type_id: a non-empty string (the request type ID)
+        
+        # Usage
+
+        The `request_field_values` dictionary content depends on the request type (as
+        specified by `requesttype_id`).  It typically has at least the
+        following two entries:
+
+        - summary: a string
+        - description: a string
+
+        Refer to #list_requesttypes() for more information.
+        
+        # Returned value
+
+        A dictionary representing the created request.
+        
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('request_type_id')
+        ensure_noneorinstance('request_field_values', dict)
+        ensure_noneorinstance('form', dict)
+        ensure_noneorinstance('raise_on_behalf_of', str)
+        ensure_noneorinstance('request_participants', list)
+
+        params = {
+            'serviceDeskId': servicedesk_id,
+            'requestTypeId': request_type_id,
+        }
+        add_if_specified(params, 'requestParticipants', request_participants)
+        add_if_specified(params, 'raiseOnBehalfOf', raise_on_behalf_of)
+        add_if_specified(params, 'form', form)
+        add_if_specified(params, 'requestFieldValues', request_field_values)
+
+        response = self._post('servicedeskapi/request', json=params)
+        response.raise_for_status()
+
+        return response.json()
+
+    @api_call
+    def get_request(
+        self, issue_id_or_key: str, expand: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+
+        """Return service desk request details.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - expand: a list or None (None by default)
+
+        # Returned value
+
+        The _request_ details, a dictionary with the following entries:
+
+        - issueId: a string
+        - issueKey: a string
+        - requestTypeId: a string
+        - serviceDeskId: a string
+        - createDate: a dictionary
+        - reporter: a dictionary
+        - active: a boolean
+        - timeZone: a string
+        - currentStatus: a dictionary
+        - requestFieldValues: a dictionary
+
+        There may be additional fields depending on the specified
+        `expand` parameter.
+        """
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_noneorinstance('expand', list)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        response = self._get(
+            f'servicedeskapi/request/{issue_id_or_key}', params=params
+        )
+
+        return response.json()
+
+    @api_call
+    def list_request_comments(
+        self,
+        request_id_or_key: str,
+        start: int = 0,
+        limit: int = 50,
+        public: Optional[bool] = True,
+        internal: Optional[bool] = True,
+        expand: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+
+        """Return the available comments for request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        
+        # Optional parameters
+        - start: an integer (default: 0)
+        - limit: an integer (default: 50)
+        - public: a boolean (default: True, whether to include public comments)
+        - internal: a boolean (default: True, whether to include internal comments)
+        - expand: a string (optional, used for expanding additional fields)
+
+        # Returned value
+
+        A list of _request comments_.  Each request comment is a
+        dictionary with the following entries:
+
+        - id: a string
+        - author: a dictionary
+        - body: a string
+        - created: a string (a timestamp)
+        - public: a boolean
+        - _links: a dictionary
+        """
+
+        ensure_nonemptystring('request_id_or_key')
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+        ensure_noneorinstance('public', bool)
+        ensure_noneorinstance('internal', bool)
+        ensure_noneorinstance('expand', str)
+
+        params = {'start': start, 'limit': limit}
+        add_if_specified(params, 'public', public)
+        add_if_specified(params, 'internal', internal)
+        add_if_specified(params, 'expand', expand)
+
+        response = self._collect_sd_data(
+            f'servicedeskapi/request/{request_id_or_key}/comment',
+            params=params,
+        )
+
+        return response
+
+    @api_call
+    def add_request_participants(
+        self, request_id_or_key: str, participants: List[str]
+    ) -> bool:
+        """Add participants to a request.
+
+        # Required parameters
+        - request_id_or_key: a non-empty string (the request ID or key)
+        - participants: a list of strings (the account IDs of the participants)
+        
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('participants', list)
+        ensure_nonemptystring('request_id_or_key')
+
+        params = {'accountIds': participants}
+
+        response = self._post(
+            f'servicedeskapi/request/{request_id_or_key}/participant',
+            json=params,
+        )
+
+        return response.status_code in [200, 201, 204]
+
+    @api_call
+    def list_queues(
+        self,
+        servicedesk_id: str,
+        include_count: Optional[bool] = False,
+        start: int = 0,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """List queues for a service desk.
+        
+        # Required parameters
+        
+        - servicedesk_id: a non-empty string (the service desk ID)
+        
+        # Optional parameters
+        
+        - include_count: a boolean (default: False, whether to include issue count)
+        - start: an integer (default: 0)
+        - limit: an integer (default: 50)
+        
+        # Returned value
+
+        A list of dictionaries, each representing a queue.
+        Each queue has the following entries:
+        
+        - id: a string
+        - name: a string
+        - jql: a string
+        - fields: a list
+        - issueCount: an integer (if include_count is True)
+        - _links: a dictionary
+        
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+        ensure_noneorinstance('include_count', bool)
+
+        params = {
+            'includeCount': include_count,
+            'start': start,
+            'limit': limit,
+        }
+
+        response = self._collect_sd_data(
+            f'servicedeskapi/servicedesk/{servicedesk_id}/queue', params=params
+        )
+
+        return response
+
+    @api_call
+    def list_queue_issues(
+        self,
+        servicedesk_id: str,
+        queue_id: str,
+        start: int = 0,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+
+        """Return the list of all issues in a given queue.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - queue_id: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('queue_id')
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+
+        params = {'start': start, 'limit': limit}
+
+        response = self._collect_sd_data(
+            f'servicedeskapi/servicedesk/{servicedesk_id}/queue/{queue_id}/issue',
+            params=params,
+        )
+
+        return response
+
+    @api_call
+    def list_requesttypes(
+        self,
+        servicedesk_id: str,
+        group_id: Optional[int] = None,
+        search_query: Optional[str] = None,
+        start: int = 0,
+        limit: int = 50,
+        include_hidden_request_types_in_search: Optional[bool] = None,
+        restriction_status: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+
+        """List request types for a service desk.
+        
+        # Required parameters
+        
+        - servicedesk_id: a non-empty string (the service desk ID)
+        
+        # Optional parameters
+        - group_id: an integer (optional, used for filtering by group ID)
+        - search_query: a string (optional, used for filtering by search query)
+        - start: an integer (default: 0)
+        - limit: an integer (default: 50)
+        - include_hidden_request_types_in_search: a boolean (optional, used to include hidden request types in search)
+        - restriction_status: a string (optional, used for filtering by restriction status. Takes two options : [open, restricted])
+        
+        # Returned value
+        A list of dictionaries, each representing a request type.
+        Each request type has the following entries:
+        
+        """
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_noneorinstance('group_id', int)
+        ensure_noneorinstance('search_query', str)
+        ensure_instance('start', int)
+        ensure_instance('limit', int)
+        ensure_noneorinstance('include_hidden_request_types_in_search', bool)
+        ensure_noneorinstance('restriction_status', str)
+
+        params = {
+            'start': start,
+            'limit': limit,
+            'groupId': group_id,
+            'searchQuery': search_query,
+            'includeHiddenRequestTypesInSearch': include_hidden_request_types_in_search,
+            'restrictionStatus': restriction_status,
+        }
+
+        response = self._collect_sd_data(
+            f'servicedeskapi/servicedesk/{servicedesk_id}/requesttype',
+            params=params,
+        )
+        return response
+
+    @api_call
+    def list_requesttypes_fields(
+        self,
+        servicedesk_id: str,
+        request_type_id: str,
+        expand: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+
+        """Return the list of all request types for a given service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - requesttype_id: a non-empty string
+        
+        # Optional parameters
+        - expand: a list or None (None by default)
+
+        # Returned value
+
+        A list _request types_.  Each request type is a dictionary with
+        the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - helpText: a string
+        - serviceDeskId: a string
+        - groupIds: a list of strings
+        - icon: a dictionary
+        - _links: a dictionary
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('request_type_id')
+        ensure_noneorinstance('expand', list)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        response = self._get(
+            f'servicedeskapi/servicedesk/{servicedesk_id}/requesttype/{request_type_id}/field',
+            params=params,
+        )
+        return response.json()
+
+    @api_call
+    def list_servicedesk_organizations(
         self, start: int = 0, limit: int = 50, account_id: Optional[str] = None
     ) -> List[Dict[str, Any]]:
 
@@ -516,6 +895,7 @@ class JiraCloud:
 
     @api_call
     def delete_organization(self, organization_id: int) -> bool:
+
         """Delete service desk organization.
 
         # Required parameters
@@ -531,8 +911,99 @@ class JiraCloud:
         response = self._delete(
             f'servicedeskapi/organization/{organization_id}'
         )
+        response.raise_for_status()
 
         return response.status_code in [200, 201, 204]
+
+    @api_call
+    def add_servicedesk_organization(
+        self, servicedesk_id: str, organization_id: int
+    ) -> bool:
+
+        """Add organization to servicedesk.
+
+        # Required parameters
+
+        - servicedesk_id: a string
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_instance('organization_id', int)
+
+        params = {
+            'servicedeskId': servicedesk_id,
+            'organizationId': organization_id,
+        }
+
+        response = self._post(
+            'servicedeskapi/servicedesk/{servicedesk_id}/organization',
+            json=params,
+        )
+        return response.json()
+
+    @api_call
+    def add_request_comment(
+        self, issue_id_or_key: str, body: str, public: Optional[bool] = False
+    ) -> Dict[str, Any]:
+
+        """Create public or private comment on request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        - body: a string
+
+        # Optional parameters
+
+        - public: a boolean (False by default)
+
+        # Returned value
+
+        A _request comment_.  A request comment is a dictionary with the
+        following entries:
+
+        - id: a string
+        - _links: a dictionary
+        - author: a dictionary
+        - body: a string
+        - created: a dictionary
+        - public: a boolean
+
+        The `author` dictionary has the following entries:
+        
+        - accountId: a string
+        - name: a string
+        - key: a string
+        - emailAddress: a string
+        - displayName: a string
+        - active: a boolean
+        - timeZone: a string
+        - _links: a dictionary
+
+        The `created` dictionary has the following entries:
+
+        - iso8601: a string (an ISO8601 timestamp)
+        - jira: a string (an ISO8601 timestamp)
+        - friendly: a string
+        - epochMillis: an integer
+        """
+
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_nonemptystring('body')
+        ensure_noneorinstance('public', bool)
+
+        params = {'body': body, 'public': public}
+
+        response = self._post(
+            f'servicedeskapi/request/{issue_id_or_key}/comment', json=params
+        )
+
+        return response.json()
 
     ####################################################################
     # JIRA helpers
@@ -543,10 +1014,12 @@ class JiraCloud:
         params: Optional[
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         return requests.get(
             join_url(self.url, uri),
             params=params,
+            headers=headers,
             auth=self.auth,
             timeout=TIMEOUT,
         )
@@ -565,11 +1038,13 @@ class JiraCloud:
         params: Optional[
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         return requests.delete(
             join_url(self.url, api),
             json=json_data,
             params=params,
+            headers=headers,
             auth=self.auth,
             timeout=TIMEOUT,
         )
