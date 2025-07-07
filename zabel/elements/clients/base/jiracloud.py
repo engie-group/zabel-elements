@@ -51,7 +51,7 @@ class JiraCloud:
     # Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
-    
+
     # Agile references
 
     - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>
@@ -83,6 +83,7 @@ class JiraCloud:
     jc.list_projects()
     ```
     """
+
     def __init__(
         self,
         url: str,
@@ -117,7 +118,6 @@ class JiraCloud:
         ensure_noneorinstance('basic_auth', tuple)
         ensure_instance('verify', bool)
 
-
         self.url = url
         self.basic_auth = basic_auth
 
@@ -126,6 +126,7 @@ class JiraCloud:
         self.REST_BASE_URL = join_url(url, 'rest/api/3/')
         self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
         self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
+        self.SERVICEDESK_BASE_URL = join_url(url, 'rest/servicedeskapi/')
 
         self.auth = basic_auth
         self.session = prepare_session(self.auth, verify=verify)
@@ -138,7 +139,7 @@ class JiraCloud:
             rep = self.basic_auth[0]
 
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
-    
+
     ####################################################################
     # JIRA CLOUD groups
     #
@@ -164,7 +165,7 @@ class JiraCloud:
 
         A dictionary where keys are group names and values are dictionaries
           with following entries:
-          
+
         - name: a string
         - html: a string
         - labels: a list of strings
@@ -198,7 +199,9 @@ class JiraCloud:
         return response.status_code == 201
 
     @api_call
-    def list_group_users(self, group_name: str, include_inactive_users: bool = False) -> Dict[str, Any]:
+    def list_group_users(
+        self, group_name: str, include_inactive_users: bool = False
+    ) -> Dict[str, Any]:
         """List users in a group.
 
         # Required parameters
@@ -244,7 +247,7 @@ class JiraCloud:
         - account_id: a non-empty string
 
         # Returned value
-        
+
         A boolean.  True if successful, False otherwise.
         """
         ensure_nonemptystring('group_name')
@@ -267,7 +270,7 @@ class JiraCloud:
         - account_id: a non-empty string (the user's account ID)
 
         # Returned value
-        
+
         A boolean.  True if successful, False otherwise.
         """
         ensure_nonemptystring('group_name')
@@ -290,7 +293,7 @@ class JiraCloud:
     # create_project_board
     # add_project_role_actors
     # remove_project_role_actor
-    
+
     @api_call
     def list_projects(
         self,
@@ -656,8 +659,6 @@ class JiraCloud:
 
     ### Groups
 
-    
-
     ### Schemes ###
 
     @api_call
@@ -754,15 +755,13 @@ class JiraCloud:
     def list_servicedesks(
         self, start: int = 0, limit: int = 50
     ) -> List[Dict[str, Any]]:
-
-        """
-        Return the available service desks.
+        """Return the available service desks.
 
         # Optional parameters
-        
+
         - start: an integer (default: 0)
         - limit: an integer (default: 50)
-        
+
         # Returned value
 
         A list of _service desks_.  Each service desk is a dictionary
@@ -774,7 +773,6 @@ class JiraCloud:
         - projectKey: a string
         - projectId: a string
         - _links: a dictionary
-        
         """
 
         ensure_instance('start', int)
@@ -783,7 +781,7 @@ class JiraCloud:
         params = {'start': start, 'limit': limit}
 
         response = self._collect_sd_data(
-            'servicedeskapi/servicedesk', params=params
+            'servicedesk', params=params
         )
         return response
 
@@ -792,22 +790,21 @@ class JiraCloud:
         self,
         servicedesk_id: str,
         request_type_id: str,
-        request_field_values: Dict[str, Any],
+        fields: Dict[str, Any],
         request_participants: Optional[List[str]] = None,
         raise_on_behalf_of: Optional[str] = None,
-        form: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-
         """Create a new request in a service desk.
-        
+
         # Required parameters
-        
-        - servicedesk_id: a non-empty string (the service desk ID)
-        - request_type_id: a non-empty string (the request type ID)
-        
+
+        - servicedesk_id: a non-empty string
+        - request_type_id: a non-empty string
+        - fields: a dictionary
+
         # Usage
 
-        The `request_field_values` dictionary content depends on the request type (as
+        The `fields` dictionary content depends on the request type (as
         specified by `requesttype_id`).  It typically has at least the
         following two entries:
 
@@ -815,38 +812,35 @@ class JiraCloud:
         - description: a string
 
         Refer to #list_requesttypes() for more information.
-        
+
         # Returned value
 
         A dictionary representing the created request.
-        
+
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('request_type_id')
-        ensure_noneorinstance('request_field_values', dict)
-        ensure_noneorinstance('form', dict)
+        ensure_instance('fields', dict)
         ensure_noneorinstance('raise_on_behalf_of', str)
         ensure_noneorinstance('request_participants', list)
 
         params = {
             'serviceDeskId': servicedesk_id,
             'requestTypeId': request_type_id,
+            'requestFieldValues': fields,
         }
         add_if_specified(params, 'requestParticipants', request_participants)
         add_if_specified(params, 'raiseOnBehalfOf', raise_on_behalf_of)
-        add_if_specified(params, 'form', form)
-        add_if_specified(params, 'requestFieldValues', request_field_values)
 
-        response = self._post('servicedeskapi/request', json=params)
-        response.raise_for_status()
-
+        response = self.session().post(
+            join_url(self.SERVICEDESK_BASE_URL, 'request'), json=params
+        )
         return response.json()
 
     @api_call
     def get_request(
-        self, issue_id_or_key: str, expand: Optional[List[str]] = None
+        self, request_id_or_key: str, expand: Optional[str] = None
     ) -> Dict[str, Any]:
-
         """Return service desk request details.
 
         # Required parameters
@@ -855,7 +849,7 @@ class JiraCloud:
 
         # Optional parameters
 
-        - expand: a list or None (None by default)
+        - expand: a string or None (None by default)
 
         # Returned value
 
@@ -875,14 +869,17 @@ class JiraCloud:
         There may be additional fields depending on the specified
         `expand` parameter.
         """
-        ensure_nonemptystring('issue_id_or_key')
-        ensure_noneorinstance('expand', list)
+        ensure_nonemptystring('request_id_or_key')
+        ensure_noneorinstance('expand', str)
 
         params = {}
         add_if_specified(params, 'expand', expand)
 
-        response = self._get(
-            f'servicedeskapi/request/{issue_id_or_key}', params=params
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
+            ),
+            params=params,
         )
 
         return response.json()
@@ -891,22 +888,18 @@ class JiraCloud:
     def list_request_comments(
         self,
         request_id_or_key: str,
-        start: int = 0,
-        limit: int = 50,
         public: Optional[bool] = True,
         internal: Optional[bool] = True,
         expand: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-
         """Return the available comments for request.
 
         # Required parameters
 
         - request_id_or_key: a non-empty string
-        
+
         # Optional parameters
-        - start: an integer (default: 0)
-        - limit: an integer (default: 50)
+
         - public: a boolean (default: True, whether to include public comments)
         - internal: a boolean (default: True, whether to include internal comments)
         - expand: a string (optional, used for expanding additional fields)
@@ -925,19 +918,17 @@ class JiraCloud:
         """
 
         ensure_nonemptystring('request_id_or_key')
-        ensure_instance('start', int)
-        ensure_instance('limit', int)
         ensure_noneorinstance('public', bool)
         ensure_noneorinstance('internal', bool)
         ensure_noneorinstance('expand', str)
 
-        params = {'start': start, 'limit': limit}
+        params = {}
         add_if_specified(params, 'public', public)
         add_if_specified(params, 'internal', internal)
         add_if_specified(params, 'expand', expand)
 
         response = self._collect_sd_data(
-            f'servicedeskapi/request/{request_id_or_key}/comment',
+            f'request/{request_id_or_key}/comment',
             params=params,
         )
 
@@ -952,7 +943,7 @@ class JiraCloud:
         # Required parameters
         - request_id_or_key: a non-empty string (the request ID or key)
         - participants: a list of strings (the account IDs of the participants)
-        
+
         # Returned value
 
         A boolean.  True if successful, False otherwise.
@@ -962,59 +953,54 @@ class JiraCloud:
 
         params = {'accountIds': participants}
 
-        response = self._post(
-            f'servicedeskapi/request/{request_id_or_key}/participant',
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/participant',
+            ),
             json=params,
         )
 
-        return response.status_code in [200, 201, 204]
+        return response.status_code == 200
 
     @api_call
     def list_queues(
         self,
         servicedesk_id: str,
         include_count: Optional[bool] = False,
-        start: int = 0,
-        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """List queues for a service desk.
-        
+
         # Required parameters
-        
-        - servicedesk_id: a non-empty string (the service desk ID)
-        
+
+        - servicedesk_id: a non-empty string
+
         # Optional parameters
-        
+
         - include_count: a boolean (default: False, whether to include issue count)
-        - start: an integer (default: 0)
-        - limit: an integer (default: 50)
-        
+
         # Returned value
 
         A list of dictionaries, each representing a queue.
         Each queue has the following entries:
-        
+
         - id: a string
         - name: a string
         - jql: a string
         - fields: a list
         - issueCount: an integer (if include_count is True)
         - _links: a dictionary
-        
+
         """
         ensure_nonemptystring('servicedesk_id')
-        ensure_instance('start', int)
-        ensure_instance('limit', int)
         ensure_noneorinstance('include_count', bool)
 
         params = {
             'includeCount': include_count,
-            'start': start,
-            'limit': limit,
         }
 
         response = self._collect_sd_data(
-            f'servicedeskapi/servicedesk/{servicedesk_id}/queue', params=params
+            f'servicedesk/{servicedesk_id}/queue', params=params
         )
 
         return response
@@ -1024,10 +1010,7 @@ class JiraCloud:
         self,
         servicedesk_id: str,
         queue_id: str,
-        start: int = 0,
-        limit: int = 50,
     ) -> List[Dict[str, Any]]:
-
         """Return the list of all issues in a given queue.
 
         # Required parameters
@@ -1042,14 +1025,9 @@ class JiraCloud:
 
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('queue_id')
-        ensure_instance('start', int)
-        ensure_instance('limit', int)
-
-        params = {'start': start, 'limit': limit}
 
         response = self._collect_sd_data(
-            f'servicedeskapi/servicedesk/{servicedesk_id}/queue/{queue_id}/issue',
-            params=params,
+            f'servicedesk/{servicedesk_id}/queue/{queue_id}/issue',
         )
 
         return response
@@ -1058,53 +1036,42 @@ class JiraCloud:
     def list_requesttypes(
         self,
         servicedesk_id: str,
-        group_id: Optional[int] = None,
         search_query: Optional[str] = None,
-        start: int = 0,
-        limit: int = 50,
-        include_hidden_request_types_in_search: Optional[bool] = None,
-        restriction_status: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-
         """List request types for a service desk.
-        
+
         # Required parameters
-        
+
         - servicedesk_id: a non-empty string (the service desk ID)
-        
+
         # Optional parameters
-        - group_id: an integer (optional, used for filtering by group ID)
-        - search_query: a string (optional, used for filtering by search query)
-        - start: an integer (default: 0)
-        - limit: an integer (default: 50)
-        - include_hidden_request_types_in_search: a boolean (optional, used to include hidden request types in search)
-        - restriction_status: a string (optional, used for filtering by restriction status. Takes two options : [open, restricted])
-        
+
+        - search_query: a string
+
         # Returned value
+
         A list of dictionaries, each representing a request type.
         Each request type has the following entries:
-        
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - helpText: a string
+        - serviceDeskId: a string
+        - groupIds: a list of strings
+        - icon: a dictionary
+        - _links: a dictionary
+        - portalId: a string
         """
 
         ensure_nonemptystring('servicedesk_id')
-        ensure_noneorinstance('group_id', int)
         ensure_noneorinstance('search_query', str)
-        ensure_instance('start', int)
-        ensure_instance('limit', int)
-        ensure_noneorinstance('include_hidden_request_types_in_search', bool)
-        ensure_noneorinstance('restriction_status', str)
 
-        params = {
-            'start': start,
-            'limit': limit,
-            'groupId': group_id,
-            'searchQuery': search_query,
-            'includeHiddenRequestTypesInSearch': include_hidden_request_types_in_search,
-            'restrictionStatus': restriction_status,
-        }
+        params = {}
+        add_if_specified(params, 'searchQuery', search_query)
 
         response = self._collect_sd_data(
-            f'servicedeskapi/servicedesk/{servicedesk_id}/requesttype',
+            f'servicedesk/{servicedesk_id}/requesttype',
             params=params,
         )
         return response
@@ -1114,18 +1081,17 @@ class JiraCloud:
         self,
         servicedesk_id: str,
         request_type_id: str,
-        expand: Optional[List[str]] = None,
+        expand: Optional[str] = None,
     ) -> Dict[str, Any]:
-
         """Return the list of all request types for a given service desk.
 
         # Required parameters
 
         - servicedesk_id: a non-empty string
         - requesttype_id: a non-empty string
-        
+
         # Optional parameters
-        - expand: a list or None (None by default)
+        - expand: a string (optional, used for expanding additional fields)
 
         # Returned value
 
@@ -1143,30 +1109,30 @@ class JiraCloud:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('request_type_id')
-        ensure_noneorinstance('expand', list)
+        ensure_noneorinstance('expand', str)
 
         params = {}
         add_if_specified(params, 'expand', expand)
 
-        response = self._get(
-            f'servicedeskapi/servicedesk/{servicedesk_id}/requesttype/{request_type_id}/field',
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/requesttype/{request_type_id}/field',
+            ),
             params=params,
         )
         return response.json()
 
     @api_call
     def list_servicedesk_organizations(
-        self, start: int = 0, limit: int = 50, account_id: Optional[str] = None
+        self, servicedesk_id: Union[str, int]
     ) -> List[Dict[str, Any]]:
-
         """
         Return the list of all service desk organizations.
-        
-        # Optional parameters
-        
-        - start: an integer (default: 0)
-        - limit: an integer (default: 50)
-        - account_id: a string (optional, used for filtering by account ID)
+
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
 
         # Returned value
 
@@ -1174,26 +1140,23 @@ class JiraCloud:
 
         Refer to #get_organization() for details on its structure.
         """
-        ensure_instance('start', int)
-        ensure_instance('limit', int)
-        ensure_noneorinstance('account_id', str)
 
-        params = {'start': start, 'limit': limit}
-        add_if_specified(params, 'accountId', account_id)
+        ensure_instance('servicedesk_id', (str, int))
 
-        return self._collect_sd_data(
-            'servicedeskapi/organization', params=params
+        organizations = self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/organization',
         )
+        return organizations
 
     @api_call
     def get_organization(self, organization_id: int) -> Dict[str, Any]:
         """
         Get a specific organization by its ID.
-        
+
         # Required parameters
-        
+
         - organization_id: a non-empty string (the organization ID)
-        
+
         # Returned value
 
         The _organization_ details, a dictionary, with the following
@@ -1207,20 +1170,22 @@ class JiraCloud:
         """
         ensure_instance('organization_id', int)
 
-        response = self._get(f'servicedeskapi/organization/{organization_id}')
-        response.raise_for_status()
-
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            )
+        )
         return response.json()
 
     @api_call
     def create_organization(self, name: str) -> Dict[str, Any]:
         """
         Create a new organization.
-        
+
         # Required parameters
-        
-        - name: a non-empty string (the organization name)
-        
+
+        - name: a non-empty string
+
         # Returned value
 
         The created _organization_ details, a dictionary, with the
@@ -1235,13 +1200,14 @@ class JiraCloud:
         ensure_nonemptystring('name')
         params = {'name': name}
 
-        response = self._post('servicedeskapi/organization', json=params)
+        response = self.session().post(
+            join_url(self.SERVICEDESK_BASE_URL, 'organization'), json=params
+        )
 
         return response.json()
 
     @api_call
     def delete_organization(self, organization_id: int) -> bool:
-
         """Delete service desk organization.
 
         # Required parameters
@@ -1254,18 +1220,17 @@ class JiraCloud:
         """
         ensure_instance('organization_id', int)
 
-        response = self._delete(
-            f'servicedeskapi/organization/{organization_id}'
+        response = self.session().delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
         )
-        response.raise_for_status()
-
         return response.status_code in [200, 201, 204]
 
     @api_call
     def add_servicedesk_organization(
         self, servicedesk_id: str, organization_id: int
     ) -> bool:
-
         """Add organization to servicedesk.
 
         # Required parameters
@@ -1276,18 +1241,20 @@ class JiraCloud:
         # Returned value
 
         A boolean.  True if successful, False otherwise.
-        
+
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_instance('organization_id', int)
 
         params = {
-            'servicedeskId': servicedesk_id,
             'organizationId': organization_id,
         }
 
-        response = self._post(
-            'servicedeskapi/servicedesk/{servicedesk_id}/organization',
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'/servicedesk/{servicedesk_id}/organization',
+            ),
             json=params,
         )
         return response.json()
@@ -1296,7 +1263,6 @@ class JiraCloud:
     def add_request_comment(
         self, issue_id_or_key: str, body: str, public: Optional[bool] = False
     ) -> Dict[str, Any]:
-
         """Create public or private comment on request.
 
         # Required parameters
@@ -1321,7 +1287,7 @@ class JiraCloud:
         - public: a boolean
 
         The `author` dictionary has the following entries:
-        
+
         - accountId: a string
         - name: a string
         - key: a string
@@ -1345,8 +1311,11 @@ class JiraCloud:
 
         params = {'body': body, 'public': public}
 
-        response = self._post(
-            f'servicedeskapi/request/{issue_id_or_key}/comment', json=params
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'request/{issue_id_or_key}/comment'
+            ),
+            json=params,
         )
 
         return response.json()
@@ -1746,6 +1715,7 @@ class JiraCloud:
         uri: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
         base: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
         start_at: str = 'startAt',
         is_last: str = 'isLast',
         key: str = 'values',
@@ -1754,9 +1724,9 @@ class JiraCloud:
         collected: List[Any] = []
         _params = dict(params or {})
         more = True
-
+        print(f'Collecting data from {api_url} with params {_params}')
         while more:
-            response = self.session().get(api_url, params=_params)
+            response = self.session().get(api_url, params=_params, headers=headers)
             if response.status_code // 100 != 2:
                 raise ApiError(response.text)
             try:
@@ -1774,3 +1744,18 @@ class JiraCloud:
                 _params[start_at] = workload[start_at] + len(values)
 
         return collected
+
+    def _collect_sd_data(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> List[Any]:
+        return self._collect_data(
+            api,
+            params=params,
+            base=self.SERVICEDESK_BASE_URL,
+            headers=headers,
+            start_at='start',
+            is_last='isLastPage',
+        )
