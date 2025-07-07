@@ -41,10 +41,10 @@ class ConfluenceCloud(Base):
     # Sample use
 
     ```python
-    from zabel.elements.clients import Confluence
+    from zabel.elements.clients import ConfluenceCloud
 
     url = 'https://{instance}.atlassian.net/wiki/'
-    confluencecloud = Confluence(url, basic_auth=(user, token))
+    confluencecloud = ConfluenceCloud(url, basic_auth=(user, token))
     confluencecloud.list_users()
     ```
     """
