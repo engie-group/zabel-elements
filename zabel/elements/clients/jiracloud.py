@@ -6,23 +6,14 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-"""Jira Server and Data Center.
+"""Jira Cloud.
 
-A class wrapping Jira Server and Data Center APIs.
+A class wrapping Jira Cloud APIs.
 
 There can be as many Jira instances as needed.
 
-This module depends on the #::.base.jira module.
+This module depends on the #::.base.jiracloud module.
 """
-
-from typing import Any, Dict, Iterable, List, Optional, Union
-
-from zabel.commons.exceptions import ApiError
-from zabel.commons.utils import (
-    api_call,
-    ensure_instance,
-    ensure_nonemptystring,
-)
 
 from .base.jiracloud import JiraCloud as Base
 
@@ -32,20 +23,42 @@ class JiraCloud(Base):
 
     There can be as many Jira instances as needed.
 
-    This class depends on the public **requests** and **jira.JIRA**
-    libraries.  It also depends on two **zabel-commons** modules,
+    This class depends on the public **requests** library.
+    It also depends on two **zabel-commons** modules,
     #::zabel.commons.exceptions and #::zabel.commons.utils.
-
-    !!! note
-        This class reuses the JIRA library whenever possible, but always
-        returns 'raw' values (dictionaries, ..., not classes).
 
     # Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
-    - <https://developer.atlassian.com/cloud/jira/service-desk/rest>
+    
+    # Agile references
 
-    # Using the jira.JIRA python library
+    - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>
+    - <https://support.atlassian.com/jira/kb/how-to-update-board-administrators-through-rest-api/>
 
-    - <http://jira.readthedocs.io/en/latest/>
+    # Implemented features
+
+    - boards
+    - filters
+    - groups
+    - projects
+    - users
+
+    Works with basic authentication.
+
+    It is the responsibility of the user to be sure the provided
+    authentication has enough rights to perform the requested operation.
+
+    # Sample usage
+
+    ```python
+    from zabel.elements.clients.jiracloud import JiraCloud
+
+    url = 'https://your-domain.atlassian.net'
+    jc = JiraCloud(
+        url,
+        basic_auth=(user, token),
+    )
+    jc.list_projects()
+    ```
     """
