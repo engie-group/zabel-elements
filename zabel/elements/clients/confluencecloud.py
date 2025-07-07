@@ -1,0 +1,55 @@
+from typing import Any, Dict, List, Union, Optional
+
+from zabel.commons.utils import (
+    api_call,
+    ensure_instance,
+    ensure_noneornonemptystring,
+)
+
+from .base.confluencecloud import ConfluenceCloud as Base
+
+
+class ConfluenceCloud(Base):
+    """Confluence Cloud Low-Level Wrapper.
+
+    There can be as many Confluence Cloud instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    # Reference URL
+
+    <https://developer.atlassian.com/cloud/confluence/rest/v2/>
+    <https://developer.atlassian.com/cloud/confluence/rest/v1/>
+
+    WADLs are also available on a given instance:
+
+    <https://{instance}/rest/api/application.wadl>
+    <https://{instance}/rest/mobile/1.0/application.wadl>
+
+    An interface to Confluence, including users and groups management.
+
+    # Implemented features
+
+    - pages
+    - search
+    - spaces
+
+
+    What is accessible through the API depends on account rights.
+
+    Whenever applicable, the provided features handle pagination (i.e.,
+    they return all relevant elements, not only the first n).
+
+    # Sample use
+
+    ```python
+    from zabel.elements.clients import Confluence
+
+    url = 'https://{instance}.atlassian.net/wiki/'
+    confluencecloud = Confluence(url, basic_auth=(user, token))
+    confluencecloud.list_users()
+    ```
+    """
