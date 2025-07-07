@@ -1029,7 +1029,6 @@ class JiraCloud:
             verify=self.verify,
             timeout=TIMEOUT,
         )
-        print(result.status_code)
         return result
 
     def _get_url(self, uri: str) -> str:
@@ -1054,7 +1053,7 @@ class JiraCloud:
     def _post(
         self,
         uri: str,
-        params: Optional[Mapping[str, Any]],
+        params: Optional[Mapping[str, Any]] = None,
         json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
         return self.session().post(
