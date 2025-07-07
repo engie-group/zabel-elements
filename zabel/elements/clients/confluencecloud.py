@@ -1,10 +1,6 @@
-from typing import Any, Dict, List, Union, Optional
-
-from zabel.commons.utils import (
-    api_call,
-    ensure_instance,
-    ensure_noneornonemptystring,
-)
+"""
+ConfluenceCloud client module providing access to Confluence Cloud API.
+"""
 
 from .base.confluencecloud import ConfluenceCloud as Base
 
@@ -37,7 +33,6 @@ class ConfluenceCloud(Base):
     - search
     - spaces
 
-
     What is accessible through the API depends on account rights.
 
     Whenever applicable, the provided features handle pagination (i.e.,
@@ -53,3 +48,5 @@ class ConfluenceCloud(Base):
     confluencecloud.list_users()
     ```
     """
+    # Inherits all methods from Base class
+    # No additional methods or properties are defined here
