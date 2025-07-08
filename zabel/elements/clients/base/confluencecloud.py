@@ -388,7 +388,7 @@ class ConfluenceCloud:
     def create_space(
         self,
         name: str,
-        key: Optional[str] = None,
+        key: str,
         alias: Optional[str] = None,
         description: Optional[Dict[str, Any]] = None,
         role_assignments: Optional[List[Dict[str, Any]]] = None,
@@ -409,21 +409,22 @@ class ConfluenceCloud:
         """
 
         ensure_nonemptystring('name')
-        ensure_noneorinstance('key', str)
+        ensure_nonemptystring('key')
         ensure_noneorinstance('alias', str)
         ensure_noneorinstance('description', dict)
         ensure_noneorinstance('role_assignments', list)
 
-        definition: Dict[str, Any] = {
+        data: Dict[str, Any] = {
             'name': name,
+            'key': key,
         }
-        add_if_specified(definition, 'key', key)
-        add_if_specified(definition, 'alias', alias)
-        add_if_specified(definition, 'description', description)
-        add_if_specified(definition, 'roleAssignments', role_assignments)
-
-        result = self._post('spaces', definition)
-        return result
+        add_if_specified(data, 'alias', alias)
+        add_if_specified(data, 'description', description)
+        add_if_specified(data, 'roleAssignments', role_assignments)
+       
+        url = join_url(join_url(self.url, 'rest/api/'), 'space')
+        response = self.session().post(url, json=data) 
+        return response.status_code // 100 == 2
 
     @api_call
     def get_space_properties(
@@ -495,7 +496,7 @@ class ConfluenceCloud:
         return self._collect_data('space-permissions', params=params)
 
     @api_call
-    def get_space_permission(
+    def get_space_permissions(
         self, space_key: str, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Return permissions for a space.
@@ -517,6 +518,37 @@ class ConfluenceCloud:
         return self._collect_data(
             f'spaces/{space_key}/permissions', params=params
         )
+    
+    @api_call
+    def add_space_label(
+        self,
+        space_key: str,
+        prefix: str,
+        label: str
+    ) -> Dict[str, Any]:
+        """Add a label to a space.
+
+        # Required parameters
+        - space_key: a string
+        - prefix: a string 
+        - label: a string
+
+        # Returned value
+        A dictionary representing the added label.
+        """
+
+        ensure_nonemptystring('space_key')
+        ensure_nonemptystring('prefix')
+        ensure_nonemptystring('label')
+
+        definition = [{
+            'prefix': prefix,
+            'name': label
+        }]
+        url = join_url(self.url, f"rest/api/space/{space_key}/label")
+        response = self.session().post(url, json=definition)
+        return response.status_code // 100 == 2
+        
 
     ####################################################################
     # Confluence pages
@@ -751,7 +783,8 @@ class ConfluenceCloud:
         add_if_specified(params, 'purge', purge)
         add_if_specified(params, 'draft', draft)
 
-        response = self.session().delete(f'pages/{page_id}', params=params)
+        url = join_url(join_url(self.url, 'rest/api/'), 'pages/{page_id}')
+        response = self.session().delete(url, params=params)
         return response.status_code // 100 == 2
 
     @api_call
