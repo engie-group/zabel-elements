@@ -128,6 +128,13 @@ class ConfluenceCloud:
         """Return confluence Cloud POST api call results."""
         api_url = join_url(join_url(self.url, 'api/v2/'), api)
         return self.session().post(api_url, json=json)
+    
+    def _put(
+        self, api: str, json: Optional[Mapping[str, Any]] = None
+    ) -> requests.Response:
+        """Return confluence Cloud PUT api call results."""
+        api_url = join_url(join_url(self.url, 'api/v2/'), api)
+        return self.session().put(api_url, json=json)
 
     def _collect_data(
         self,
@@ -136,7 +143,6 @@ class ConfluenceCloud:
     ) -> List[Any]:
         """Return confluence cloud GET api call results, collected."""
         api_url = join_url(join_url(self.url, 'api/v2/'), api)
-        print(api_url)
         collected: List[Any] = []
         more = True
         while more:
@@ -783,7 +789,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'purge', purge)
         add_if_specified(params, 'draft', draft)
 
-        url = join_url(join_url(self.url, 'rest/api/'), 'pages/{page_id}')
+        url = join_url(join_url(self.url, 'api/v2/'), f'pages/{page_id}')
         response = self.session().delete(url, params=params)
         return response.status_code // 100 == 2
 
@@ -838,7 +844,7 @@ class ConfluenceCloud:
         add_if_specified(definition, 'parentId', parent_id)
         add_if_specified(definition, 'ownerId', owner_id)
 
-        result = self._post(f'pages/{page_id}', definition)
+        result = self._put(f'pages/{page_id}', definition)
         return result
 
     @api_call
@@ -862,7 +868,7 @@ class ConfluenceCloud:
 
         definition = {'status': status, 'title': title}
 
-        result = self._post(f'pages/{page_id}/title', definition)
+        result = self._put(f'pages/{page_id}/title', definition)
         return result
 
     @api_call
@@ -871,7 +877,7 @@ class ConfluenceCloud:
         page_id: int,
         limit: int = 100,
         sort: Optional[str] = None,
-        status: List[str] = ['current', 'archived'],
+        status: str = 'current',
         media_type: Optional[str] = None,
         filename: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
@@ -894,13 +900,13 @@ class ConfluenceCloud:
         ensure_instance('page_id', int)
         ensure_in('status', ['current', 'archived', 'trashed'])
         ensure_noneorinstance('sort', str)
-        ensure_noneorinstance('mediaType', str)
+        ensure_noneorinstance('media_type', str)
         ensure_noneorinstance('filename', str)
 
-        params = {'limit': limit, status: status}
+        params = {'limit': limit, 'status': status}
 
         add_if_specified(params, 'sort', sort)
-        add_if_specified(params, 'media-type', media_type)
+        add_if_specified(params, 'mediaType', media_type)
         add_if_specified(params, 'filename', filename)
 
         return self._collect_data(
