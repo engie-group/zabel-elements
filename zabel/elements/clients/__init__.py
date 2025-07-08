@@ -74,6 +74,7 @@ __all__ = [
     'SquashTM',
     'GitHubCloud',
     'Atlassian',
+    'ConfluenceCloud',
 ]
 
 
@@ -89,3 +90,4 @@ from .okta import Okta
 from .base.okta import OktaException
 from .githubcloud import GitHubCloud
 from .base.atlassian import Atlassian
+from .confluencecloud import ConfluenceCloud
