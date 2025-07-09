@@ -278,6 +278,87 @@ class JiraCloud:
             params={'accountId': account_id, 'groupname': group_name},
         )
         return response.status_code == 204
+    
+    ####################################################################
+    # JIRA CLOUD groups
+    #
+    # list_users
+    # get_user
+    # search_users
+
+    @api_call
+    def list_users(
+        self,
+    ) -> List[Dict[str, Any]]:
+        """List all users.
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.  Each user
+        dictionary has the following entries:
+
+        - accountId: a string
+        - accountType: a string
+        - active: a boolean
+        - avatarUrls: a dictionary
+        - displayName: a string
+        - emailAddress: a string
+        - self: a string
+        - timeZone: a string
+        """
+        return self._get('users/search')
+    
+    @api_call
+    def get_user(self, account_id: str) -> Dict[str, Any]:
+        """Get a user by their account ID.
+
+        # Required parameters
+
+        - account_id: a non-empty string (the user's account ID)
+
+        # Returned value
+
+        A dictionary representing the user.  See
+        #list_users() for details on its structure.
+        """
+        ensure_nonemptystring('account_id')
+
+        response = self._get(f'user?accountId={account_id}')
+        return response.json()
+    
+    @api_call
+    def search_users(
+        self,
+        query: Optional[str] = None,
+        start_at: Optional[int] = None,
+        max_results: Optional[int] = None,
+        account_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Search for users.
+
+        # Optional parameters
+
+        - query: a string
+        - start_at: an integer
+        - max_results: an integer
+        - account_id: a string
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        """
+        ensure_noneorinstance('query', str)
+        ensure_noneorinstance('start_at', int)
+        ensure_noneorinstance('max_results', int)
+        ensure_noneorinstance('account_id', str)
+
+        params = {}
+        add_if_specified(params, 'query', query)
+        add_if_specified(params, 'startAt', start_at)
+        add_if_specified(params, 'maxResults', max_results)
+        add_if_specified(params, 'accountId', account_id)
+
+        return self._get('user/search', params=params)
 
     ####################################################################
     # JIRA Cloud projects
@@ -507,7 +588,7 @@ class JiraCloud:
         - avatarUrl: a string
 
         """
-        ensure_nonemptystring('project_key')
+        ensure_nonemptystring('project_id_or_key')
         ensure_instance('role_id', int)
 
         response = self._get(f'project/{project_id_or_key}/role/{role_id}')
