@@ -51,7 +51,7 @@ class JiraCloud:
     # Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
-    
+
     # Agile references
 
     - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>
@@ -83,6 +83,7 @@ class JiraCloud:
     jc.list_projects()
     ```
     """
+
     def __init__(
         self,
         url: str,
@@ -117,7 +118,6 @@ class JiraCloud:
         ensure_noneorinstance('basic_auth', tuple)
         ensure_instance('verify', bool)
 
-
         self.url = url
         self.basic_auth = basic_auth
 
@@ -126,6 +126,7 @@ class JiraCloud:
         self.REST_BASE_URL = join_url(url, 'rest/api/3/')
         self.AGILE_BASE_URL = join_url(url, 'rest/agile/1.0/')
         self.GREENHOPPER_BASE_URL = join_url(url, 'rest/greenhopper/1.0/')
+        self.SERVICEDESK_BASE_URL = join_url(url, 'rest/servicedeskapi/')
 
         self.auth = basic_auth
         self.session = prepare_session(self.auth, verify=verify)
@@ -138,7 +139,7 @@ class JiraCloud:
             rep = self.basic_auth[0]
 
         return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
-    
+
     ####################################################################
     # JIRA CLOUD groups
     #
@@ -164,7 +165,7 @@ class JiraCloud:
 
         A dictionary where keys are group names and values are dictionaries
           with following entries:
-          
+
         - name: a string
         - html: a string
         - labels: a list of strings
@@ -198,7 +199,9 @@ class JiraCloud:
         return response.status_code == 201
 
     @api_call
-    def list_group_users(self, group_name: str, include_inactive_users: bool = False) -> Dict[str, Any]:
+    def list_group_users(
+        self, group_name: str, include_inactive_users: bool = False
+    ) -> Dict[str, Any]:
         """List users in a group.
 
         # Required parameters
@@ -244,7 +247,7 @@ class JiraCloud:
         - account_id: a non-empty string
 
         # Returned value
-        
+
         A boolean.  True if successful, False otherwise.
         """
         ensure_nonemptystring('group_name')
@@ -267,7 +270,7 @@ class JiraCloud:
         - account_id: a non-empty string (the user's account ID)
 
         # Returned value
-        
+
         A boolean.  True if successful, False otherwise.
         """
         ensure_nonemptystring('group_name')
@@ -371,7 +374,7 @@ class JiraCloud:
     # create_project_board
     # add_project_role_actors
     # remove_project_role_actor
-    
+
     @api_call
     def list_projects(
         self,
@@ -737,8 +740,6 @@ class JiraCloud:
 
     ### Groups
 
-    
-
     ### Schemes ###
 
     @api_call
@@ -811,6 +812,580 @@ class JiraCloud:
         response = self._get('role')
 
         return response.json()
+
+    ####################################################################
+    # JIRA Service Desk
+    #
+    # list_servicedesks
+    # create_request
+    # get_request
+    # list_request_comments
+    # add_request_comment
+    # add_request_participants
+    # list_queues
+    # list_queue_issues
+    # list_requesttypes
+    # list_requesttypes_fields
+    # list_servicedesk_organizations
+    # get_organization
+    # create_organization
+    # delete_organization
+    # add_servicedesk_organization
+
+    @api_call
+    def list_servicedesks(
+        self
+    ) -> List[Dict[str, Any]]:
+        """Return the available service desks.
+
+        # Returned value
+
+        A list of _service desks_.  Each service desk is a dictionary
+        with the following entries:
+
+        - id: a string
+        - projectId: a string
+        - projectName: a string
+        - projectKey: a string
+        - _links: a dictionary
+        """
+        return self._collect_sd_data('servicedesk')
+
+    @api_call
+    def create_request(
+        self,
+        servicedesk_id: str,
+        request_type_id: str,
+        fields: Dict[str, Any],
+        request_participants: Optional[List[str]] = None,
+        raise_on_behalf_of: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a new request in a service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - request_type_id: a non-empty string
+        - fields: a dictionary
+
+        # Usage
+
+        The `fields` dictionary content depends on the request type (as
+        specified by `requesttype_id`).  It typically has at least the
+        following two entries:
+
+        - summary: a string
+        - description: a string
+
+        Refer to #list_requesttypes() for more information.
+
+        # Returned value
+
+        A dictionary representing the created request.
+
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('request_type_id')
+        ensure_instance('fields', dict)
+        ensure_noneorinstance('raise_on_behalf_of', str)
+        ensure_noneorinstance('request_participants', list)
+
+        params = {
+            'serviceDeskId': servicedesk_id,
+            'requestTypeId': request_type_id,
+            'requestFieldValues': fields,
+        }
+        add_if_specified(params, 'requestParticipants', request_participants)
+        add_if_specified(params, 'raiseOnBehalfOf', raise_on_behalf_of)
+
+        response = self.session().post(
+            join_url(self.SERVICEDESK_BASE_URL, 'request'), json=params
+        )
+        return response.json()
+
+    @api_call
+    def get_request(
+        self, request_id_or_key: str, expand: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return service desk request details.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - expand: a string or None (None by default)
+
+        # Returned value
+
+        The _request_ details, a dictionary with the following entries:
+
+        - issueId: a string
+        - issueKey: a string
+        - requestTypeId: a string
+        - serviceDeskId: a string
+        - createDate: a dictionary
+        - reporter: a dictionary
+        - active: a boolean
+        - timeZone: a string
+        - currentStatus: a dictionary
+        - requestFieldValues: a dictionary
+
+        There may be additional fields depending on the specified
+        `expand` parameter.
+        """
+        ensure_nonemptystring('request_id_or_key')
+        ensure_noneorinstance('expand', str)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
+            ),
+            params=params,
+        )
+
+        return response.json()
+
+    @api_call
+    def list_request_comments(
+        self,
+        request_id_or_key: str,
+        public: Optional[bool] = True,
+        internal: Optional[bool] = True,
+        expand: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return the available comments for request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+
+        # Optional parameters
+
+        - public: a boolean (default: True, whether to include public comments)
+        - internal: a boolean (default: True, whether to include internal comments)
+        - expand: a string (optional, used for expanding additional fields)
+
+        # Returned value
+
+        A list of _request comments_.  Each request comment is a
+        dictionary with the following entries:
+
+        - id: a string
+        - author: a dictionary
+        - body: a string
+        - created: a string (a timestamp)
+        - public: a boolean
+        - _links: a dictionary
+        """
+
+        ensure_nonemptystring('request_id_or_key')
+        ensure_noneorinstance('public', bool)
+        ensure_noneorinstance('internal', bool)
+        ensure_noneorinstance('expand', str)
+
+        params = {}
+        add_if_specified(params, 'public', public)
+        add_if_specified(params, 'internal', internal)
+        add_if_specified(params, 'expand', expand)
+
+        response = self._collect_sd_data(
+            f'request/{request_id_or_key}/comment',
+            params=params,
+        )
+
+        return response
+
+    @api_call
+    def add_request_participants(
+        self, request_id_or_key: str, participants: List[str]
+    ) -> bool:
+        """Add participants to a request.
+
+        # Required parameters
+        - request_id_or_key: a non-empty string (the request ID or key)
+        - participants: a list of strings (the account IDs of the participants)
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('participants', list)
+        ensure_nonemptystring('request_id_or_key')
+
+        params = {'accountIds': participants}
+
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/participant',
+            ),
+            json=params,
+        )
+
+        return response.status_code == 200
+
+    @api_call
+    def list_queues(
+        self,
+        servicedesk_id: str,
+        include_count: Optional[bool] = False,
+    ) -> List[Dict[str, Any]]:
+        """List queues for a service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+
+        # Optional parameters
+
+        - include_count: a boolean
+
+        # Returned value
+
+        A list of dictionaries, each representing a queue.
+        Each queue has the following entries:
+
+        - id: a string
+        - name: a string
+        - jql: a string
+        - fields: a list of dictionaries
+        - issueCount: an integer (if include_count is True)
+        - _links: a dictionary
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_noneorinstance('include_count', bool)
+
+        params = {}
+        add_if_specified(params, 'includeCount', include_count)
+
+        return self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/queue', params=params
+        )
+
+    @api_call
+    def list_queue_issues(
+        self,
+        servicedesk_id: str,
+        queue_id: str,
+    ) -> List[Dict[str, Any]]:
+        """Return the list of all issues in a given queue.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - queue_id: a non-empty string
+
+        # Returned value
+
+        A list of dictionaries.
+        """
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('queue_id')
+
+        return self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/queue/{queue_id}/issue',
+        )
+
+    @api_call
+    def list_requesttypes(
+        self,
+        servicedesk_id: str,
+        search_query: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List request types for a service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string (the service desk ID)
+
+        # Optional parameters
+
+        - search_query: a string
+
+        # Returned value
+
+        A list of dictionaries, each representing a request type.
+        Each request type has the following entries:
+
+        - id: a string
+        - name: a string
+        - description: a string
+        - helpText: a string
+        - serviceDeskId: a string
+        - groupIds: a list of strings
+        - icon: a dictionary
+        - _links: a dictionary
+        - portalId: a string
+        """
+
+        ensure_nonemptystring('servicedesk_id')
+        ensure_noneorinstance('search_query', str)
+
+        params = {}
+        add_if_specified(params, 'searchQuery', search_query)
+
+        return self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/requesttype',
+            params=params,
+        )
+
+    @api_call
+    def list_requesttypes_fields(
+        self,
+        servicedesk_id: str,
+        request_type_id: str,
+        expand: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the list of all request types for a given service desk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string
+        - requesttype_id: a non-empty string
+
+        # Optional parameters
+        - expand: a string (optional, used for expanding additional fields)
+
+        # Returned value
+
+        A dictionary representing the fields for a specific request type.
+        The structure of the returned value is as follows:
+
+        - canRaiseOnBehalfOf: a boolean
+        - canRequestParticipants: a boolean
+        - requestTypeFields: a list of dictionary with
+        the following entries:
+
+        - fieldId: a string
+        - name: a string
+        - description: a string
+        - required: a boolean
+        - defaultValues: a list
+        - validValues: a list
+        - jiraSchema: a dictionary
+        """
+        ensure_nonemptystring('servicedesk_id')
+        ensure_nonemptystring('request_type_id')
+        ensure_noneorinstance('expand', str)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'servicedesk/{servicedesk_id}/requesttype/{request_type_id}/field',
+            ),
+            params=params,
+        )
+        return response.json()
+
+    @api_call
+    def list_servicedesk_organizations(
+        self, servicedesk_id: Union[str, int]
+    ) -> List[Dict[str, Any]]:
+        """
+        Return the list of all service desk organizations.
+
+        # Required parameters
+
+        - servicedesk_id: an integer or a string
+
+        # Returned value
+
+        A list of _organizations_.  An organization is a dictionary.
+
+        Refer to #get_organization() for details on its structure.
+        """
+
+        ensure_instance('servicedesk_id', (str, int))
+
+        return self._collect_sd_data(
+            f'servicedesk/{servicedesk_id}/organization',
+        )
+
+    @api_call
+    def get_organization(self, organization_id: Union[int, str]) -> Dict[str, Any]:
+        """
+        Get a specific organization by its ID.
+
+        # Required parameters
+
+        - organization_id: an integer or a string (the organization ID)
+
+        # Returned value
+
+        The _organization_ details, a dictionary, with the following
+        entries:
+
+        - created : a dictionary
+        - id: a string
+        - name: a string
+        - scimManaged: a boolean
+        - uuid: a string
+        - _links: a dictionary
+
+        """
+        ensure_instance('organization_id', (int, str))
+
+        response = self.session().get(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            )
+        )
+        return response.json()
+
+    @api_call
+    def create_organization(self, name: str) -> Dict[str, Any]:
+        """
+        Create a new organization.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Returned value
+
+        The created _organization_ details, a dictionary, with the
+        following entries:
+
+        - id: a string
+        - name: a string
+        - _links: a dictionary
+        - scimManaged: a boolean (indicating if the organization is managed by SCIM)
+
+        """
+        ensure_nonemptystring('name')
+        params = {'name': name}
+
+        response = self.session().post(
+            join_url(self.SERVICEDESK_BASE_URL, 'organization'), json=params
+        )
+
+        return response.json()
+
+    @api_call
+    def delete_organization(self, organization_id: int) -> bool:
+        """Delete service desk organization.
+
+        # Required parameters
+
+        - organization_id: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('organization_id', int)
+
+        response = self.session().delete(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
+            ),
+            headers={'Content-Type': 'application/json'}
+        )
+        return response.status_code == 204
+
+    @api_call
+    def add_servicedesk_organization(
+        self, servicedesk_id: Union[str, int], organization_id: int
+    ) -> bool:
+        """Add organization to servicedesk.
+
+        # Required parameters
+
+        - servicedesk_id: a non-empty string or an integer
+        - organization_id: an integer
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('servicedesk_id', (str, int))
+        ensure_instance('organization_id', int)
+
+        params = {
+            'organizationId': organization_id,
+        }
+
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL,
+                f'/servicedesk/{servicedesk_id}/organization',
+            ),
+            json=params,
+        )
+        return response.status_code == 204
+
+    @api_call
+    def add_request_comment(
+        self, issue_id_or_key: str, body: str, public: Optional[bool] = False
+    ) -> Dict[str, Any]:
+        """Create public or private comment on request.
+
+        # Required parameters
+
+        - request_id_or_key: a non-empty string
+        - body: a string
+
+        # Optional parameters
+
+        - public: a boolean (False by default)
+
+        # Returned value
+
+        A _request comment_.  A request comment is a dictionary with the
+        following entries:
+
+        - id: a string
+        - _links: a dictionary
+        - author: a dictionary
+        - body: a string
+        - created: a dictionary
+        - public: a boolean
+
+        The `author` dictionary has the following entries:
+
+        - accountId: a string
+        - name: a string
+        - key: a string
+        - emailAddress: a string
+        - displayName: a string
+        - active: a boolean
+        - timeZone: a string
+        - _links: a dictionary
+
+        The `created` dictionary has the following entries:
+
+        - iso8601: a string (an ISO8601 timestamp)
+        - jira: a string (an ISO8601 timestamp)
+        - friendly: a string
+        - epochMillis: an integer
+        """
+
+        ensure_nonemptystring('issue_id_or_key')
+        ensure_nonemptystring('body')
+        ensure_noneorinstance('public', bool)
+
+        params = {'body': body, 'public': public}
+
+        response = self.session().post(
+            join_url(
+                self.SERVICEDESK_BASE_URL, f'request/{issue_id_or_key}/comment'
+            ),
+            json=params,
+        )
+
+        return response.json()
+
+    ####################################################################
+    # JIRA helpers
 
     @api_call
     def create_filter(
@@ -1123,10 +1698,12 @@ class JiraCloud:
         params: Optional[
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> requests.Response:
         return self.session().get(
             self._get_url(uri),
             params=params,
+            headers=headers,
             auth=self.auth,
             timeout=TIMEOUT,
         )
@@ -1161,11 +1738,48 @@ class JiraCloud:
             timeout=TIMEOUT,
         )
 
+    def _delete(
+        self,
+        api: str,
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        return requests.delete(
+            join_url(self.url, api),
+            json=json_data,
+            params=params,
+            headers=headers,
+            auth=self.auth,
+            timeout=TIMEOUT,
+        )
+
+    def _delete(
+        self,
+        api: str,
+        json_data: Optional[Mapping[str, Any]] = None,
+        params: Optional[
+            Mapping[str, Union[str, Iterable[str], int, bool]]
+        ] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> requests.Response:
+        return requests.delete(
+            join_url(self.url, api),
+            json=json_data,
+            params=params,
+            headers=headers,
+            auth=self.auth,
+            timeout=TIMEOUT,
+        )
+
     def _collect_data(
         self,
         uri: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
         base: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
         start_at: str = 'startAt',
         is_last: str = 'isLast',
         key: str = 'values',
@@ -1174,9 +1788,8 @@ class JiraCloud:
         collected: List[Any] = []
         _params = dict(params or {})
         more = True
-
         while more:
-            response = self.session().get(api_url, params=_params)
+            response = self.session().get(api_url, params=_params, headers=headers)
             if response.status_code // 100 != 2:
                 raise ApiError(response.text)
             try:
@@ -1195,12 +1808,17 @@ class JiraCloud:
 
         return collected
 
-    def _collect_agile_data(
+    def _collect_sd_data(
         self,
         api: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
-        key: str = 'values',
+        headers: Optional[Mapping[str, str]] = None,
     ) -> List[Any]:
         return self._collect_data(
-            api, params=params, base=self.AGILE_BASE_URL, key=key
+            api,
+            params=params,
+            base=self.SERVICEDESK_BASE_URL,
+            headers=headers,
+            start_at='start',
+            is_last='isLastPage',
         )
