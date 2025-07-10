@@ -251,9 +251,10 @@ class GitLab:
 
         A list of _projects_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
 
@@ -273,9 +274,10 @@ class GitLab:
 
         A list of _groups_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
 
@@ -304,9 +306,10 @@ class GitLab:
 
         A list of _milestones_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', MILESTONES_STATE)
 
         group = self._group(group_name_or_id)
@@ -339,9 +342,10 @@ class GitLab:
 
         A list of _boards_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', MILESTONES_STATE)
 
         group = self._group(group_name_or_id)
@@ -372,9 +376,10 @@ class GitLab:
 
         A list of _iterations_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', ITERATIONS_STATE)
 
         group = self._group(group_name_or_id)
@@ -407,9 +412,10 @@ class GitLab:
 
         A list of _issues_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', ISSUES_STATE)
 
         group = self._group(group_name_or_id)
@@ -440,9 +446,10 @@ class GitLab:
 
         A list of _epics_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', ISSUES_STATE)
 
         group = self._group(group_name_or_id)
@@ -473,9 +480,10 @@ class GitLab:
 
         A list of _merge requests_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
         ensure_in('state', MR_STATE)
 
         group = self._group(group_name_or_id)
@@ -505,9 +513,10 @@ class GitLab:
 
         A list of _members_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
         extra = filter or {}
@@ -534,9 +543,10 @@ class GitLab:
 
         A list of _members_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
         extra = filter or {}
@@ -563,9 +573,10 @@ class GitLab:
 
         A list of _member roles_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
         extra = filter or {}
@@ -592,9 +603,10 @@ class GitLab:
 
         A list of _releases_.
         """
-        ensure_instance('group_name_or_id', (str, int))
-        if isinstance('group_name_or_id', str):
+        if isinstance(group_name_or_id, str):
             ensure_nonemptystring('group_name_or_id')
+        else:
+            ensure_instance('group_name_or_id', int)
 
         group = self._group(group_name_or_id)
         extra = filter or {}
@@ -635,9 +647,10 @@ class GitLab:
 
         A _project_ dictionary.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
 
@@ -657,9 +670,10 @@ class GitLab:
 
         A _pages_ dictionary.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
 
@@ -688,9 +702,10 @@ class GitLab:
 
         A list of _pipelines_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
         ensure_noneorinstance('status', str)
         if status:
             ensure_in('status', PIPELINES_STATUSES)
@@ -722,9 +737,10 @@ class GitLab:
 
         A list of _tags_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -755,9 +771,10 @@ class GitLab:
 
         A list of _commits_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -782,9 +799,10 @@ class GitLab:
 
         A list of _packages_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -814,9 +832,10 @@ class GitLab:
 
         A list of _issues_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
         ensure_in('state', ISSUES_STATE)
 
         project = self._project(project_name_or_id)
@@ -849,9 +868,10 @@ class GitLab:
 
         A list of _milestones_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
         ensure_in('state', MILESTONES_STATE)
 
         project = self._project(project_name_or_id)
@@ -884,9 +904,10 @@ class GitLab:
 
         A list of _iterations_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
         ensure_in('state', ITERATIONS_STATE)
 
         project = self._project(project_name_or_id)
@@ -914,9 +935,10 @@ class GitLab:
 
         A list of _boards_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -946,9 +968,10 @@ class GitLab:
 
         A list of _merge requests_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
         ensure_in('state', MR_STATE)
 
         project = self._project(project_name_or_id)
@@ -976,9 +999,10 @@ class GitLab:
 
         A list of _members_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -1003,9 +1027,10 @@ class GitLab:
 
         A list of _members_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -1030,9 +1055,10 @@ class GitLab:
 
         A list of _releases_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -1059,9 +1085,10 @@ class GitLab:
 
         A list of _branches_.
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
@@ -1087,9 +1114,10 @@ class GitLab:
         A list of _protected branches_.  (Note that a protected branch
         may be a pattern, not a real branch.)
         """
-        ensure_instance('project_name_or_id', (str, int))
-        if isinstance('project_name_or_id', str):
+        if isinstance(project_name_or_id, str):
             ensure_nonemptystring('project_name_or_id')
+        else:
+            ensure_instance('project_name_or_id', int)
 
         project = self._project(project_name_or_id)
         extra = filter or {}
