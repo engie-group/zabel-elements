@@ -115,7 +115,7 @@ class JiraCloud:
         this is set to False.
         """
         ensure_nonemptystring('url')
-        ensure_noneorinstance('basic_auth', tuple)
+        ensure_instance('basic_auth', tuple)
         ensure_instance('verify', bool)
 
         self.url = url
@@ -281,7 +281,7 @@ class JiraCloud:
             params={'accountId': account_id, 'groupname': group_name},
         )
         return response.status_code == 204
-    
+
     ####################################################################
     # JIRA CLOUD groups
     #
@@ -310,7 +310,7 @@ class JiraCloud:
         - timeZone: a string
         """
         return self._get('users/search')
-    
+
     @api_call
     def get_user(self, account_id: str) -> Dict[str, Any]:
         """Get a user by their account ID.
@@ -328,7 +328,28 @@ class JiraCloud:
 
         response = self._get(f'user?accountId={account_id}')
         return response.json()
-    
+
+    @api_call
+    def get_currentuser(self, expand: Optional[str] = None) -> Dict[str, Any]:
+        """Return currently logged user details.
+
+        # Optional parameters
+
+        - expand: a string
+
+        # Returned value
+
+        A dictionary.  Refer to #get_user() for details.
+        """
+        ensure_noneorinstance('expand', str)
+
+        if expand:
+            params = {'expand': expand}
+        else:
+            params = {}
+
+        return self._get('myself', params=params)
+
     @api_call
     def search_users(
         self,
@@ -369,6 +390,7 @@ class JiraCloud:
     # list_projects
     # get_project
     # create_project
+    # update_project
     # get_project_role
     # list_project_boards
     # create_project_board
@@ -556,6 +578,132 @@ class JiraCloud:
 
         response = self._post('project', json=params)
         return response.json()
+
+    @api_call
+    def update_project(
+        self, project_id_or_key: Union[int, str], project: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update project.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a non-empty string
+        - project: a dictionary
+
+        `project` is dictionary with the following optional entries:
+
+        - assigneeType
+        - avatarId
+        - categoryId
+        - description
+        - issueSecurityScheme
+        - key
+        - lead
+        - leadAccountId
+        - name
+        - notificationScheme
+        - permissionScheme
+        - releasedProjectKeys
+        - url
+
+        This dictionary respects the format returned by
+        #list_projects().
+
+        If an entry is not specified or is None, its corresponding
+        value in the project will remain unchanged.
+
+        # Returned value
+
+        A dictionary.  See #list_projects() for details on its
+        structure.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+
+        result = self.session().put(
+            self._get_url(f'project/{project_id_or_key}'), json=project
+        )
+        return result  # type: ignore
+
+    @api_call
+    def update_project_workflowscheme(
+        self, project_id: str, workflowscheme_id: str
+    ) -> bool:
+        """Update the workflow scheme of a project.
+
+        # Required parameters
+
+        - project_id: a string
+        - workflowscheme_id: a string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('project_id_or_key')
+        ensure_nonemptystring('workflowscheme_id', str)
+
+        response = self._put(
+            'workflowscheme/project',
+            json={
+                'projectId': project_id,
+                'workflowSchemeId': workflowscheme_id,
+            },
+        )
+        return response.status_code == 204
+
+    @api_call
+    def update_project_issuetypescheme(
+        self, project_id: str, issuetypescheme_id: str
+    ) -> bool:
+        """Update the issue type scheme of a project.
+
+        # Required parameters
+
+        - project_id: a string
+        - issuetype_scheme_id: a string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('project_id')
+        ensure_nonemptystring('issuetypescheme_id')
+
+        response = self._put(
+            'issuetypescheme/project',
+            json={
+                'projectId': project_id,
+                'issueTypeSchemeId': issuetypescheme_id,
+            },
+        )
+        return response.status_code == 204
+
+    @api_call
+    def update_project_issuetypescreenscheme(
+        self, project_id: str, issuetypescreenscheme_id: str
+    ) -> bool:
+        """Update the issue type screen scheme of a project.
+
+        # Required parameters
+
+        - project_id: a string
+        - issuetype_screenscheme_id: a string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_nonemptystring('project_id')
+        ensure_nonemptystring('issuetypescreenscheme_id')
+
+        response = self._put(
+            'issuetypescreenscheme/project',
+            json={
+                'projectId': project_id,
+                'issueTypeScreenSchemeId': issuetypescreenscheme_id,
+            },
+        )
+        return response.status_code == 204
 
     @api_call
     def get_project_role(
@@ -833,9 +981,7 @@ class JiraCloud:
     # add_servicedesk_organization
 
     @api_call
-    def list_servicedesks(
-        self
-    ) -> List[Dict[str, Any]]:
+    def list_servicedesks(self) -> List[Dict[str, Any]]:
         """Return the available service desks.
 
         # Returned value
@@ -1211,7 +1357,9 @@ class JiraCloud:
         )
 
     @api_call
-    def get_organization(self, organization_id: Union[int, str]) -> Dict[str, Any]:
+    def get_organization(
+        self, organization_id: Union[int, str]
+    ) -> Dict[str, Any]:
         """
         Get a specific organization by its ID.
 
@@ -1288,7 +1436,7 @@ class JiraCloud:
             join_url(
                 self.SERVICEDESK_BASE_URL, f'organization/{organization_id}'
             ),
-            headers={'Content-Type': 'application/json'}
+            headers={'Content-Type': 'application/json'},
         )
         return response.status_code == 204
 
@@ -1722,54 +1870,16 @@ class JiraCloud:
             timeout=TIMEOUT,
         )
 
-    def _delete(
+    def _put(
         self,
         uri: str,
-        json_data: Optional[Mapping[str, Any]] = None,
-        params: Optional[
-            Mapping[str, Union[str, Iterable[str], int, bool]]
-        ] = None,
+        params: Optional[Mapping[str, Any]] = None,
+        json: Optional[Mapping[str, Any]] = None,
     ) -> requests.Response:
-        return self.session().delete(
+        return self.session().put(
             self._get_url(uri),
-            json=json_data,
             params=params,
-            auth=self.auth,
-            timeout=TIMEOUT,
-        )
-
-    def _delete(
-        self,
-        api: str,
-        json_data: Optional[Mapping[str, Any]] = None,
-        params: Optional[
-            Mapping[str, Union[str, Iterable[str], int, bool]]
-        ] = None,
-        headers: Optional[Mapping[str, str]] = None,
-    ) -> requests.Response:
-        return requests.delete(
-            join_url(self.url, api),
-            json=json_data,
-            params=params,
-            headers=headers,
-            auth=self.auth,
-            timeout=TIMEOUT,
-        )
-
-    def _delete(
-        self,
-        api: str,
-        json_data: Optional[Mapping[str, Any]] = None,
-        params: Optional[
-            Mapping[str, Union[str, Iterable[str], int, bool]]
-        ] = None,
-        headers: Optional[Mapping[str, str]] = None,
-    ) -> requests.Response:
-        return requests.delete(
-            join_url(self.url, api),
-            json=json_data,
-            params=params,
-            headers=headers,
+            json=json,
             auth=self.auth,
             timeout=TIMEOUT,
         )
@@ -1789,7 +1899,9 @@ class JiraCloud:
         _params = dict(params or {})
         more = True
         while more:
-            response = self.session().get(api_url, params=_params, headers=headers)
+            response = self.session().get(
+                api_url, params=_params, headers=headers
+            )
             if response.status_code // 100 != 2:
                 raise ApiError(response.text)
             try:
