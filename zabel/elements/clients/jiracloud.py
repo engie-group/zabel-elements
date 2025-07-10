@@ -30,7 +30,7 @@ class JiraCloud(Base):
     # Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
-    
+
     # Agile references
 
     - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>

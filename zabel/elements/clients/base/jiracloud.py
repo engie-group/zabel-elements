@@ -745,7 +745,7 @@ class JiraCloud:
 
         response = self._get(f'project/{project_id_or_key}/role/{role_id}')
         return response.json()
-    
+
     @api_call
     def add_project_role_actors(
         self,
@@ -806,7 +806,7 @@ class JiraCloud:
         - role_id: an integer or a string
 
         # Optional parameters
-        
+
         - group: a string
         - user: a string
         """
@@ -824,7 +824,7 @@ class JiraCloud:
             f'project/{project_id_or_key}/role/{role_id}',
             params=params,
         )
-    
+
     ####################################################################
     # JIRA agile
     #
@@ -905,8 +905,7 @@ class JiraCloud:
                 'type': 'project',
             },
         )
-    
-    
+
     @api_call
     def create_filter(
         self,
@@ -1947,7 +1946,7 @@ class JiraCloud:
                 _params[start_at] = workload[start_at] + len(values)
 
         return collected
-    
+
     def _delete(
         self,
         uri: str,
@@ -1976,7 +1975,7 @@ class JiraCloud:
             start_at='start',
             is_last='isLastPage',
         )
-    
+
     def _collect_agile_data(
         self,
         api: str,
