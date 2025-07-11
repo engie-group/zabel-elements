@@ -20,10 +20,6 @@ class ConfluenceCloud(Base):
     <https://developer.atlassian.com/cloud/confluence/rest/v2/>
     <https://developer.atlassian.com/cloud/confluence/rest/v1/>
 
-    WADLs are also available on a given instance:
-
-    <https://{instance}/rest/api/application.wadl>
-    <https://{instance}/rest/mobile/1.0/application.wadl>
 
     An interface to Confluence, including users and groups management.
 
@@ -48,5 +44,6 @@ class ConfluenceCloud(Base):
     confluencecloud.list_users()
     ```
     """
+
     # Inherits all methods from Base class
     # No additional methods or properties are defined here
