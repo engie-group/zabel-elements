@@ -25,6 +25,7 @@ from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
     ensure_noneorinstance,
+    ensure_noneornonemptystring,
     ensure_instance,
     join_url,
     add_if_specified,
@@ -34,6 +35,7 @@ from zabel.commons.utils import (
 
 ########################################################################
 ########################################################################
+
 TIMEOUT = 60
 PROJECTS_EXPAND = 'description,lead,url,projectKeys,issueTypes'
 PROJECT_EXPAND = 'description,lead,projectKeys,issueTypes,issueTypeHierarchy'
@@ -87,14 +89,12 @@ class JiraCloud:
     def __init__(
         self,
         url: str,
-        basic_auth: Optional[Tuple[str, str]] = None,
+        basic_auth: Tuple[str, str],
         verify: bool = True,
     ) -> None:
         """Create a JiraCloud instance object.
 
         https://developer.atlassian.com/cloud/jira/software/rest/intro/#introduction
-
-        You can only specify either `basic_auth`.
 
         # Required parameters
 
@@ -135,10 +135,7 @@ class JiraCloud:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-        if self.basic_auth:
-            rep = self.basic_auth[0]
-
-        return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
+        return f'<{self.__class__.__name__}: {self.url!r}, {self.basic_auth[0]!r}>'
 
     ####################################################################
     # JIRA CLOUD groups
@@ -163,8 +160,8 @@ class JiraCloud:
 
         # Returned value
 
-        A dictionary where keys are group names and values are dictionaries
-          with following entries:
+        A dictionary where keys are group names and values are
+        dictionaries with following entries:
 
         - groupId: a string
         - html: a string
@@ -194,6 +191,7 @@ class JiraCloud:
         A boolean.  True if successful, False otherwise.
         """
         ensure_instance('group_name', str)
+
         response = self._post('group', json={'name': group_name})
 
         return response.status_code == 201
@@ -201,7 +199,7 @@ class JiraCloud:
     @api_call
     def list_group_users(
         self, group_name: str, include_inactive_users: bool = False
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """List users in a group.
 
         # Required parameters
@@ -213,6 +211,7 @@ class JiraCloud:
         - include_inactive_users: a boolean (default: False)
 
         # Returned value
+
         A list of dictionaries.  Each dictionary has the following keys:
 
         - accountId: a string
@@ -254,7 +253,7 @@ class JiraCloud:
         ensure_nonemptystring('account_id')
 
         response = self._post(
-            f'group/user',
+            'group/user',
             params={'groupname': group_name},
             json={'accountId': account_id},
         )
@@ -277,7 +276,7 @@ class JiraCloud:
         ensure_nonemptystring('account_id')
 
         response = self._delete(
-            f'group/user={group_name}',
+            'group/user',
             params={'accountId': account_id, 'groupname': group_name},
         )
         return response.status_code == 204
@@ -326,7 +325,7 @@ class JiraCloud:
         """
         ensure_nonemptystring('account_id')
 
-        response = self._get(f'user?accountId={account_id}')
+        response = self._get('user', params={'accountId': account_id})
         return response.json()
 
     @api_call
@@ -348,7 +347,7 @@ class JiraCloud:
         else:
             params = {}
 
-        return self._get('myself', params=params)
+        return self._get('myself', params=params)  # type: ignore
 
     @api_call
     def search_users(
@@ -362,19 +361,19 @@ class JiraCloud:
 
         # Optional parameters
 
-        - query: a string
-        - start_at: an integer
-        - max_results: an integer
-        - account_id: a string
+        - query: a non-empty string or None (None by default)
+        - start_at: an integer or None (None by default)
+        - max_results: an integer or None (None by default)
+        - account_id: a non-empty string or None (None by default)
 
         # Returned value
 
         A list of dictionaries, each representing a user.
         """
-        ensure_noneorinstance('query', str)
+        ensure_noneornonemptystring('query')
         ensure_noneorinstance('start_at', int)
         ensure_noneorinstance('max_results', int)
-        ensure_noneorinstance('account_id', str)
+        ensure_noneornonemptystring('account_id')
 
         params = {}
         add_if_specified(params, 'query', query)
@@ -382,7 +381,7 @@ class JiraCloud:
         add_if_specified(params, 'maxResults', max_results)
         add_if_specified(params, 'accountId', account_id)
 
-        return self._get('user/search', params=params)
+        return self._get('user/search', params=params)  # type: ignore
 
     ####################################################################
     # JIRA Cloud projects
@@ -407,7 +406,7 @@ class JiraCloud:
         order_by: Optional[str] = None,
         start_at: Optional[int] = None,
         max_results: Optional[int] = None,
-        id: Optional[List[int]] = None,
+        ids: Optional[List[int]] = None,
         keys: Optional[List[str]] = None,
         type_key: Optional[str] = None,
         category_id: Optional[int] = None,
@@ -420,7 +419,7 @@ class JiraCloud:
         - action: a string
         - category_id: an integer
         - expand: a string (see `PROJECT_EXPAND` constant)
-        - id: a list of integers
+        - ids: a list of integers
         - keys: a list of strings
         - max_results: an integer (default: 50, maximum: 100)
         - order_by: a string
@@ -428,7 +427,7 @@ class JiraCloud:
         - start_at: an integer
         - type_key: a string
 
-        # Return value
+        # Returned value
 
         A list of dictionaries, each representing a project.
         """
@@ -437,7 +436,7 @@ class JiraCloud:
         ensure_noneorinstance('order_by', str)
         ensure_noneorinstance('start_at', int)
         ensure_noneorinstance('max_results', int)
-        ensure_noneorinstance('id', list)
+        ensure_noneorinstance('ids', list)
         ensure_noneorinstance('keys', list)
         ensure_noneorinstance('type_key', str)
         ensure_noneorinstance('category_id', int)
@@ -449,7 +448,7 @@ class JiraCloud:
         add_if_specified(params, 'order_by', order_by)
         add_if_specified(params, 'start_at', start_at)
         add_if_specified(params, 'max_results', max_results)
-        add_if_specified(params, 'id', id)
+        add_if_specified(params, 'id', ids)
         add_if_specified(params, 'keys', keys)
         add_if_specified(params, 'type_key', type_key)
         add_if_specified(params, 'category_id', category_id)
@@ -490,7 +489,7 @@ class JiraCloud:
         key: str,
         project_type_key: str,
         name: str,
-        lead_account_id: str = None,
+        lead_account_id: Optional[str] = None,
         url: Optional[str] = None,
         assignee_type: Optional[str] = None,
         avatar_id: Optional[int] = None,
@@ -510,34 +509,38 @@ class JiraCloud:
         # Required parameters
 
         - key: a non-empty string (the project key)
-        - project_type_key: a string (project type key, e.g., 'business', 'software', 'service_desk')
+        - project_type_key: a string (project type key, e.g.,
+          `business`, `software`, `service_desk`)
         - name: a non-empty string (the project name)
-        - lead_account_id: a string (the project lead account ID, if different from username)
 
         # Optional parameters
 
-        - assignee_type: a string (e.g., 'PROJECT_LEAD')
+        - lead_account_id: a string (the project lead account ID, if
+          different from username)
+        - assignee_type: a string (e.g., `PROJECT_LEAD`)
         - avatar_id: an integer (the avatar ID)
         - category_id: an integer (the category ID)
         - description: a string (the project description)
-        - field_configuration_scheme: an integer (field configuration scheme ID)
+        - field_configuration_scheme: an integer (field configuration
+          scheme ID)
         - issue_security_scheme: an integer (issue security scheme ID)
         - issue_type_scheme: an integer (issue type scheme ID)
-        - issue_type_screen_scheme: an integer (issue type screen scheme ID)
+        - issue_type_screen_scheme: an integer (issue type screen scheme
+          ID)
         - notification_scheme: an integer (notification scheme ID)
         - permission_scheme: an integer (permission scheme ID)
-        - project_template_key: a string (project template key, e.g., 'com.atlassian.jira-core-project-templates:jira-core-simplified')
+        - project_template_key: a string (project template key, e.g.,
+          'com.atlassian.jira-core-project-templates:jira-core-simplified')
         - url: a string (the project URL)
         - workflow_scheme: an integer (workflow scheme ID)
 
-        # Return Value
+        # Returned value
 
-            A dictionary representing the created project.
-
+        A dictionary representing the created project.
         """
         ensure_nonemptystring('key')
-        ensure_nonemptystring('name')
         ensure_nonemptystring('project_type_key')
+        ensure_nonemptystring('name')
         ensure_noneorinstance('lead_account_id', str)
         ensure_noneorinstance('url', str)
         ensure_noneorinstance('assignee_type', str)
@@ -556,9 +559,9 @@ class JiraCloud:
         params = {
             'key': key,
             'name': name,
-            'leadAccountId': lead_account_id,
             'projectTypeKey': project_type_key,
         }
+        add_if_specified(params, 'leadAccountId', lead_account_id)
         add_if_specified(params, 'url', url)
         add_if_specified(params, 'assigneeType', assignee_type)
         add_if_specified(params, 'avatarId', avatar_id)
@@ -620,9 +623,7 @@ class JiraCloud:
         """
         ensure_instance('project_id_or_key', (str, int))
 
-        result = self.session().put(
-            self._get_url(f'project/{project_id_or_key}'), json=project
-        )
+        result = self._put(f'project/{project_id_or_key}', json=project)
         return result  # type: ignore
 
     @api_call
@@ -633,15 +634,15 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id: a string
-        - workflowscheme_id: a string
+        - project_id: a non-empty string
+        - workflowscheme_id: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
         ensure_nonemptystring('project_id_or_key')
-        ensure_nonemptystring('workflowscheme_id', str)
+        ensure_nonemptystring('workflowscheme_id')
 
         response = self._put(
             'workflowscheme/project',
@@ -660,8 +661,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id: a string
-        - issuetype_scheme_id: a string
+        - project_id: a non-empty string
+        - issuetypescheme_id: a non-empty string
 
         # Returned value
 
@@ -687,8 +688,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id: a string
-        - issuetype_screenscheme_id: a string
+        - project_id: a non-empty string
+        - issuetypescreenscheme_id: a non-empty string
 
         # Returned value
 
@@ -717,7 +718,7 @@ class JiraCloud:
         - project_id_or_key: an integer or a string
         - role_id: an integer or a string
 
-        # Return Value
+        # Returned value
 
         A project _role_.  Project roles are dictionaries with the
         following entries:
@@ -740,7 +741,7 @@ class JiraCloud:
         - type: a string
 
         """
-        ensure_nonemptystring('project_id_or_key')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_instance('role_id', int)
 
         response = self._get(f'project/{project_id_or_key}/role/{role_id}')
@@ -1204,7 +1205,7 @@ class JiraCloud:
             verify=self.verify,
             timeout=TIMEOUT,
         )
-        return result
+        return result  # type: ignore
 
     ####################################################################
     # JIRA Cloud misc. schemes
@@ -1218,7 +1219,7 @@ class JiraCloud:
         self,
         start_at: int = 0,
         max_results: int = 50,
-        id: Optional[List[int]] = None,
+        ids: Optional[List[int]] = None,
         query: Optional[str] = None,
         order_by: Optional[str] = None,
         expand: Optional[str] = None,
@@ -1230,7 +1231,7 @@ class JiraCloud:
 
         - start_at: an integer (default: 0)
         - max_results: an integer (default: 50, maximum: 100)
-        - id: a list of integers (optional, used for filtering by scheme IDs)
+        - ids: a list of integers (optional, used for filtering by scheme IDs)
         - query: a string (optional, used for filtering by scheme name)
         - order_by: a string (optional, used for ordering results)
         - expand: a string (optional, used for expanding additional fields)
@@ -1241,15 +1242,15 @@ class JiraCloud:
         """
         ensure_instance('start_at', int)
         ensure_instance('max_results', int)
-        ensure_noneorinstance('id', list)
+        ensure_noneorinstance('ids', list)
         ensure_noneorinstance('query', str)
         ensure_noneorinstance('order_by', str)
         ensure_noneorinstance('expand', str)
 
         params = {'startAt': start_at, 'maxResults': max_results}
-        add_if_specified(params, 'id', id)
-        add_if_specified(params, 'query', query)
-        add_if_specified(params, 'order_by', order_by)
+        add_if_specified(params, 'id', ids)
+        add_if_specified(params, 'queryString', query)
+        add_if_specified(params, 'orderBy', order_by)
         add_if_specified(params, 'expand', expand)
 
         return self._collect_data('issuetypescreenscheme', params=params)
@@ -1340,6 +1341,11 @@ class JiraCloud:
         - servicedesk_id: a non-empty string
         - request_type_id: a non-empty string
         - fields: a dictionary
+
+        # Optional parameters
+
+        - request_participants: a list of strings (account IDs) or None
+        - raise_on_behalf_of: a string or None (optional, account ID)
 
         # Usage
 
@@ -1480,6 +1486,7 @@ class JiraCloud:
         """Add participants to a request.
 
         # Required parameters
+
         - request_id_or_key: a non-empty string (the request ID or key)
         - participants: a list of strings (the account IDs of the participants)
 
@@ -1620,9 +1627,10 @@ class JiraCloud:
         # Required parameters
 
         - servicedesk_id: a non-empty string
-        - requesttype_id: a non-empty string
+        - request_type_id: a non-empty string
 
         # Optional parameters
+
         - expand: a string (optional, used for expanding additional fields)
 
         # Returned value
@@ -1800,7 +1808,7 @@ class JiraCloud:
 
     @api_call
     def add_request_comment(
-        self, issue_id_or_key: str, body: str, public: Optional[bool] = False
+        self, request_id_or_key: str, body: str, public: Optional[bool] = False
     ) -> Dict[str, Any]:
         """Create public or private comment on request.
 
@@ -1844,7 +1852,7 @@ class JiraCloud:
         - jira: a string (an ISO8601 timestamp)
         """
 
-        ensure_nonemptystring('issue_id_or_key')
+        ensure_nonemptystring('request_id_or_key')
         ensure_nonemptystring('body')
         ensure_noneorinstance('public', bool)
 
@@ -1852,7 +1860,8 @@ class JiraCloud:
 
         response = self.session().post(
             join_url(
-                self.SERVICEDESK_BASE_URL, f'request/{issue_id_or_key}/comment'
+                self.SERVICEDESK_BASE_URL,
+                f'request/{request_id_or_key}/comment',
             ),
             json=params,
         )
