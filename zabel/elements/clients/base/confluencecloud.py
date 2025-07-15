@@ -1100,6 +1100,158 @@ class ConfluenceCloud:
         return response.json()
 
     ####################################################################
+    # Confluence users
+    #
+    # get_user
+    # get_current_user
+    # get_user_groups
+    # get_multiple_users
+
+    @api_call
+    def get_user(
+        self,
+        account_id: str,
+        expand: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Return details of a user.
+
+        # Required parameters
+
+        - account_id: a non-empty string
+
+        # Optional parameters
+
+        - expand: a list of strings
+
+        # Returned value
+
+        A dictionary representing the user, with entries like:
+        - type: a string
+        - username: a string
+        - accountId: a string
+        - accountType: a string
+        - email: a string
+        - publicName: a string
+        - profilePicture: a dictionary
+        - displayName: a string
+        - timezone: a string
+        - external collaborator: a boolean
+        - isExternalCollaborator: a boolean
+        - isGuest: a boolean
+        - operations: a list of dictionaries
+        - details: a dictionary
+        - personalSpace: a dictionary
+        - _expandable: a dictionary
+        - _links: a dictionary
+        - Additional properties: a dictionnary
+        """
+
+        ensure_nonemptystring('account_id')
+        ensure_noneorinstance('expand', list)
+
+        params = {'accountId': account_id}
+        add_if_specified(params, 'expand', expand)
+
+        url = join_url(self.url, 'rest/api/user')
+        result = self.session().get(url, params=params)
+        return result
+
+    @api_call
+    def get_current_user(
+        self,
+        expand: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Return details of the current user.
+
+        # Optional parameters
+
+        - expand: a list of strings
+
+        # Returned value
+
+        A dictionary representing the current user
+        Please refer to #get_user() for more.
+        """
+
+        ensure_noneorinstance('expand', list)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+
+        url = join_url(self.url, 'rest/api/user/current')
+        result = self.session().get(url, params=params)
+        return result
+
+    @api_call
+    def get_user_groups(
+        self,
+        account_id: str,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Return groups of a user.
+
+        # Required parameters
+
+        - account_id: a non-empty string
+
+        # Optional parameters
+
+        - limit: an integer (default 100)
+
+        # Returned value
+
+        A list of dictionaries, each representing a group.
+        each group has entries like:
+        - name: a string
+        - type: a string
+        - id: a string
+        - _links: a dictionary
+        """
+
+        ensure_nonemptystring('account_id')
+        ensure_instance('limit', int)
+
+        params = {'accountId': account_id, 'limit': limit}
+
+        url = join_url(self.url, 'rest/api/user/memberof')
+        result = self.session().get(url, params=params)
+        return result
+
+    @api_call
+    def get_multiple_users(
+        self,
+        account_ids: List[str],
+        expand: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return details of multiple users.
+
+        # Required parameters
+
+        - account_ids: a list of non-empty strings
+
+        # Optional parameters
+
+        - expand: a list of strings
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more.
+        """
+
+        ensure_instance('account_ids', list)
+        for account_id in account_ids:
+            ensure_nonemptystring('account_id')
+        ensure_noneorinstance('expand', list)
+
+        params = [('accountId', aid) for aid in account_ids]
+        add_if_specified(params, 'expand', expand)
+
+        url = join_url(self.url, 'rest/api/user/bulk')
+        result = self.session().get(url, params=params)
+        return result
+
+    ####################################################################
     # confluence cloud helpers
 
     def _get(
