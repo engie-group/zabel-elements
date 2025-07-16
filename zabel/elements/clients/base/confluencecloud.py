@@ -1253,6 +1253,15 @@ class ConfluenceCloud:
 
     ####################################################################
     # Confluence cloud groups
+    #
+    # list_groups
+    # get_group
+    # create_group
+    # delete_group
+    # list_group_members
+    # add_group_member
+    # remove_group_member
+    
 
     @api_call
     def list_groups(self, limit: int = 100) -> List[Dict[str, Any]]:
