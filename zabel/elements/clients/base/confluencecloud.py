@@ -1252,6 +1252,175 @@ class ConfluenceCloud:
         return result
 
     ####################################################################
+    # Confluence cloud groups
+
+    @api_call
+    def list_groups(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Return a list of groups.
+
+        # Optional parameters
+
+        - limit: an integer (default 100)
+
+        # Returned value
+
+        A list of dictionaries, each representing a group.
+        Please refer to #get_group() for more.
+        """
+
+        ensure_instance('limit', int)
+
+        params = {'limit': limit}
+        url = join_url(self.url, 'rest/api/group')
+        return self.session().get(url, params=params)
+
+    @api_call
+    def get_group(self, name: str) -> Dict[str, Any]:
+        """Return details of a group.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Returned value
+
+        A dictionary representing the group, with the following entries:
+        - name: a string
+        - type: a string
+        - id: a string
+        - _links: a dictionary
+        """
+
+        ensure_nonemptystring('name')
+
+        url = join_url(self.url, f'rest/api/group/{name}')
+        result = self.session().get(url)
+        return result
+
+    @api_call
+    def create_group(self, name: str) -> Dict[str, Any]:
+        """Create a new group.
+
+        # Required parameters
+
+        - name: a non-empty string
+
+        # Returned value
+
+        A dictionary representing the created group.
+        Please refer to #get_group() for more.
+        """
+
+        ensure_nonemptystring('name')
+
+        data = {'name': name}
+        url = join_url(self.url, 'rest/api/group')
+        response = self.session().post(url, json=data)
+        return response.json()
+
+    @api_call
+    def delete_group(self, group_id: str) -> bool:
+        """Delete a group.
+        # Required parameters
+        - group_id: a non-empty string (UUID format)
+        # Returned value
+        A boolean indicating whether the deletion was successful.
+
+        """
+
+        ensure_nonemptystring('group_id')
+
+        url = join_url(self.url, 'rest/api/group/by-id')
+        params = {'id': group_id}
+        response = self.session().delete(url, params=params)
+        print(f"Response: {response.status_code} - {response.text}")
+        return response.status_code == 204
+
+    @api_call
+    def list_group_members(
+        self,
+        group_name: str,
+        expand: Optional[List[str]] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Return members of a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Optional parameters
+
+        - expand: a list of strings
+        - limit: an integer (default 100)
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more.
+        """
+
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('expand', list)
+        ensure_instance('limit', int)
+
+        params = {'limit': limit}
+        add_if_specified(params, 'expand', expand)
+
+        url = join_url(
+            self.url, f'rest/api/group/{group_name}/membersByGroupId'
+        )
+        result = self.session().get(url, params=params)
+        return result
+
+    @api_call
+    def add_group_member(self, group_id: str, account_id: str) -> bool:
+        """Add a user to a group using groupId.
+
+        # Required parameters
+
+        - group_id: a non-empty string (UUID format)
+        - account_id: a non-empty string
+
+        # Returned value
+
+        A boolean indicating whether the user was added successfully.
+        """
+        url = join_url(self.url, 'rest/api/group/userByGroupId')
+        params = {'groupId': group_id}
+        body = {'accountId': account_id}
+
+        response = self.session().post(url, params=params, json=body)
+        print(f"Response: {response.status_code} - {response.text}")
+
+        return response.status_code == 201
+
+    @api_call
+    def remove_group_member(self, group_id: str, account_id: str) -> bool:
+        """Remove a user from a group using groupId.
+
+        # Required parameters
+
+        - group_id: a non-empty string (UUID format)
+        - account_id: a non-empty string
+
+        # Returned value
+
+        A boolean indicating whether the user was removed successfully.
+        """
+
+        ensure_nonemptystring('group_id')
+        ensure_nonemptystring('account_id')
+
+        url = join_url(self.url, 'rest/api/group/userByGroupId')
+        params = {'groupId': group_id, 'accountId': account_id}
+
+        response = self.session().delete(url, params=params)
+        print(f"Response: {response.status_code} - {response.text}")
+
+        return response.status_code == 204
+
+    ####################################################################
     # confluence cloud helpers
 
     def _get(
