@@ -37,6 +37,30 @@ from zabel.commons.utils import (
 
 ########################################################################
 
+OPERATIN_KEY_VALUES = [
+    'administer',
+    'archive',
+    'copy',
+    'create',
+    'delete',
+    'export',
+    'move',
+    'purge',
+    'purge_version',
+    'read',
+    'restore',
+    'restrict_content',
+    'update',
+    'use',
+]
+OPERATION_TARGET_VALUES = [
+    'page',
+    'blogpost',
+    'comment',
+    'attachment',
+    'space',
+]
+
 
 class ConfluenceCloud:
     """Confluence Cloud Low-Level Wrapper.
@@ -260,7 +284,7 @@ class ConfluenceCloud:
         return result
 
     @api_call
-    def get_space_pages(
+    def list_space_pages(
         self,
         space_id: int,
         body_format: Optional[str] = None,
@@ -489,7 +513,7 @@ class ConfluenceCloud:
         return self._collect_data('space-permissions', params=params)
 
     @api_call
-    def get_space_permissions(
+    def list_space_permissions(
         self,
         space_id: int,
         limit: int = 100,
@@ -520,6 +544,76 @@ class ConfluenceCloud:
         return self._collect_data(
             f'spaces/{space_id}/permissions', params=params
         )
+
+    @api_call
+    def add_space_permission(
+        self,
+        space_key: str,
+        type: str,
+        identifier: str,
+        operation_key: str,
+        operation_target: str,
+    ) -> Dict[str, Any]:
+        """Add a new permission on a space.
+
+        # Required parameters
+
+        - space_key: a string
+        - type: a string
+        - identifier: a string
+        - operation_key: a string
+        - operation_target: a string
+
+        # Returned value
+
+        A dictionary with the following entries:
+        - id: a string
+        - subject: a dictionary with type and identifier
+        - operation: a dictionary with key and target
+        - _links: a dictionary
+        """
+
+        ensure_nonemptystring('space_key')
+        ensure_nonemptystring('identifier')
+        ensure_in('type', ['user', 'group'])
+        ensure_in('operation_key', OPERATIN_KEY_VALUES)
+        ensure_in('operation_target', OPERATION_TARGET_VALUES)
+
+        body = {
+            "subject": {"type": type, "identifier": identifier},
+            "operation": {"key": operation_key, "target": operation_target},
+        }
+
+        url = join_url(self.url, f'rest/api/space/{space_key}/permission')
+        response = self.session().post(url, json=body)
+
+        return response
+
+    @api_call
+    def remove_space_permission(
+        self, space_key: str, permission_id: str
+    ) -> bool:
+        """Remove a permission from a space.
+
+        # Required parameters
+
+        - space_key: a string
+        - permission_id: a string
+
+        # Returned value
+
+        A boolean indicating whether the operation was successful.
+        """
+
+        ensure_nonemptystring('space_key')
+        ensure_nonemptystring('permission_id')
+
+        url = join_url(
+            self.url, f'rest/api/space/{space_key}/permission/{permission_id}'
+        )
+        response = self.session().delete(url)
+
+        return response.status_code == 204
 
     @api_call
     def add_space_label(
@@ -1040,9 +1134,10 @@ class ConfluenceCloud:
         if comment:
             data['comment'] = comment
 
-        response = self._put(
+        url = join_url(
             self.url, f'rest/api/content/{page_id}/child/attachment'
         )
+        response = self.session().post(url, data=data, files=files)
         return response
 
     @api_call
@@ -1105,7 +1200,6 @@ class ConfluenceCloud:
     # get_user
     # get_current_user
     # get_user_groups
-    # get_multiple_users
 
     @api_call
     def get_user(
@@ -1214,40 +1308,6 @@ class ConfluenceCloud:
         params = {'accountId': account_id, 'limit': limit}
 
         url = join_url(self.url, 'rest/api/user/memberof')
-        result = self.session().get(url, params=params)
-        return result
-
-    @api_call
-    def get_multiple_users(
-        self,
-        account_ids: List[str],
-        expand: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
-        """Return details of multiple users.
-
-        # Required parameters
-
-        - account_ids: a list of non-empty strings
-
-        # Optional parameters
-
-        - expand: a list of strings
-
-        # Returned value
-
-        A list of dictionaries, each representing a user.
-        Please refer to #get_user() for more.
-        """
-
-        ensure_instance('account_ids', list)
-        for account_id in account_ids:
-            ensure_nonemptystring('account_id')
-        ensure_noneorinstance('expand', list)
-
-        params = [('accountId', aid) for aid in account_ids]
-        add_if_specified(params, 'expand', expand)
-
-        url = join_url(self.url, 'rest/api/user/bulk')
         result = self.session().get(url, params=params)
         return result
 
