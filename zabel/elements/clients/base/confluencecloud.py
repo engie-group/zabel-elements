@@ -39,7 +39,7 @@ from zabel.commons.utils import (
 
 
 class ConfluenceCloud:
-    """Confluence Cloud  Low-Level Wrapper.
+    """Confluence Cloud Low-Level Wrapper.
 
     There can be as many Confluence Cloud instances as needed.
 
@@ -106,7 +106,7 @@ class ConfluenceCloud:
     def __repr__(self) -> str:
         if self.basic_auth:
             rep = self.basic_auth[0]
-            return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
+        return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
 
     ####################################################################
     # Confluence spaces
@@ -130,7 +130,7 @@ class ConfluenceCloud:
         not_favorited_by: Optional[str] = None,
         sort: Optional[str] = None,
         status: Optional[str] = None,
-        type: Optional[str] = None,
+        space_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return a list of spaces.
 
@@ -146,7 +146,7 @@ class ConfluenceCloud:
         - not_favorited_by: a string
         - sort: a string
         - status: a string
-        - type: a string
+        - space_type: a string
 
         # Returned value
 
@@ -177,7 +177,7 @@ class ConfluenceCloud:
         ensure_noneorinstance('not_favorited_by', str)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', str)
-        ensure_noneorinstance('type', str)
+        ensure_noneorinstance('space_type', str)
 
         params = {'limit': limit}
         add_if_specified(params, 'description-format', description_format)
@@ -189,7 +189,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'not-favorited-by', not_favorited_by)
         add_if_specified(params, 'sort', sort)
         add_if_specified(params, 'status', status)
-        add_if_specified(params, 'type', type)
+        add_if_specified(params, 'type', space_type)
 
         return self._collect_data('spaces', params=params)
 
@@ -848,12 +848,12 @@ class ConfluenceCloud:
         self,
         page_id: int,
         body: Dict[str, Any],
+        version: Dict[str, Any],
         owner_id: Optional[str] = None,
         parent_id: Optional[int] = None,
         space_key: Optional[str] = None,
         status: str = 'current',
         title: str = '',
-        version: Dict[str, Any] = {},
     ) -> Dict[str, Any]:
         """Update a page.
 
@@ -861,9 +861,9 @@ class ConfluenceCloud:
 
         - page_id: an integer
         - body: a dictionary
+        - version: a dictionary
         - status: a string (default 'current')
         - title: a non-empty string
-        - version: a dictionary
 
         # Optional parameters
 
@@ -1261,7 +1261,6 @@ class ConfluenceCloud:
     # list_group_members
     # add_group_member
     # remove_group_member
-    
 
     @api_call
     def list_groups(self, limit: int = 100) -> List[Dict[str, Any]]:
