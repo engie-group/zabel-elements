@@ -5107,7 +5107,7 @@ class Jira:
 
     @api_call
     def get_request(
-        self, request_id_or_key: str, expand: Optional['str'] = None
+        self, request_id_or_key: str, expand: Optional[str] = None
     ) -> Dict[str, Any]:
         """Return service desk request details.
 

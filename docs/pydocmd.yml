@@ -23,6 +23,8 @@ generate:
     - zabel.elements.clients.CloudBeesJenkins@
   - clients/jira.md:
     - zabel.elements.clients.Jira@
+  - clients/jiracloud.md:
+    - zabel.elements.clients.JiraCloud@
   - clients/kubernetes.md:
     - zabel.elements.clients.Kubernetes@
   - clients/okta.md:
@@ -48,6 +50,7 @@ pages:
         - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
         - Jira: clients/jira.md
+        - JiraCloud: clients/jiracloud.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
         - SonarQube: clients/sonarqube.md
