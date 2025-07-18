@@ -37,7 +37,7 @@ from zabel.commons.utils import (
 
 ########################################################################
 
-OPERATIN_KEY_VALUES = [
+OPERATION_KEY_VALUES = [
     'administer',
     'archive',
     'copy',
@@ -553,7 +553,7 @@ class ConfluenceCloud:
         identifier: str,
         operation_key: str,
         operation_target: str,
-    ) -> Dict[str, Any]:
+    ) -> bool:
         """Add a new permission on a space.
 
         # Required parameters
@@ -566,17 +566,13 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A dictionary with the following entries:
-        - id: a string
-        - subject: a dictionary with type and identifier
-        - operation: a dictionary with key and target
-        - _links: a dictionary
+        A boolean indicating whether the operation was successful.
         """
 
         ensure_nonemptystring('space_key')
         ensure_nonemptystring('identifier')
         ensure_in('type', ['user', 'group'])
-        ensure_in('operation_key', OPERATIN_KEY_VALUES)
+        ensure_in('operation_key', OPERATION_KEY_VALUES)
         ensure_in('operation_target', OPERATION_TARGET_VALUES)
 
         body = {
@@ -587,7 +583,7 @@ class ConfluenceCloud:
         url = join_url(self.url, f'rest/api/space/{space_key}/permission')
         response = self.session().post(url, json=body)
 
-        return response
+        return response.status_code == 200
 
     @api_call
     def remove_space_permission(
