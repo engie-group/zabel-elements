@@ -74,6 +74,8 @@ __all__ = [
     'SquashTM',
     'GitHubCloud',
     'Atlassian',
+    'ConfluenceCloud',
+    'JiraCloud',
 ]
 
 
@@ -90,4 +92,7 @@ from .sonatypenexus import SonatypeNexus
 from .squashtm import SquashTM
 from .okta import Okta
 from .base.okta import OktaException
-from .base.atlassian import Atlassian
+from .githubcloud import GitHubCloud
+from .atlassian import Atlassian
+from .confluencecloud import ConfluenceCloud
+from .jiracloud import JiraCloud
