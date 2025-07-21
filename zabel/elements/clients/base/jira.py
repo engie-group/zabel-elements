@@ -103,7 +103,7 @@ class Jira:
 
     # Reference URLs
 
-    - <https://docs.atlassian.com/jira/REST/server/>
+    - <https://developer.atlassian.com/server/jira/platform/rest/>
     - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
     - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
@@ -430,6 +430,7 @@ class Jira:
     # delete_group
     #
     # list_group_users
+    # list_group_users2
     # add_group_user
     # remove_group_user
 
