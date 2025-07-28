@@ -126,7 +126,7 @@ class Confluence:
         # Usage
 
         `url` must be the URL of the Confluence instance, e.g.,
-        `https://confluence.example.com`.
+        `'https://confluence.example.com'`.
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -279,7 +279,7 @@ class Confluence:
         following entries:
 
         - name: a string
-        - type: a string ('group')
+        - type: a string (`'group'`)
         - _links: a transient dictionary
 
         `_links` is a dictionary with the following entries:
@@ -580,7 +580,7 @@ class Confluence:
             displayName: a string
 
         It may also contains 'transient' entries (i.e., entries starting
-        with '_').
+        with `'_'`).
         """
         ensure_onlyone('user_name', 'key')
         ensure_noneornonemptystring('user_name')
@@ -648,7 +648,7 @@ class Confluence:
         # Required parameters
 
         - name: a non-empty string
-        - password: a non-empty string or 'NONE'
+        - password: a non-empty string or None
         - email_address: a non-empty string
         - display_name: a string
 
@@ -661,7 +661,7 @@ class Confluence:
         ensure_nonemptystring('email_address')
         ensure_instance('display_name', str)
 
-        user = {'email': email_address, "fullname": display_name, "name": name}
+        user = {'email': email_address, 'fullname': display_name, 'name': name}
 
         return (
             self.session()
@@ -927,7 +927,7 @@ class Confluence:
         - displayName: a string
 
         It may also contains 'transient' entries (i.e., entries starting
-        with '_').
+        with `'_'`).
         """
         ensure_noneorinstance('expand', str)
 
@@ -1158,14 +1158,14 @@ class Confluence:
 
         # Returned value
 
-        A list of _permissionsets_.  Each permissionset is a dictionary
-        with the following entries:
+        A list of _permissionsets_.  Each permissionset is a
+        dictionary with the following entries:
 
         - type: a string
         - spacePermissions: a list of dictionaries
 
-        `type` is a space permission (as returned by
-        #list_space_permissions()).
+        `type` is a space permission (as returned
+        by #list_space_permissions()).
 
         Dictionaries in `spacePermissions` have the following entries:
 
@@ -1302,9 +1302,9 @@ class Confluence:
 
         # Required parameters
 
-            space_key: a non-empty string
-            entity: a non-empty string
-            permission: a non-empty string
+        - space_key: a non-empty string
+        - entity: a non-empty string
+        - permission: a non-empty string
 
         # Returned value
 
@@ -1412,7 +1412,7 @@ class Confluence:
 
         # Returned value
 
-        A possibly empty list of items.  Items are dictionaries.
+        A possibly empty list of _items_.  Items are dictionaries.
 
         Assuming the default `expand` values, an item contains the
         following entries:
@@ -1673,9 +1673,9 @@ class Confluence:
 
         # Returned value
 
-        A possibly empty list of versions. Versions are dictionaries.
+        A possibly empty list of _versions_. Versions are dictionaries.
 
-        An version contains the following entries:
+        A version contains the following entries:
 
         - by: a dictionary
         - when: a datetime as a string
@@ -1685,9 +1685,7 @@ class Confluence:
         - hidden: a boolean
         - links: a dictionary
         - expandable: a dictionary
-
         """
-
         ensure_instance('page_id', (str, int))
 
         api_url = join_url(
@@ -1957,20 +1955,22 @@ class Confluence:
 
         # Required parameters
 
-        - `page_id` : integer or string
+        - page_id: an integer or string
 
         # Returned value
 
         A list of _restrictions_. Restrictions are structured as follow:
 
-        - `type`: string, either "Edit" or "View"
-        - `contentPermissions`: a dictionary structured as follow
-            * `type`: string, either "Edit" or "View"
-            * `userName`: string, or None if groupName is set,
-            * `groupName`: string, or None if userName is set
-        ```
+        - type: a string, either `'Edit'` or `'View'`
+        - contentPermissions: a list of _permissions_
 
-        # See
+        Each permission is a dictionary with the following entries:
+
+        - type: a string, either `'Edit'` or `'View'`
+        - userName: a string, or None if groupName is set
+        - groupName: a string, or None if userName is set
+
+        # See also
 
         <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """
@@ -1995,18 +1995,17 @@ class Confluence:
     ) -> bool:
         """Set restrictions on a page.
 
-        `permission_type` is either 'View' or 'Edit'.
-
         # Required parameters
 
         - `page_id`: integer or string
-        - `permission_type`: a string, either "View" or "Edit"
-        - `restrictions`: a list of dictionaries structured as follow :
-           * `type`: string, either "Edit", "View" or None.
+        - `permission_type`: a string, either `'View'` or `'Edit'`
+        - `restrictions`: a list of dictionaries structured as follow:
+
+            * `type`: a string, either `'Edit'`, `'View'`, or None.
                      If set, must be consistent with `permission_type`.
                      If None, will inherit `permission_type`.
-           * `userName`: string, or None if `groupName` is set
-           * `groupName`: string, or None if `userName` is set
+            * `userName`: a string, or None if `groupName` is set
+            * `groupName`: a string, or None if `userName` is set
 
         # Returned value
 
@@ -2032,7 +2031,7 @@ class Confluence:
             'page_id',
             'Edit',
             [{'type': 'Edit', 'userName': 'bob', 'groupName': None},
-            {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
+             {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
         )
         ```
 
@@ -2043,8 +2042,10 @@ class Confluence:
         when designing restrictions schemes. The default behavior when
         no permissions are set are the following:
 
-        - when no restrictions is set for type 'View' -> anyone can view the page.
-        - when no restrictions is set for type 'Edit' -> anyone can edit the page.
+        - when no restrictions is set for type 'View' -> anyone can view
+          the page.
+        - when no restrictions is set for type 'Edit' -> anyone can edit
+          the page.
 
         So if you want to absolutely restrict access to a particular
         user or group, be user to specify both 'View' and 'Edit'
@@ -2053,7 +2054,7 @@ class Confluence:
         As a result you will often have to call this method twice in a
         row.
 
-        # See
+        # See also
 
         <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """

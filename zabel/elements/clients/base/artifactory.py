@@ -2265,7 +2265,7 @@ class Artifactory:
         have the following entries:
 
         - name: a string
-        - type: a string ('local' or 'remote')
+        - type: a string (`'local'` or `'remote'`)
         - pkg_type: a string
         """
         ensure_nonemptystring('bin_mgr_id')

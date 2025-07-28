@@ -44,7 +44,6 @@ class Atlassian:
 
     <https://developer.atlassian.com/cloud/admin>
 
-
     # Implemented features
 
     - users
@@ -56,7 +55,7 @@ class Atlassian:
 
     url = 'https://api.atlassian.com/admin'
     atlassian = Atlassian(url, token)
-    atlassian.list_organisation_users("org_id")
+    atlassian.list_organisation_users('org_id')
     ```
     """
 
@@ -116,8 +115,8 @@ class Atlassian:
         - `product_access`: a list of strings
         - `links`: a dictionary
         """
-
         ensure_nonemptystring('org_id')
+
         return self._get(f'orgs/{org_id}/users')
 
     ####################################################################

@@ -77,17 +77,17 @@ class Confluence(Base):
 
     @api_call
     def list_users(self) -> List[str]:
-        """Return a list of confluence users.
+        """Return a list of Confluence users.
 
         # Returned value
 
-        A list of _users_.  Each user is a string (the user 'username').
+        A list of _users_.  Each user is a string (the user's username).
 
         Users are not properly speaking managed by Confluence.  The
         returned list is the aggregation of group member, with no
         duplication.
 
-        The 'jira-*' groups are ignored.
+        The `'jira-*'` groups are ignored.
 
         Handles pagination (i.e., it returns all group users, not only
         the first n users).

@@ -537,8 +537,8 @@ class GitHub:
 
         # Optional parameters
 
-        - role: a string, one of `direct_member`, `billing_manager`, or
-          `admin` (`direct_member` by default)
+        - role: a string, one of `'direct_member'`, `'billing_manager'`,
+          or `'admin'` (`'direct_member'` by default)
         - team_ids: a list of integers or None (None by default)
 
         # Returned value
@@ -816,8 +816,8 @@ class GitHub:
 
         # Optional parameters
 
-        - role: a non-empty string, one of 'all', 'member', or 'admin'
-          ('all' by default)
+        - role: a non-empty string, one of `'all'`, `'member'`, or
+          `'admin'` (`'all'` by default)
 
         # Returned value
 
@@ -1291,9 +1291,10 @@ class GitHub:
         - branch: a string or None (None by default)
         - event: a string or None (None by default)
         - status: a string or None (None by default). Can be one of:
-          `completed`, `action_required`, `cancelled`, `failure`,
-          `neutral`, `skipped`, `stale`, `success`, `timed_out`,
-          `in_progress`, `queued`, `requested`, `waiting`, `pending`
+          `'completed'`, `'action_required'`, `'cancelled'`,
+          `'failure'`, `'neutral'`, `'skipped'`, `'stale'`, `'success'`,
+          `'timed_out'`, `'in_progress'`, `'queued'`, `'requested'`,
+          `'waiting'`, or `'pending'`
         - created: a string or None (None by default)
         - exclude_pull_requests: a boolean or None (None by default)
         - check_suite_id: an integer or None (None by default)
@@ -1912,7 +1913,8 @@ class GitHub:
 
         # Returned value
 
-        A list of strings (the list may be empty).
+        A list of _topics_.  Each topic is a string (the list may be
+        empty).
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1940,7 +1942,7 @@ class GitHub:
 
         # Returned value
 
-        A possibly empty list of strings.
+        A possibly empty list of _topics_ (strings).
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1960,7 +1962,7 @@ class GitHub:
         """Return the list of number of additions&deletions per week.
 
         The returned value is cached.  A first call for a given
-        repository may return a 202 response code.  Retrying a moment
+        repository may return a `202` response code.  Retrying a moment
         later will return the computed value.
 
         # Required parameters
@@ -2595,8 +2597,8 @@ class GitHub:
 
         # Optional parameters
 
-        - state: a string, one of `open`, `closed`, or `all` (`all` by
-          default)
+        - state: a string, one of `'open'`, `'closed'`, or `'all'`
+          (`'all'` by default)
 
         # Returned value
 
@@ -2765,8 +2767,8 @@ class GitHub:
         - commit_title: a non-empty string or None (None by default)
         - commit_message: a non-empty string or None (None by default)
         - sha: a non-empty string or None (None by default)
-        - merge_method: a string, one of `merge`, `squash`, `rebase`,
-          or None (None by default)
+        - merge_method: a string, one of `'merge'`, `'squash'`,
+          `'rebase'`, or None (None by default)
 
         # Returned value
 
@@ -2874,7 +2876,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashes)
+          with `'refs'` and having at least two slashes)
         - sha: a non-empty string
 
         # Optional parameters
@@ -2926,7 +2928,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashes)
+          with `'refs'` and having at least two slashes)
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -3010,8 +3012,8 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - ref: a non-empty string (of form `heads/{branch}` or
-          `tags/{tag}`)
+        - ref: a non-empty string (of form `'heads/{branch}'` or
+          `'tags/{tag}'`)
 
         # Returned value
 
@@ -3051,7 +3053,7 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - ref: a non-empty string (`heads` or `tags`)
+        - ref: a non-empty string (`'heads'` or `'tags'`)
 
         # Returned value
 
@@ -3170,9 +3172,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Repository`)
+        - type: a string (`'Repository'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3211,9 +3213,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Global`)
+        - type: a string (`'Global'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3246,9 +3248,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Organization`)
+        - type: a string (`'Organization'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3306,7 +3308,7 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3367,7 +3369,7 @@ class GitHub:
 
         # Required parameters
 
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3428,7 +3430,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3788,17 +3790,17 @@ class GitHub:
 
         # Optional parameters
 
-        - what: a string (`all` by default)
+        - what: a string (`'all'` by default)
 
-        `what` can be `all`, `comments`, `gists`, `hooks`, `issues`,
-        `milestones`, `orgs`, `pages`, `pulls`, `repos`,
-        `security-products`, or `users`.
+        `what` can be `'all'`, `'comments'`, `'gists'`, `'hooks'`,
+        `'issues'`, `'milestones'`, `'orgs'`, `'pages'`, `'pulls'`,
+        `'repos'`, `'security-products'`, or `'users'`.
 
         Requires sysadmin rights.
 
         # Returned value
 
-        A dictionary with either one entry (if `what` is not `all`)
+        A dictionary with either one entry (if `what` is not `'all'`)
         or one entry per item.
 
         Values are dictionaries.

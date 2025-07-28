@@ -189,7 +189,7 @@ class CloudBeesJenkins:
 
         # Returned value
 
-        A list of u_sers_.  Each user is a dictionary with the following
+        A list of _users_.  Each user is a dictionary with the following
         entries:
 
         - user: a dictionary
@@ -355,7 +355,7 @@ class CloudBeesJenkins:
 
         # Optional parameters
 
-        - path: a string, where to look for managed masters (`cjoc` by
+        - path: a string, where to look for managed masters (`'cjoc'` by
           default)
 
         # Returned value
@@ -367,7 +367,7 @@ class CloudBeesJenkins:
         - url: a string
         - name: a string
 
-        Managed masters will have a _class value of:
+        Managed masters will have a `_class` value of:
 
         `'com.cloudbees.opscenter.server.model.ManagedMaster'`
         """
@@ -1093,7 +1093,7 @@ class CloudBeesJenkins:
 
         # Optional parameters
 
-        - offset: an integer (0 by default)
+        - offset: an integer (`0` by default)
         - inherited: a boolean (False by default)
         """
         ensure_nonemptystring('project_url')
@@ -1382,7 +1382,7 @@ class CloudBeesJenkins:
     def delete_group_user(self, group_url: str, user: str) -> None:
         """Delete user from group.
 
-        # Requirement parameters
+        # Required parameters
 
         - group_url: a non-empty string
         - user: a non-empty string
@@ -1402,7 +1402,7 @@ class CloudBeesJenkins:
     def migrate_group_member_as_user(self, group_url: str, user: str) -> None:
         """Migrate member of group as user
 
-        # Requirement parameters
+        # Required parameters
 
         - group_url: a non-empty string
         - user: a non-empty string

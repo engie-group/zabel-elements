@@ -483,8 +483,8 @@ class GitHub(Base):
 
         # Optional parameters
 
-        - visibility: a string, one of 'all', 'private', or 'selected'
-          ('all' by default)
+        - visibility: a string, one of `'all'`, `'private'`, or
+        `'selected'` (`'all'` by default)
         - repositories_ids: a list of integers or None (None by default)
 
         # Returned value

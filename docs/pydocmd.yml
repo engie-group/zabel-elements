@@ -15,6 +15,8 @@ generate:
     - zabel.elements.clients.Atlassian@
   - clients/confluence.md:
     - zabel.elements.clients.Confluence@
+  - clients/confluencecloud.md:
+    - zabel.elements.clients.ConfluenceCloud@
   - clients/github.md:
     - zabel.elements.clients.GitHub@
   - clients/githubcloud.md:
@@ -51,6 +53,7 @@ pages:
         - Atlassian: clients/atlassian.md
         - CloudBeesJenkins: clients/jenkins.md
         - Confluence: clients/confluence.md
+        - ConfluenceCloud: clients/confluencecloud.md
         - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
         - GitLab: clients/gitlab.md
