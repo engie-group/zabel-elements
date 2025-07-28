@@ -19,6 +19,8 @@ generate:
     - zabel.elements.clients.GitHub@
   - clients/githubcloud.md:
     - zabel.elements.clients.GitHubCloud@
+  - clients/gitlab.md:
+    - zabel.elements.clients.GitLab@
   - clients/jenkins.md:
     - zabel.elements.clients.CloudBeesJenkins@
   - clients/jira.md:
@@ -31,6 +33,8 @@ generate:
     - zabel.elements.clients.Okta@
   - clients/sonarqube.md:
     - zabel.elements.clients.SonarQube@
+  - clients/sonatypenexus.md:
+    - zabel.elements.clients.SonatypeNexus@
   - clients/squashtm.md:
     - zabel.elements.clients.SquashTM@
   - images.md:
@@ -49,11 +53,13 @@ pages:
         - Confluence: clients/confluence.md
         - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
+        - GitLab: clients/gitlab.md
         - Jira: clients/jira.md
         - JiraCloud: clients/jiracloud.md
         - Kubernetes: clients/kubernetes.md
         - Okta: clients/okta.md
         - SonarQube: clients/sonarqube.md
+        - SonatypeNexus: clients/sonatypenexus.md
         - SquashTM: clients/squashtm.md
     - Images:
       - Overview: images.md

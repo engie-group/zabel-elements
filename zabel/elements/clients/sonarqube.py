@@ -43,7 +43,7 @@ class SonarQube(Base):
     - languages
     - permissions
     - permissionstemplates
-    - projectanalyses (incompete)
+    - projectanalyses (incomplete)
     - projects (incomplete)
     - qualitygates (incomplete)
     - qualityprofiles (incomplete)
@@ -55,6 +55,9 @@ class SonarQube(Base):
     Some features may be specific to the Enterprise Edition, but as long
     as they are not used directly, the library can be used with the
     Community edition too.
+
+    When using SonarCloud, the `organization_key` parameter must be
+    specified for methods that declare it.
 
     Tested on SonarQube v9.9.
 
@@ -76,6 +79,14 @@ class SonarQube(Base):
 
     url = 'https://sonar.example.com/sonar/api/'
     sq = SonarQube(url, token)
-    sq.search_users()
+    sq.list_projects()
+    ```
+
+    ```python
+    from zabel.elements.clients import SonarQube
+
+    url = 'https://sonarcloud.io/api/'
+    sq = SonarQube(url, token)
+    sq.list_projects(organization_key='my_organization')
     ```
     """

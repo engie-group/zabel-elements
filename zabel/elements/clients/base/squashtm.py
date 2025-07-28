@@ -156,6 +156,9 @@ class SquashTM:
     # create_project
     # get_project_permissions
     # add_project_permission
+    # list_project_requirements
+    # list_project_campaigns
+    # list_project_testcases
 
     @api_call
     def list_projects(self) -> List[Dict[str, Any]]:
@@ -197,6 +200,59 @@ class SquashTM:
         ensure_instance('project_id', int)
 
         return self._get(f'projects/{project_id}')  # type: ignore
+
+    @api_call
+    def list_project_requirements(
+        self, project_id: int
+    ) -> List[Dict[str, Any]]:
+        """Return project requirements.
+
+        # Required parameters
+
+            project_id: an integer
+
+        # Returned value
+
+        A list of _requirements_.  Each requirement is a dictionary.
+        """
+        ensure_instance('project_id', int)
+        return self._collect_data(
+            f'projects/{project_id}/requirements', 'requirements'
+        )
+
+    @api_call
+    def list_project_campaigns(self, project_id: int) -> List[Dict[str, Any]]:
+        """Return project campaigns.
+
+        # Required parameters
+
+            project_id: an integer
+
+        # Returned value
+
+        A list of _campaigns_.  Each campaign is a dictionary.
+        """
+        ensure_instance('project_id', int)
+        return self._collect_data(
+            f'projects/{project_id}/campaigns', 'campaigns'
+        )
+
+    @api_call
+    def list_project_testcases(self, project_id: int) -> List[Dict[str, Any]]:
+        """Return project test cases.
+
+        # Required parameters
+
+            project_id: an integer
+
+        # Returned value
+
+        A list of _test cases_.  Each test case is a dictionary.
+        """
+        ensure_instance('project_id', int)
+        return self._collect_data(
+            f'projects/{project_id}/test-cases', 'test-cases'
+        )
 
     @api_call
     def create_project(

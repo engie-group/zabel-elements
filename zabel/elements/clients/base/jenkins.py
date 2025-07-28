@@ -1503,7 +1503,7 @@ class CloudBeesJenkins:
         self,
         api_url: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
-    ) -> Dict[str, Any]:
+    ) -> requests.Response:
         """Returns cloudbeesjenkins api call results.
 
         # Required parameters
@@ -1513,6 +1513,10 @@ class CloudBeesJenkins:
         # Optional parameters
 
         - params: a dictionary
+
+        # Returned value
+
+        A requests.Response object
         """
         return self.session().get(api_url, params=params)
 
@@ -1530,6 +1534,10 @@ class CloudBeesJenkins:
         # Optional parameters
 
         - params: a dictionary
+
+        # Returned value
+
+        A JSON object (a dictionary).
         """
         result = (
             self.session()
