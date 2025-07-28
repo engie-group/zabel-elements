@@ -77,7 +77,6 @@ class GitLab(Base):
 
         all_projects = self.list_group_projects(group_name_or_id)
         for grp in self.list_group_subgroups(group_name_or_id):
-            print(grp)
             all_projects.extend(self.list_namespace_projects(grp['id']))
 
         return all_projects
