@@ -1553,8 +1553,7 @@ class SonarQube:
 
         - `project_key` : a string
         """
-        ensure_nonemptystring(project_key)
-
+        ensure_nonemptystring('project_key')
         return self._post('projects/delete', {'project': project_key})
 
     ####################################################################
