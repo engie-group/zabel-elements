@@ -19,9 +19,6 @@ depends on three **zabel-commons** modules, #::zabel.commons.exceptions,
 
 from typing import Any, Dict, List, Optional, Union
 
-import gitlab
-import gitlab.v4.objects
-
 from zabel.commons.utils import (
     api_call,
     ensure_in,
@@ -1127,8 +1124,10 @@ class GitLab:
     ####################################################################
     # GitLab helpers
 
-    def _project(self, project: Union[str, int]) -> gitlab.v4.objects.Project:
+    def _project(
+        self, project: Union[str, int]
+    ) -> 'gitlab.v4.objects.Project':
         return self._client().projects.get(project)
 
-    def _group(self, group: Union[str, int]) -> gitlab.v4.objects.Group:
+    def _group(self, group: Union[str, int]) -> 'gitlab.v4.objects.Group':
         return self._client().groups.get(group)

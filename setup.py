@@ -38,15 +38,17 @@ setup(
     packages=find_namespace_packages(include=['zabel.*']),
     install_requires=['zabel-commons>=1.7'],
     extras_require={
+        'gitlab': ['python-gitlab>=6.1'],
         'jira': ['Jira>=3.0'],
-        'kubernetes': ['kubernetes>=10.1.0'],
-        'okta': ['okta>=2.3.1'],
+        'kubernetes': ['kubernetes>=33.1.0'],
+        'okta': ['okta>=2.9'],
         'pynacl': ['pynacl>=1.5.0'],
         'all': [
             'Jira>=3.0',
-            'kubernetes>=10.1.0',
-            'okta>=2.3.1',
+            'kubernetes>=33.1.0',
+            'okta>=2.9',
             'pynacl>=1.5.0',
+            'python-gitlab>=6.1',
         ],
     },
     classifiers=[
@@ -56,5 +58,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>= 3.8.0',
+    python_requires='>= 3.12.0',
 )

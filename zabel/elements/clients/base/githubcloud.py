@@ -1536,6 +1536,8 @@ class GitHubCloud:
     ) -> List[Dict[str, Any]]:
         """List SCIM users in an enterprise.
 
+        SCIM stands for _System for Cross-domain Identity Management_.
+
         # Required parameters
 
         - enterprise_name: a non-empty string
