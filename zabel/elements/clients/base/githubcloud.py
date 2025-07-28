@@ -1364,9 +1364,7 @@ class GitHubCloud:
     #
     # list_enterprise_consumedlicenses_users
     # list_enterprise_billing_usage
-    # get_enterprise_billing_actions
     # list_organization_billing_usage
-    # get_organization_billing_actions
 
     @api_call
     def list_enterprise_consumedlicenses_users(
@@ -1467,47 +1465,6 @@ class GitHubCloud:
         return response.get('usageItems', [])
 
     @api_call
-    def get_enterprise_billing_actions(
-        self, enterprise_name: str
-    ) -> Dict[str, Any]:
-        """Get the billing actions of an enterprise.
-
-        # Required parameters
-
-        - enterprise_name: a non-empty string
-
-        # Returned value
-
-        A dictionary with the following entries:
-
-        - total_minutes_used: an integer
-        - total_paid_minutes_used: an integer
-        - included_minutes: an integer
-        - minutes_used_breakdown: a dictionary with the following
-          entries:
-            - UBUNTU: an integer
-            - WINDOWS: an integer
-            - MACOS: an integer
-            - ubuntu_4_core: an integer
-            - ubuntu_8_core: an integer
-            - ubuntu_16_core: an integer
-            - ubuntu_32_core: an integer
-            - ubuntu_64_core: an integer
-            - windows_4_core: an integer
-            - windows_8_core: an integer
-            - windows_16_core: an integer
-            - windows_32_core: an integer
-            - windows_64_core: an integer
-            - macos_12_core: an integer
-            - total: an integer
-        """
-        ensure_nonemptystring('enterprise_name')
-
-        return self._get(
-            f'enterprises/{enterprise_name}/settings/billing/actions',
-        )
-
-    @api_call
     def list_organization_billing_usage(
         self,
         organization_name: str,
@@ -1563,47 +1520,6 @@ class GitHubCloud:
         ).json()
 
         return response.get('usageItems', [])
-
-    @api_call
-    def get_organization_billing_actions(
-        self, organization_name: str
-    ) -> Dict[str, Any]:
-        """Get the billing actions of an organization.
-
-        # Required parameters
-
-        - organization_name: a non-empty string
-
-        # Returned value
-
-        A dictionary with the following entries:
-
-        - total_minutes_used: an integer
-        - total_paid_minutes_used: an integer
-        - included_minutes: an integer
-        - minutes_used_breakdown: a dictionary with the following
-          entries:
-            - UBUNTU: an integer
-            - WINDOWS: an integer
-            - MACOS: an integer
-            - ubuntu_4_core: an integer
-            - ubuntu_8_core: an integer
-            - ubuntu_16_core: an integer
-            - ubuntu_32_core: an integer
-            - ubuntu_64_core: an integer
-            - windows_4_core: an integer
-            - windows_8_core: an integer
-            - windows_16_core: an integer
-            - windows_32_core: an integer
-            - windows_64_core: an integer
-            - macos_12_core: an integer
-            - total: an integer
-        """
-        ensure_nonemptystring('organization_name')
-
-        return self._get(
-            f'orgs/{organization_name}/settings/billing/actions',
-        )
 
     ####################################################################
     # GitHubCloud SCIM

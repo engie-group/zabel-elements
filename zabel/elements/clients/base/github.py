@@ -1276,7 +1276,7 @@ class GitHub:
         exclude_pull_requests: Optional[bool] = None,
         check_suite_id: Optional[int] = None,
         head_sha: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """Return the list of workflow runs.
 
         # Required parameters
