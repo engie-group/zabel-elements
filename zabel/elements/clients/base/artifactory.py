@@ -97,12 +97,12 @@ class Artifactory:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
     - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
-    # Implemented features
+    ## Implemented features
 
     - artefacts
     - builds
@@ -113,12 +113,14 @@ class Artifactory:
     - users
     - misc. features (storageinfo, version, ping, ...)
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
+    user = '...'
+    token = '...'
     af = Artifactory(url, basic_auth=(user, token))
     af.list_users()
     ```
@@ -148,8 +150,9 @@ class Artifactory:
 
         # Usage
 
-        `url` is the top-level API endpoint.  For example,
-        `'https://artifactory.example.com/artifactory/api/'`
+        `url` is the top-level API endpoint.  For example:
+
+            'https://artifactory.example.com/artifactory/api/'
 
         `xray_url`, if specified, is the top-level jfrog-xray API
         endpoint.  If not specified, will be as `url` with the
@@ -810,7 +813,7 @@ class Artifactory:
 
     @api_call
     def get_group(
-        self, group_name: str, include_users: Optional[bool] = False
+        self, group_name: str, include_users: bool = False
     ) -> Dict[str, Any]:
         """Return group details.
 
@@ -835,10 +838,9 @@ class Artifactory:
         """
 
         ensure_nonemptystring('group_name')
-        ensure_noneorinstance('include_users', bool)
+        ensure_instance('include_users', bool)
 
-        params = {}
-        add_if_specified(params, 'includeUsers', include_users)
+        params = {'includeUsers': include_users}
 
         return self._get(f'security/groups/{group_name}', params=params)  # type: ignore
 
@@ -1649,7 +1651,7 @@ class Artifactory:
         - repository_name: a non-empty string
         - json: a dictionary
 
-        # Raised exceptionx
+        # Raised exceptions
 
         An _ApiError_ exception is raised  if the update was not
         successful.
@@ -2097,7 +2099,7 @@ class Artifactory:
         is the property name (a string) and the value is the property
         value (property-dependent)
 
-        # Raised exception
+        # Raised exceptions
 
         If no property exists, an _ApiError_ exception is raised.
         """

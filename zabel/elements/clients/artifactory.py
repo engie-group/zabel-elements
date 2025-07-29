@@ -30,12 +30,12 @@ class Artifactory(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
     - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
-    # Implemented features
+    ## Implemented features
 
     - artefacts
     - builds
@@ -46,12 +46,14 @@ class Artifactory(Base):
     - users
     - misc. features (storageinfo, version, ping, ...)
 
-    # Sample use
+    ## Example
 
     ```python
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
+    user = '...'
+    token = '...'
     af = Artifactory(url, basic_auth=(user, token))
     af.list_users()
     ```

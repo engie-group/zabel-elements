@@ -8,6 +8,8 @@ from .base.confluencecloud import ConfluenceCloud as Base
 class ConfluenceCloud(Base):
     """Confluence Cloud Low-Level Wrapper.
 
+    An interface to Confluence, including users and groups management.
+
     There can be as many Confluence Cloud instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -15,15 +17,12 @@ class ConfluenceCloud(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://developer.atlassian.com/cloud/confluence/rest/v2/>
-    <https://developer.atlassian.com/cloud/confluence/rest/v1/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v2/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v1/>
 
-
-    An interface to Confluence, including users and groups management.
-
-    # Implemented features
+    ## Implemented features
 
     - pages
     - search
@@ -34,12 +33,14 @@ class ConfluenceCloud(Base):
     Whenever applicable, the provided features handle pagination (i.e.,
     they return all relevant elements, not only the first n).
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import ConfluenceCloud
 
-    url = 'https://{instance}.atlassian.net/wiki/'
+    url = 'https://your-instance.atlassian.net/wiki/'
+    user = '...'
+    token = '...'
     confluencecloud = ConfluenceCloud(url, basic_auth=(user, token))
     confluencecloud.list_users()
     ```

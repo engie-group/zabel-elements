@@ -50,7 +50,7 @@ from zabel.commons.utils import (
 class SonatypeNexus:
     """Sonatype Nexus Low-Level Wrapper.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://help.sonatype.com/en/api-reference.html>
     - <https://pypi.org/project/nexus_api_client/>
@@ -60,7 +60,7 @@ class SonatypeNexus:
         components and assets validation on some supported versions
         (PRO 3.70.4-02)
 
-    # Implemented features
+    ## Implemented features
 
     - repositories
     - tags
@@ -69,14 +69,15 @@ class SonatypeNexus:
     - privileges
     - misc. features (sources, metrics, ...)
 
-    # Sample use
+    ## Examples
 
     ```python
     # standard use
     from zabel.elements.clients import SonatypeNexus
 
     url = 'https://nexus.example.com/nexus/service/rest'
-    nx = SonatypeNexus(url, bearer_token=access_token)
+    token = '...'
+    nx = SonatypeNexus(url, bearer_token=token)
     nx.list_repositories()
     ```
     """
@@ -91,8 +92,7 @@ class SonatypeNexus:
     ) -> None:
         """Create a Sonatype Nexus instance object.
 
-        You can only specify either `access_token` or both `username`
-        and `password`.
+        You can only specify either `basic_auth` or both `bearer_token`.
 
         # Required parameters
 
@@ -107,9 +107,15 @@ class SonatypeNexus:
 
         - verify: a boolean or string
 
+        # Usage
+
+        `url` is the top-level API point.  For example:
+
+            'https://nexus.example.com/nexus/service/rest'
+
         `verify` can be set to False if disabling certificate checks for
-        GitLab communication is required.  Tons of warnings will occur
-        if this is set to False.
+        Sonatype Nexus communication is required.  Tons of warnings will
+        occur if this is set to False.
         """
         ensure_nonemptystring('url')
         ensure_noneorinstance('basic_auth', tuple)
@@ -149,11 +155,11 @@ class SonatypeNexus:
         A list of _repositories_.  Each repository is a dictionary
         containing the following keys:
 
-        - name: a string
+        - attributes: a dictionary
         - format: a string
+        - name: a string
         - type: a string
         - url: a string
-        - attributes: a dictionary
         """
         result = self._get('v1/repositories')
         return result  # type: ignore
@@ -167,11 +173,11 @@ class SonatypeNexus:
         A list of _repository settings_.  Each repository setting is a
         dictionary containing the following keys:
 
-        - name: a string
         - format: a string
+        - name: a string
+        - online: a boolean
         - type: a string
         - url: a string
-        - online: a boolean
         """
         result = self._get('v1/repositorySettings')
         return result  # type: ignore
@@ -180,7 +186,7 @@ class SonatypeNexus:
     def get_repository(self, repository_name: str) -> Dict[str, Any]:
         """Return a repository.
 
-        # Parameters
+        # Required parameters
 
         - repository_name: a non-empty string
 
@@ -188,11 +194,11 @@ class SonatypeNexus:
 
         A _repository_ dictionary containing the following keys:
 
-        - name: a string
+        - attributes: a dictionary
         - format: a string
+        - name: a string
         - type: a string
         - url: a string
-        - attributes: a dictionary
         """
         ensure_nonemptystring('repository_name')
 
@@ -205,7 +211,7 @@ class SonatypeNexus:
     ) -> List[Dict[str, Any]]:
         """Return a list of assets in a repository.
 
-        # Parameters
+        # Required parameters
 
         - repository_name: a non-empty string
 
@@ -214,19 +220,19 @@ class SonatypeNexus:
         A list of _assets_.  Each asset is a dictionary containing the
         following keys:
 
-        - downloadUrl: a string
-        - path: a string
-        - id: a string
-        - repository: a string
-        - format: a string (`pypi`, ...)
+        - blobCreated: a string (`'2025-05-05T09:48:40.935+00:00'`)
         - checksum: a dictionary of checksums
         - contentType: a string
-        - lastModified: a string ('2025-05-05T09:48:40.935+00:00')
-        - lastDownloaded: a string ('2025-05-05T09:56:21.840+00:00')
+        - downloadUrl: a string
+        - fileSize: an integer
+        - format: a string (`'pypi'`, ...)
+        - id: a string
+        - lastDownloaded: a string (`'2025-05-05T09:56:21.840+00:00'`)
+        - lastModified: a string (`'2025-05-05T09:48:40.935+00:00'`)
+        - path: a string
+        - repository: a string
         - uploader: a string
         - uploaderIp: a string
-        - fileSize: an integer
-        - blobCreated: a string ('2025-05-05T09:48:40.935+00:00')
 
         It may contain additional entries depending on the asset's
         format.
@@ -243,7 +249,7 @@ class SonatypeNexus:
     ) -> List[Dict[str, Any]]:
         """Return a list of components in a repository.
 
-        # Parameters
+        # Required parameters
 
         - repository_name: a non-empty string
 
@@ -252,14 +258,14 @@ class SonatypeNexus:
         A list of _components_.  Each component is a dictionary
         containing the following keys:
 
-        - id: a string
-        - repository: a string
-        - format: a string (`pypi`, ...)
-        - group: a string or None
-        - name: a string
-        - version: a string
         - assets: a list of dictionaries
+        - format: a string (`'pypi'`, ...)
+        - group: a string or None
+        - id: a string
+        - name: a string
+        - repository: a string
         - tags: a list of dictionaries
+        - version: a string
         """
         ensure_nonemptystring('repository_name')
 
@@ -281,10 +287,10 @@ class SonatypeNexus:
         A list of _tags_.  Each tag is a dictionary containing the
         following keys:
 
-        - name: a string
         - attributes: a dictionary
-        - firstCreated: a string ('2025-03-01T00:00:00Z')
-        - lastUpdated: a string ('2025-03-01T00:00:00Z')
+        - firstCreated: a string (`'2025-03-01T00:00:00Z'`)
+        - lastUpdated: a string (`'2025-03-01T00:00:00Z'`)
+        - name: a string
         """
         return self._collect_data('v1/tags')
 
@@ -314,8 +320,8 @@ class SonatypeNexus:
         - last_name: a non-empty string
         - email_address: a non-empty string
         - password: a non-empty string
-        - status: a non-empty string (one of `active`, `locked`,
-         `disabled`, or `changepassword`)
+        - status: a non-empty string (one of `'active'`, `'locked'`,
+         `'disabled'`, or `'changepassword'`)
 
         # Optional parameters
 
@@ -361,15 +367,15 @@ class SonatypeNexus:
         A list of _users_.  Each user is a dictionary containing the
         following keys:
 
-        - userId: a string
+        - emailAddress: a string
+        - externalRoles: a list of strings
         - firstName: a string
         - lastName: a string
-        - emailAddress: a string
-        - source: a string
-        - status: a string ('active')
         - readOnly: a boolean
         - roles: a list of strings
-        - externalRoles: a list of strings
+        - source: a string
+        - status: a string (`'active'`)
+        - userId: a string
         """
         ensure_noneornonemptystring('source')
         ensure_noneornonemptystring('user_id')
@@ -399,13 +405,13 @@ class SonatypeNexus:
          A list of _roles_.  Each role is a dictionary containing the
          following keys:
 
-        - id: a string
-        - source: a string
-        - name: a string
         - description: a string
-        - readOnly: a boolean
+        - id: a string
+        - name: a string
         - privileges: a list of strings
+        - readOnly: a boolean
         - roles: a list of strings
+        - source: a string
         """
         ensure_noneornonemptystring('source')
 
@@ -426,20 +432,20 @@ class SonatypeNexus:
 
          # Optional parameters
 
-         - source: a non-empty string (`default` by default)
+         - source: a non-empty string (`'default'` by default)
 
          # Returned value
 
          A _role_.  A role is a dictionary containing the following
          keys:
 
-        - id: a string
-        - source: a string
-        - name: a string
         - description: a string
-        - readOnly: a boolean
+        - id: a string
+        - name: a string
         - privileges: a list of strings
+        - readOnly: a boolean
         - roles: a list of strings
+        - source: a string
         """
         ensure_nonemptystring('role_id')
         ensure_nonemptystring('source')
@@ -461,10 +467,10 @@ class SonatypeNexus:
          A list of _privileges_.  Each privilege is a dictionary
          containing the following keys:
 
-        - type: a string
-        - name: a string
         - description: a string
+        - name: a string
         - readOnly: a boolean
+        - type: a string
         """
         return self._get('v1/security/privileges')  # type: ignore
 
@@ -481,10 +487,10 @@ class SonatypeNexus:
          A _privilege_.  A privilege is a dictionary containing the
          following keys:
 
-        - type: a string
-        - name: a string
         - description: a string
+        - name: a string
         - readOnly: a boolean
+        - type: a string
         """
         ensure_nonemptystring('privilege_id')
 
@@ -525,11 +531,11 @@ class SonatypeNexus:
         A list of dictionaries containing the following keys for the
         last 12 months:
 
-        - requestCount: an integer
         - componentCount: an integer
-        - metricDate: a string ('2025-03-01T00:00:00Z')
-        - percentageChangeRequest
+        - metricDate: a string (`'2025-03-01T00:00:00Z'`)
         - percentageChangeComponent
+        - percentageChangeRequest
+        - requestCount: an integer
         """
         return self._get('v1/monthly-metrics')  # type: ignore
 

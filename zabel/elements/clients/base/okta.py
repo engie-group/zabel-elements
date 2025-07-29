@@ -31,11 +31,27 @@ class OktaException(Exception):
 
 
 class Okta:
-    """Okta Base-Level Wrapper.
+    """Okta Low-Level Wrapper.
 
-    # Reference url
+    ## Reference URLs
 
     <https://developer.okta.com/docs/reference/api/groups/>
+
+    ## Implemented features
+
+    - users
+    - groups
+
+    ## Examples
+
+    ```python
+    from zabel.elements.clients import Okta
+
+    url = 'https://okta.example.com'
+    token = '...'
+    okta = Okta(url, token)
+    user = okta.get_user_info('JP5300')
+    ```
     """
 
     def __init__(
@@ -43,6 +59,19 @@ class Okta:
         url: str,
         token: str,
     ):
+        """Create an Okta instance object.
+
+        # Required parameters
+
+        - url: a non-empty string
+        - token: a non-empty string
+
+        # Usage
+
+        `url` must be the URL of your Okta instance.  For example:
+
+            'https://your-domain.okta-emea.com'
+        """
         ensure_nonemptystring('url')
         ensure_nonemptystring('token')
 
@@ -124,7 +153,6 @@ class Okta:
         - type: a dictionary
         - profile: a dictionary
         - credentials: a dictionary
-
         """
         ensure_nonemptystring('user')
 
@@ -158,7 +186,6 @@ class Okta:
         Return a list of groups. Refer to #get_group_by_name() for more
         information.
         """
-
         ensure_nonemptystring('user_id')
 
         async def list_groups_by_user_id_async(self, user_id: str):
@@ -234,8 +261,8 @@ class Okta:
 
         # Raised exceptions
 
-        Raises an _ApiError_ exception if error is throw by Okta during add
-        user to group operation.
+        Raises an _ApiError_ exception if error is throw by Okta during
+        add user to group operation.
         """
         ensure_nonemptystring('group_id')
         ensure_nonemptystring('user_id')
@@ -263,9 +290,8 @@ class Okta:
 
         # Raised exceptions
 
-        Raises an _ApiError_ exception if error is throw by Okta during remove
-        user from group operation.
-
+        Raises an _ApiError_ exception if error is throw by Okta during
+        remove user from group operation.
         """
         ensure_nonemptystring('group_id')
         ensure_nonemptystring('user_id')
@@ -296,7 +322,8 @@ class Okta:
 
         # Returned value
 
-        Return a list of users. Refer to #get_user_info() for more information.
+        Return a list of users. Refer to #get_user_info() for more
+        information.
         """
         ensure_nonemptystring('group_id')
 

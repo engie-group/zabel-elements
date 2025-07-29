@@ -51,13 +51,13 @@ class GitHub(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.github.com/v3/>
     - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
-    # Implemented features
+    ## Implemented features
 
     - users
     - organizations
@@ -71,21 +71,30 @@ class GitHub(Base):
 
     Some methods require an Enterprise Cloud account.
 
-    # Sample use
+    ## Examples
+
+    Standard use:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
+    user = '...'
+    token = '...'
     gh = GitHub(url, basic_auth=(user, token))
     gh.list_users()
+    ```
 
-    # enabling management features
-    from zabel.elements import clients
+    Enabling management features (for a private GitHub Enterprise
+    server):
 
+    ```python
+    from zabel.elements.clients import GitHub
+
+    url = 'https://github.example.com/api/v3/'
+    token = '...'
     mngt = 'https://github.example.com/'
-    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh = GitHub(url, bearer_auth=token, management_url=mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """

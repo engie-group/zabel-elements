@@ -32,26 +32,29 @@ from .base.githubcloud import GitHubCloud as Base
 class GitHubCloud(Base):
     """GitHubCloud Low-Level Wrapper.
 
-    There can be as many GitHub instances as needed.
-
     A class wrapping the GitHub Cloud APIs.
 
-    This module depends ont the **requests** public library. It also depends
-    on three **zabel-commons** modules, #::zabel.commons.exceptions,
-    #::zabel.commons.sessions, and #::zabel.commons.utils.
+    There can be as many GitHub Cloud instances as needed.
 
-    # Reference URLs
+    This module depends on the **requests** public library. It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions, and
+    #::zabel.commons.utils.
+
+    ## Reference URLs
 
     - <https://docs.github.com/en/enterprise-cloud@latest/rest?apiVersion=2022-11-28>
     - <https://docs.github.com/en/enterprise-cloud@latest/graphql>
 
-    # Sample use
+    ## Examples
+
+    Standard use on github.com:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitHubCloud
 
     url = 'https://api.github.com'
+    token = '...'
     ghc = GitHubCloud(url, bearer_auth=token)
     ghc.list_organizations('my_enterprise')
     ```
@@ -63,7 +66,7 @@ class GitHubCloud(Base):
         organization_name: str,
         enterprise_name: str,
         admins: List[str],
-        profile_name: Optional[str] = '',
+        profile_name: str = '',
     ) -> Dict[str, Any]:
         """Create an organization in an enterprise.
 
@@ -84,6 +87,7 @@ class GitHubCloud(Base):
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('enterprise_name')
         ensure_instance('admins', list)
+        ensure_instance('profile_name', str)
 
         enterprise = self.get_enterprise(enterprise_name)
         if not enterprise:
@@ -120,8 +124,8 @@ class GitHubCloud(Base):
 
         # Optional parameters
 
-        - visibility: a string, one of `all`, `private`, or `selected`
-          (`all` by default)
+        - visibility: a string, one of `'all'`, `'private'`, or
+          `'selected'` (`'all'` by default)
         - repositories_ids: a list of integers (None by default)
 
         # Returned value

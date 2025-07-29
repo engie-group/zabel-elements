@@ -29,37 +29,25 @@ from .base.okta import Okta as Base, OktaException
 class Okta(Base):
     """Okta Low-Level Wrapper.
 
-    # Reference url
+    ## Reference URLs
 
     <https://developer.okta.com/docs/reference/api/groups/>
 
-    # Implemented features
+    ## Implemented features
 
-    - add_users_to_group
-    - remove_users_from_group
-    - list_group_users
-    - list_user_groups
+    - users
+    - groups
 
-    - get_user_info
-    - get_group_by_name
-    - add_user_to_group
-    - remove_user_from_group
-
-    # Sample use
-
-    (assuming a token api `token`)
+    ## Examples
 
     ```python
     from zabel.elements.clients import Okta
 
     url = 'https://okta.example.com'
-    okta = Okta(
-        url,
-        token,
-    )
+    token = '...'
+    okta = Okta(url, token)
     user = okta.get_user_info('JP5300')
     ```
-
     """
 
     def add_users_to_group(self, group: str, users: Iterable[str]) -> None:
@@ -72,7 +60,6 @@ class Okta(Base):
 
         - group: a non-empty string
         - users: an list of strings
-
         """
         okta_group = self.get_group_by_name(group)
         okta_group_id = okta_group['id']

@@ -49,6 +49,8 @@ CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
 class Confluence:
     """Confluence Server and Data Center Low-Level Wrapper.
 
+    An interface to Confluence, including users and groups management.
+
     There can be as many Confluence instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -56,40 +58,39 @@ class Confluence:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://docs.atlassian.com/ConfluenceServer/rest/latest>
-    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
-    <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    <https://developer.atlassian.com/server/confluence/remote-confluence
-        -methods>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
+    - <https://developer.atlassian.com/confdev/confluence-server-rest-api>
+    - <https://developer.atlassian.com/server/confluence/remote-confluence-methods>
 
     WADLs are also available on a given instance:
 
-    <https://{instance}/rest/api/application.wadl>
-    <https://{instance}/rest/mobile/1.0/application.wadl>
+    - <https://{instance}/rest/api/application.wadl>
+    - <https://{instance}/rest/mobile/1.0/application.wadl>
 
-    An interface to Confluence, including users and groups management.
-
-    # Implemented features
+    ## Implemented features
 
     - groups&users
     - pages
     - search
     - spaces
-    - misc. features (index,long tasks, ...)
+    - misc. features (index, long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
     Whenever applicable, the provided features handle pagination (i.e.,
-    they return all relevant elements, not only the first n).
+    they return all relevant elements, not only the first _n_).
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import Confluence
 
     url = 'https://confluence.example.com'
+    user = '...'
+    token = '...'
     confluence = Confluence(url, basic_auth=(user, token))
     confluence.list_users()
     ```
@@ -125,8 +126,9 @@ class Confluence:
 
         # Usage
 
-        `url` must be the URL of the Confluence instance, e.g.,
-        `'https://confluence.example.com'`.
+        `url` must be the URL of the Confluence instance.  For example:
+
+            'https://confluence.example.com'
 
         The `oauth` dictionary is expected to have the following
         entries:

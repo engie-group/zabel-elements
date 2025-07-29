@@ -53,13 +53,13 @@ class GitHub:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.github.com/v3/>
     - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
-    # Implemented features
+    ## Implemented features
 
     - users
     - organizations
@@ -73,21 +73,30 @@ class GitHub:
 
     Some methods require an Enterprise Cloud account.
 
-    # Sample use
+    ## Examples
+
+    Standard use:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
+    user = '...'
+    token = '...'
     gh = GitHub(url, basic_auth=(user, token))
     gh.list_users()
+    ```
 
-    # enabling management features
-    from zabel.elements import clients
+    Enabling management features (for a private GitHub Enterprise
+    server):
 
+    ```python
+    from zabel.elements.clients import GitHub
+
+    url = 'https://github.example.com/api/v3/'
+    token = '...'
     mngt = 'https://github.example.com/'
-    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh = GitHub(url, bearer_auth=token, management_url=mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """
@@ -110,7 +119,8 @@ class GitHub:
 
         Some methods require an Enterprise Cloud account.
 
-        The legacy `user` and `token` parameters are still supported.
+        The legacy `user` and `token` parameters are deprecated.  Use
+        `basic_auth` or `bearer_auth` instead.
 
         # Required parameters
 
@@ -127,6 +137,17 @@ class GitHub:
         - management_url: a non-empty string or None (None by
           default)
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` is the base URL of the GitHub API.  For example:
+
+            'https://github.example.com/api/v3/'
+
+        `management_url` is the base URL of the GitHub instance.  For
+        example:
+
+            'https://github.example.com'
 
         `verify` can be set to False if disabling certificate checks for
         GitHub communication is required.  Tons of warnings will occur

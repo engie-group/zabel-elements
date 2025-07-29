@@ -40,22 +40,23 @@ from zabel.commons.utils import (
 class Atlassian:
     """Atlassian Base-Level Wrapper.
 
-    # Reference URLs
+    ## Reference URLs
 
-    <https://developer.atlassian.com/cloud/admin>
+    - <https://developer.atlassian.com/cloud/admin>
 
-    # Implemented features
+    ## Implemented features
 
     - users
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import Atlassian
 
     url = 'https://api.atlassian.com/admin'
-    atlassian = Atlassian(url, token)
-    atlassian.list_organisation_users('org_id')
+    token = '...'
+    atlassian = Atlassian(url, bearer_auth=token)
+    atlassian.list_organization_users('your-organization-id')
     ```
     """
 
@@ -71,9 +72,11 @@ class Atlassian:
         - url: a non-empty string
         - bearer_auth: a string
 
-        `url` is the top-level API endpoint.  For example,
-        `'https://api.atlassian.com/admin/v1/'`
+        # Usage
 
+        `url` is the top-level API endpoint.  For example:
+
+            'https://api.atlassian.com/admin/v1/'
         """
         ensure_nonemptystring('url')
         ensure_nonemptystring('bearer_auth')
@@ -99,11 +102,12 @@ class Atlassian:
         """List organization users.
 
         # Required parameters
+
         - org_id: a string
 
         # Returned value
 
-        A list of users.  Each user is a dictionary with the
+        A list of _users_.  Each user is a dictionary with the
         following entries:
 
         - `account_id`: a string

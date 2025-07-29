@@ -101,28 +101,28 @@ class Jira:
         This class reuses the JIRA library whenever possible, but always
         returns 'raw' values (dictionaries, ..., not classes).
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.atlassian.com/server/jira/platform/rest/>
     - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
     - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
-    # Agile references
+    ### Agile references
 
     - <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
-    # Using the jira.JIRA python library
+    ### The jira.JIRA python library
 
     - <http://jira.readthedocs.io/en/latest/>
 
-    # Other interesting links
+    ### Other interesting links
 
     The various WADLs, such as:
 
     - <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
     - <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
 
-    # Implemented features
+    ## Implemented features
 
     - anonymization
     - boards
@@ -154,7 +154,7 @@ class Jira:
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
 
-    # Expansion
+    ## Expansion
 
     The Jira REST API uses resource expansion.  This means the API will
     only return parts of the resource when explicitly requested.
@@ -197,12 +197,27 @@ class Jira:
     expand the widgets collection and also the _fringel_ property of
     each widget.
 
-    # Sample use
+    ## Search methods
+
+    The search methods, #search() and #search_users(), return a limited
+    number of results.
+
+    This limit can be configured by passing a `max_results` parameter,
+    but this limit is constrained by the Jira server to a maximum
+    value, which is defined by its `jira.search.views.default.max`
+    property.
+
+    The default value used by this library is `MAX_RESULTS` (`1000`),
+    but this is subject to the above restriction.
+
+    ## Examples
 
     ```python
     from zabel.elements.clients import Jira
 
     url = 'https://jira.example.com'
+    user = '...'
+    token = '...'
     jc = Jira(url, basic_auth=(user, token))
     jc.list_users()
     ```
@@ -235,8 +250,9 @@ class Jira:
 
         # Usage
 
-        `url` must be the URL of the Jira instance, e.g.,
-        `https://jira.example.com`.
+        `url` must be the URL of the Jira instance.  For example:
+
+            `https://jira.example.com`
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -668,7 +684,7 @@ class Jira:
         self,
         name: str,
         description: Optional[str] = None,
-        permissions: List[Dict[str, Any]] = [],
+        permissions: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Create new permission scheme.
 
@@ -679,7 +695,7 @@ class Jira:
         # Optional parameters
 
         - description: a string or None (None by default)
-        - permissions: a possibly empty list of dictionaries (`[]` by
+        - permissions: a possibly empty list of dictionaries (None by
           default)
 
         # Returned value
@@ -698,9 +714,9 @@ class Jira:
         """
         ensure_nonemptystring('name')
         ensure_noneorinstance('description', str)
-        ensure_instance('permissions', list)
+        ensure_noneorinstance('permissions', list)
 
-        scheme = {'name': name, 'permissions': permissions}
+        scheme = {'name': name, 'permissions': permissions or []}
         add_if_specified(scheme, 'description', description)
 
         result = self.session().post(
@@ -1129,7 +1145,7 @@ class Jira:
 
         # Optional parameters
 
-        - expand: a string (`deletable` by default)
+        - expand: a string (`'deletable'` by default)
 
         # Returned value
 
@@ -2785,7 +2801,7 @@ class Jira:
 
         - project_id_or_key: a non-empty string
         - name: a non-empty string
-        - preset: one of 'kanban', 'scrum'
+        - preset: a string, either `'kanban'` or `'scrum'`
 
         # Returned value
 
@@ -3353,7 +3369,8 @@ class Jira:
         - startTime: a string (an ISO8601 timestamp)
         - finishTime: a string (an ISO8601 timestamp)
         - operations: a list of strings
-        - status: a string with following values: 'COMPLETED', 'IN_PROGRESS', 'INTERRUPTED', 'VALIDATION_FAILED'
+        - status: a string with following values: `'COMPLETED'`,
+          `'IN_PROGRESS'`, `'INTERRUPTED'`, or `'VALIDATION_FAILED'`
         - executingNode: a string
         - isRerun: a boolean
         - rerun: a boolean
@@ -3549,7 +3566,7 @@ class Jira:
         - color: a dictionary
         - done: a boolean
 
-        The `color` dictionary has one key, `'key'`, with its value
+        The `color` dictionary has one key, `key`, with its value
         being a string (the epic color, for example `'color_1'`).
         """
         ensure_instance('board_id', int)
@@ -4283,9 +4300,9 @@ class Jira:
         """Add attachment to issue.
 
         !!! note
-            If rename_to contains non-ASCII symbols, this may
-            fail with an HTTP error (code 500).  Some (?) Jira versions
-            fail to handle that properly.
+            If `rename_to` contains non-ASCII symbols, this may
+            fail with an HTTP error (code `500`).  Some (?) Jira
+            versions fail to handle that properly.
 
         # Required parameters
 
@@ -4340,7 +4357,6 @@ class Jira:
         - enabled: a a boolean
         - uploadLimit: an integer
         """
-
         result = self._get_json('attachment/meta')
         return result
 
@@ -4510,7 +4526,7 @@ class Jira:
 
         # Returned value
 
-        None.
+        A boolean.
         """
         ensure_instance('sprint_id', int)
 
@@ -4678,8 +4694,8 @@ class Jira:
         description: Optional[str] = None,
         release_date: Optional[str] = None,
         start_date: Optional[str] = None,
-        archived: Optional[bool] = False,
-        released: Optional[bool] = False,
+        archived: bool = False,
+        released: bool = False,
     ) -> Dict[str, Any]:
         """Create a new version.
 
@@ -4700,7 +4716,6 @@ class Jira:
 
         A dictionary.
         """
-
         ensure_nonemptystring('name')
         ensure_nonemptystring('project_key')
         ensure_noneorinstance('description', str)
@@ -4712,12 +4727,12 @@ class Jira:
         params = {
             'name': name,
             'project': project_key,
+            'archived': archived,
+            'released': released,
         }
         add_if_specified(params, 'description', description)
         add_if_specified(params, 'releaseDate', release_date)
         add_if_specified(params, 'startDate', start_date)
-        add_if_specified(params, 'archived', archived)
-        add_if_specified(params, 'released', released)
 
         return self._post('version', json=params)
 
@@ -4871,13 +4886,12 @@ class Jira:
     def update_component(
         self, component_id: Union[str, int], component: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        Update a component in Jira.
+        """Update a component.
 
         # Required parameters
 
         - component_id: a non-empty string or integer
-        - component: a dictionary containing the component fields to update
+        - component: a dictionary, the component fields to update
 
         # Returned value
 
@@ -5032,7 +5046,7 @@ class Jira:
 
     @api_call
     def list_servicedesks(
-        self, include_archived: Optional[bool] = False
+        self, include_archived: bool = False
     ) -> List[Dict[str, Any]]:
         """Return the available service desks.
 
@@ -5053,17 +5067,13 @@ class Jira:
         """
         ensure_instance('include_archived', bool)
 
-        params = {}
-        add_if_specified(params, 'includeArchived', include_archived)
+        params = {'includeArchived': include_archived}
 
         return self._collect_sd_data('servicedesk', params)
 
     @api_call
     def create_request(
-        self,
-        servicedesk_id: str,
-        requesttype_id: str,
-        fields: Dict[str, Any],
+        self, servicedesk_id: str, requesttype_id: str, fields: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Create new request on specified service desk.
 
@@ -5145,6 +5155,7 @@ class Jira:
             params: Optional[Dict[str, str]] = {'expand': expand}
         else:
             params = None
+
         response = requests.get(
             join_url(
                 self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
@@ -5275,8 +5286,8 @@ class Jira:
 
         # Required parameters
 
-        - context_id: a string
-        - customfield_id: a string
+        - context_id: a non-empty string
+        - customfield_id: a non-empty string
 
         # Returned value
 
@@ -5391,6 +5402,7 @@ class Jira:
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
+
         result = requests.get(
             join_url(
                 self.SERVICEDESK_BASE_URL,
@@ -5400,17 +5412,17 @@ class Jira:
             verify=self.verify,
             timeout=TIMEOUT,
         )
-        return result
+        return result  # type: ignore
 
     @api_call
     def list_servicedesk_organizations(
-        self, servicedesk_id: Union[int, str]
+        self, servicedesk_id: str
     ) -> List[Dict[str, Any]]:
         """Return the list of all service desk organizations.
 
         # Required parameters
 
-        - servicedesk_id: an integer or a string
+        - servicedesk_id: a non-empty string
 
         # Returned value
 
@@ -5419,6 +5431,8 @@ class Jira:
         Refer to
         #get_organization() for details on its structure.
         """
+        ensure_nonemptystring('servicedesk_id')
+
         organizations = self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/organization',
             headers={'X-ExperimentalApi': 'opt-in'},
@@ -5547,6 +5561,7 @@ class Jira:
         - _links: a dictionary
         """
         ensure_instance('organization_id', int)
+
         return self._collect_sd_data(
             f'organization/{organization_id}/user',
             headers={'X-ExperimentalApi': 'opt-in'},
@@ -5554,9 +5569,7 @@ class Jira:
 
     @api_call
     def add_organization_users(
-        self,
-        organization_id: int,
-        usernames: List[str],
+        self, organization_id: int, usernames: List[str]
     ) -> bool:
         """Add user(s) to organization.
 
@@ -5624,7 +5637,7 @@ class Jira:
     def add_servicedesk_organization(
         self, servicedesk_id: Union[int, str], organization_id: int
     ) -> bool:
-        """Add organization to servicedesk.
+        """Add organization to service desk.
 
         # Required parameters
 
@@ -5635,7 +5648,6 @@ class Jira:
 
         A boolean.  True if successful, False otherwise.
         """
-
         ensure_instance('servicedesk_id', (str, int))
         ensure_instance('organization_id', (str, int))
 
@@ -5736,15 +5748,15 @@ class Jira:
 
         ```python
         {
-            'versionNumbers': [7, 3, 8],
-            'serverTitle': 'JIRA Dev',
-            'buildNumber': 73019,
-            'deploymentType': 'Server',
-            'version': '7.3.8',
-            'baseUrl': 'https://jira.example.com',
-            'scmInfo': '94e8771b8094eef96c119ec22b8e8868d286fa88',
-            'buildDate': '2017-06-12T00:00:00.000+0000',
-            'serverTime': '2018-01-15T11:07:40.690+0000'
+          'versionNumbers': [7, 3, 8],
+          'serverTitle': 'JIRA Dev',
+          'buildNumber': 73019,
+          'deploymentType': 'Server',
+          'version': '7.3.8',
+          'baseUrl': 'https://jira.example.com',
+          'scmInfo': '94e8771b8094eef96c119ec22b8e8868d286fa88',
+          'buildDate': '2017-06-12T00:00:00.000+0000',
+          'serverTime': '2018-01-15T11:07:40.690+0000'
         }
         ```
         """

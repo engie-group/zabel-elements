@@ -70,6 +70,8 @@ pages:
 theme:
   features:
     - navigation.indexes
+    - content.code.copy
+    - content.tabs.link
     # - navigation.tabs
   name: material
   palette:

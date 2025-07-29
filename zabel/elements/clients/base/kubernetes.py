@@ -37,15 +37,38 @@ class Kubernetes:
     !!! warning
         Preliminary work.  Not stable.  May change at any time.
 
-    # Reference URL
-    ...
+    There can be as many _Kubernetes_ instances as needed.
 
-    # Implemented features
+    This module depends on the public **kubernetes** library.  It also
+    depends on one **zabel-commons** module, #::zabel.commons.utils.
 
-    - `namespaces`
-    - `resource quota`
+    ## Reference URLs
 
-    # Sample use
+    - <https://github.com/kubernetes-client/python>
+
+    ## Implemented features
+
+    - namespaces
+    - resource quota
+    - create and patch from YAML manifests
+
+    ## Exceptions
+
+    A _KubernetesError_ exception, extending _ApiError_ is raised if an
+    error occurs while handling a Kubernetes object.  The exception
+    contains a list of _ApiException_ objects, each one corresponding to
+    a failed Kubernetes operation.
+
+    ```python
+    class KubernetesError(zabel.commons.exceptions.ApiError):
+
+        def __init__(
+            self,
+            api_exceptions: list[kubernetes.client.rest.ApiException]
+        ) -> None
+    ```
+
+    ## Examples
 
     Using the default context as defined in the `~/.kube/config`
     configuration file:
@@ -62,13 +85,14 @@ class Kubernetes:
     ```python
     from zabel.elements.clients import Kubernetes
 
-    K8S_URL = 'https://kubernetes.example.com'
+    url = 'https://kubernetes.example.com'
+    api_key = '...'
     k8s = Kubernetes(
-        config={
-            'url': K8S_URL,
-            'api_key': '...',
-            'verify': False,
-        }
+      config={
+        'url': url,
+        'api_key': api_key,
+        'verify': False,
+      }
     )
     namespaces = k8s.list_namespaces()
     ```
@@ -117,7 +141,7 @@ class Kubernetes:
 
         The `url` parameter is the top-level API point. E.g.:
 
-            https://FOOBARBAZ.example.com
+            'https://FOOBARBAZ.example.com'
 
         `verify` can be set to False if disabling certificate checks for
         Kubernetes communication is required.  Tons of warnings will
@@ -317,7 +341,7 @@ class Kubernetes:
 
         # Optional parameters
 
-        - namespace: a string
+        - namespace: a string (`'default'` by default)
 
         # Returned value
 
@@ -340,7 +364,7 @@ class Kubernetes:
 
         # Optional parameters
 
-        - namespace: a string
+        - namespace: a string (`'default'` by default)
 
         # Returned value
 
@@ -371,7 +395,7 @@ class Kubernetes:
 
         # Optional parameters
 
-        - namespace: a string
+        - namespace: a string (`'default'` by default)
 
         # Returned value
 

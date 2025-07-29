@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Martin Lafaix (martin.lafaix@external.engie.com)
+# Copyright (c) 2025 Martin Lafaix (mlafaix@henix.com)
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
@@ -28,33 +28,35 @@ from .base.gitlab import GitLab as Base
 class GitLab(Base):
     """GitLab Low-Level Wrapper.
 
-    # Reference URL
+    !!! note
+        Reuse the **python-gitlab** library whenever possible, but
+        always returns 'raw' values (dictionaries, ..., not classes).
+
+    ## Reference URLs
 
     - <https://docs.gitlab.com/api/rest/>
     - <https://docs.gitlab.com/api/api_resources/>
     - <https://python-gitlab.readthedocs.io/en/stable/>
 
-    # Implemented features
+    ## Implemented features
 
     - namespaces
     - groups
     - projects
     - members
 
-    # Sample use
+    ## Examples
+
+    Standard use on gitlab.com:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitLab
 
     url = 'https://gitlab.com/'
-    gl = GitLab(url, private_token)
+    token = '...'
+    gl = GitLab(url, private_token=token)
     gl.list_project_protectedbranches()
     ```
-
-    !!! note
-        Reuse the **python-gitlab** library whenever possible, but
-        always returns 'raw' values (dictionaries, ..., not classes).
     """
 
     def list_namespace_projects(

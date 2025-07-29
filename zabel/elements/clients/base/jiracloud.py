@@ -10,13 +10,15 @@
 
 A class wrapping Jira Cloud APIs.
 
-There can be as many Jira instances as needed.
+There can be as many Jira Cloud instances as needed.
 
 This module depends on the public **requests**library.
 It also depends on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
+
 from typing import Optional, Tuple, Union, Mapping, Iterable, List, Any, Dict
+
 import requests
 
 from zabel.commons.exceptions import ApiError
@@ -42,24 +44,24 @@ PROJECT_EXPAND = 'description,lead,projectKeys,issueTypes,issueTypeHierarchy'
 
 
 class JiraCloud:
-    """JIRA Cloud Low-Level Wrapper.
+    """Jira Cloud Low-Level Wrapper.
 
-    There can be as many Jira instances as needed.
+    There can be as many Jira Cloud instances as needed.
 
     This class depends on the public **requests** library.
     It also depends on two **zabel-commons** modules,
     #::zabel.commons.exceptions and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.atlassian.com/cloud/jira/platform/rest/v3>
 
-    # Agile references
+    ### Agile references
 
     - <https://developer.atlassian.com/cloud/jira/software/rest/intro/>
     - <https://support.atlassian.com/jira/kb/how-to-update-board-administrators-through-rest-api/>
 
-    # Implemented features
+    ## Implemented features
 
     - boards
     - filters
@@ -72,16 +74,53 @@ class JiraCloud:
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
 
-    # Sample usage
+    ## Expansion
+
+    The Jira REST API uses resource expansion.  This means the API will
+    only return parts of the resource when explicitly requested.
+
+    Many query methods have an `expand` parameter, a comma-separated
+    list of entities that are to be expanded, identifying each of them
+    by name.
+
+    Here are the default values for the main Jira entities:
+
+    | Entity            | Default value
+    | ----------------- | -------------
+    | `PROJECTS_EXPAND` | description, lead, url, projectKeys,
+                          issueTypes
+    | `PROJECT_EXPAND`  | description, lead, projectKeys, issueTypes,
+                          issueTypeHierarchy
+
+    To discover the identifiers for each entity, look at the `expand`
+    properties in the parent object.  In the example below, the
+    resource declares _widgets_ as being expandable:
+
+    ```json
+    {
+      "expand": "widgets",
+      "self": "http://www.example.com/jira/rest/api/resource/KEY-1",
+      "widgets": {
+        "widgets": [],
+        "size": 5
+      }
+    }
+    ```
+
+    The dot notation allows to specify expansion of entities within
+    another entity.  For example, `expand='widgets.fringels'` would
+    expand the widgets collection and also the _fringel_ property of
+    each widget.
+
+    ## Examples
 
     ```python
     from zabel.elements.clients.jiracloud import JiraCloud
 
     url = 'https://your-domain.atlassian.net'
-    jc = JiraCloud(
-        url,
-        basic_auth=(user, token),
-    )
+    user = '...'
+    token = '...'
+    jc = JiraCloud(url, basic_auth=(user, token))
     jc.list_projects()
     ```
     """
@@ -92,9 +131,9 @@ class JiraCloud:
         basic_auth: Tuple[str, str],
         verify: bool = True,
     ) -> None:
-        """Create a JiraCloud instance object.
+        """Create a Jira Cloud instance object.
 
-        https://developer.atlassian.com/cloud/jira/software/rest/intro/#introduction
+        <https://developer.atlassian.com/cloud/jira/software/rest/intro/#introduction>
 
         # Required parameters
 
@@ -107,8 +146,9 @@ class JiraCloud:
 
         # Usage
 
-        `url` must be the URL of the JiraCloud instance, e.g.,
-        `https://jira.atlassian.net`.
+        `url` must be the URL of the Jira Cloud instance.  For example:
+
+            `https://your-domain.atlassian.net`
 
         `verify` can be set to False if disabling certificate checks for
         Jira communication is required.  Tons of warnings will occur if
@@ -137,7 +177,7 @@ class JiraCloud:
         return f'<{self.__class__.__name__}: {self.url!r}, {self.basic_auth[0]!r}>'
 
     ####################################################################
-    # JIRA CLOUD groups
+    # Jira Cloud groups
     #
     # list_groups
     # create_group
@@ -281,7 +321,7 @@ class JiraCloud:
         return response.status_code == 204
 
     ####################################################################
-    # JIRA CLOUD groups
+    # Jira Cloud groups
     #
     # list_users
     # get_user
@@ -383,7 +423,7 @@ class JiraCloud:
         return self._get('user/search', params=params)  # type: ignore
 
     ####################################################################
-    # JIRA Cloud projects
+    # Jira Cloud projects
     #
     # list_projects
     # get_project
@@ -417,10 +457,10 @@ class JiraCloud:
 
         - action: a string
         - category_id: an integer
-        - expand: a string (see `PROJECT_EXPAND` constant)
+        - expand: a string (`PROJECTS_EXPAND` by default)
         - ids: a list of integers
         - keys: a list of strings
-        - max_results: an integer (default: 50, maximum: 100)
+        - max_results: an integer (default: `50`, maximum: `100`)
         - order_by: a string
         - query: a string
         - start_at: an integer
@@ -509,14 +549,14 @@ class JiraCloud:
 
         - key: a non-empty string (the project key)
         - project_type_key: a string (project type key, e.g.,
-          `business`, `software`, `service_desk`)
+          `'business'`, `'software'`, `'service_desk'`)
         - name: a non-empty string (the project name)
 
         # Optional parameters
 
         - lead_account_id: a string (the project lead account ID, if
           different from username)
-        - assignee_type: a string (e.g., `PROJECT_LEAD`)
+        - assignee_type: a string (e.g., `'PROJECT_LEAD'`)
         - avatar_id: an integer (the avatar ID)
         - category_id: an integer (the category ID)
         - description: a string (the project description)
@@ -529,7 +569,7 @@ class JiraCloud:
         - notification_scheme: an integer (notification scheme ID)
         - permission_scheme: an integer (permission scheme ID)
         - project_template_key: a string (project template key, e.g.,
-          'com.atlassian.jira-core-project-templates:jira-core-simplified')
+          `'com.atlassian.jira-core-project-templates:jira-core-simplified'`)
         - url: a string (the project URL)
         - workflow_scheme: an integer (workflow scheme ID)
 
@@ -727,7 +767,7 @@ class JiraCloud:
         - id: an integer
         - name: a string
         - scope: a dictionary with the following entries:
-            - type: a string (e.g., 'PROJECT')
+            - type: a string (e.g., `'PROJECT'`)
             - project: a dictionary
         - self: a string (an URL)
 
@@ -738,10 +778,9 @@ class JiraCloud:
         - displayName: a string
         - name: a string (for actorGroup)
         - type: a string
-
         """
         ensure_instance('project_id_or_key', (int, str))
-        ensure_instance('role_id', int)
+        ensure_instance('role_id', (int, str))
 
         response = self._get(f'project/{project_id_or_key}/role/{role_id}')
         return response.json()
@@ -808,7 +847,7 @@ class JiraCloud:
         # Optional parameters
 
         - group: a string
-        - user: a string
+        - user: a string (account ID)
         """
         ensure_instance('project_id_or_key', (str, int))
         ensure_instance('role_id', (str, int))
@@ -826,7 +865,7 @@ class JiraCloud:
         )
 
     ####################################################################
-    # JIRA agile
+    # Jira agile
     #
     # list_project_boards
     # create_project_board
@@ -882,7 +921,8 @@ class JiraCloud:
 
         - name: a non-empty string (the board name)
         - project_id_or_key: an integer or a string
-        - type: a string (the board type, e.g., 'scrum', 'kanban', 'simple')
+        - type: a string (the board type, e.g., `'scrum'`, `'kanban'`,
+          `'simple'`)
 
         # Optional parameters
 
@@ -925,8 +965,10 @@ class JiraCloud:
         # Optional parameters
 
         - description: a string (the filter description, optional)
-        - share_permissions: a list of dictionaries (optional, used for sharing the filter)
-        - edit_permissions: a list of dictionaries (optional, used for editing permissions)
+        - share_permissions: a list of dictionaries (optional, used for
+          sharing the filter)
+        - edit_permissions: a list of dictionaries (optional, used for
+          editing permissions)
 
         # Returned value
 
@@ -1003,12 +1045,14 @@ class JiraCloud:
         # Required parameters
 
         - name: a non-empty string (the board name)
-        - type: a string (the board type, e.g., 'scrum', 'kanban', 'simple')
+        - type: a string (the board type, e.g., `'scrum'`, `'kanban'`,
+          `'simple'`)
 
         # Optional parameters
 
         - filter_id: an integer (the filter ID)
-        - location: a dictionary (optional, used for specifying the board location)
+        - location: a dictionary (optional, used for specifying the
+          board location)
 
         # Returned value
 
@@ -1030,7 +1074,7 @@ class JiraCloud:
         return response.json()
 
     ####################################################################
-    # JIRA Cloud misc. schemes
+    # Jira Cloud misc. schemes
     #
     # list_workflowschemes
     # list_issuetypeschemes
@@ -1051,16 +1095,19 @@ class JiraCloud:
 
         # Optional parameters
 
-        - start_at: an integer (default: 0)
-        - max_results: an integer (default: 50, maximum: 100)
-        - ids: a list of integers (optional, used for filtering by scheme IDs)
+        - start_at: an integer (default: `0`)
+        - max_results: an integer (default: `50`, maximum: `100`)
+        - ids: a list of integers (optional, used for filtering by
+          scheme IDs)
         - query: a string (optional, used for filtering by scheme name)
         - order_by: a string (optional, used for ordering results)
-        - expand: a string (optional, used for expanding additional fields)
+        - expand: a string (optional, used for expanding additional
+          fields)
 
         # Returned value
 
-        A list of dictionaries, each representing an issue type screen scheme.
+        A list of dictionaries, each representing an issue type screen
+        scheme.
         """
         ensure_instance('start_at', int)
         ensure_instance('max_results', int)
@@ -1078,7 +1125,7 @@ class JiraCloud:
         return self._collect_data('issuetypescreenscheme', params=params)
 
     ####################################################################
-    # JIRA Cloud roles
+    # Jira Cloud roles
     #
     # list_roles
 
@@ -1112,7 +1159,7 @@ class JiraCloud:
         return response.json()
 
     ####################################################################
-    # JIRA Service Desk
+    # Jira Service Desk
     #
     # list_servicedesks
     # create_request
@@ -1255,8 +1302,8 @@ class JiraCloud:
     def list_request_comments(
         self,
         request_id_or_key: str,
-        public: Optional[bool] = True,
-        internal: Optional[bool] = True,
+        public: bool = True,
+        internal: bool = True,
         expand: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Return the available comments for request.
@@ -1267,9 +1314,12 @@ class JiraCloud:
 
         # Optional parameters
 
-        - public: a boolean (default: True, whether to include public comments)
-        - internal: a boolean (default: True, whether to include internal comments)
-        - expand: a string (optional, used for expanding additional fields)
+        - public: a boolean (default: True, whether to include public
+          comments)
+        - internal: a boolean (default: True, whether to include
+          internal comments)
+        - expand: a string (optional, used for expanding additional
+          fields)
 
         # Returned value
 
@@ -1283,15 +1333,12 @@ class JiraCloud:
         - public: a boolean
         - _links: a dictionary
         """
-
         ensure_nonemptystring('request_id_or_key')
-        ensure_noneorinstance('public', bool)
-        ensure_noneorinstance('internal', bool)
+        ensure_instance('public', bool)
+        ensure_instance('internal', bool)
         ensure_noneorinstance('expand', str)
 
-        params = {}
-        add_if_specified(params, 'public', public)
-        add_if_specified(params, 'internal', internal)
+        params = {'public': public, 'internal': internal}
         add_if_specified(params, 'expand', expand)
 
         response = self._collect_sd_data(
@@ -1310,7 +1357,8 @@ class JiraCloud:
         # Required parameters
 
         - request_id_or_key: a non-empty string (the request ID or key)
-        - participants: a list of strings (the account IDs of the participants)
+        - participants: a list of strings (the account IDs of the
+          participants)
 
         # Returned value
 
@@ -1335,7 +1383,7 @@ class JiraCloud:
     def list_queues(
         self,
         servicedesk_id: str,
-        include_count: Optional[bool] = False,
+        include_count: bool = False,
     ) -> List[Dict[str, Any]]:
         """List queues for a service desk.
 
@@ -1345,7 +1393,7 @@ class JiraCloud:
 
         # Optional parameters
 
-        - include_count: a boolean
+        - include_count: a boolean (False by default)
 
         # Returned value
 
@@ -1354,16 +1402,15 @@ class JiraCloud:
 
         - fields: a list of dictionaries
         - id: a string
-        - issueCount: an integer (if include_count is True)
+        - issueCount: an integer (if `include_count` is True)
         - jql: a string
         - name: a string
         - _links: a dictionary
         """
         ensure_nonemptystring('servicedesk_id')
-        ensure_noneorinstance('include_count', bool)
+        ensure_instance('include_count', bool)
 
-        params = {}
-        add_if_specified(params, 'includeCount', include_count)
+        params = {'includeCount': include_count}
 
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/queue', params=params
@@ -1386,7 +1433,6 @@ class JiraCloud:
 
         A list of dictionaries.
         """
-
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('queue_id')
 
@@ -1412,8 +1458,8 @@ class JiraCloud:
 
         # Returned value
 
-        A list of dictionaries, each representing a request type.
-        Each request type has the following entries:
+        A list of _request types_.  Each request type is a dictionary
+        with the following entries:
 
         - description: a string
         - groupIds: a list of strings
@@ -1425,7 +1471,6 @@ class JiraCloud:
         - serviceDeskId: a string
         - _links: a dictionary
         """
-
         ensure_nonemptystring('servicedesk_id')
         ensure_noneorinstance('search_query', str)
 
@@ -1438,13 +1483,13 @@ class JiraCloud:
         )
 
     @api_call
-    def list_requesttypes_fields(
+    def get_requesttype_fields(
         self,
         servicedesk_id: str,
         request_type_id: str,
         expand: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Return the list of all request types for a given service desk.
+        """List fields for request type.
 
         # Required parameters
 
@@ -1453,25 +1498,26 @@ class JiraCloud:
 
         # Optional parameters
 
-        - expand: a string (optional, used for expanding additional fields)
+        - expand: a string (optional, used for expanding additional
+          fields)
 
         # Returned value
 
-        A dictionary representing the fields for a specific request type.
-        The structure of the returned value is as follows:
+        A dictionary representing the fields for a specific request
+        type.  The structure of the returned value is as follows:
 
         - canRaiseOnBehalfOf: a boolean
         - canRequestParticipants: a boolean
-        - requestTypeFields: a list of dictionary with
-        the following entries:
+        - requestTypeFields: a list of dictionary with the following
+          entries:
 
-        - defaultValues: a list
-        - description: a string
-        - fieldId: a string
-        - jiraSchema: a dictionary
-        - name: a string
-        - required: a boolean
-        - validValues: a list
+            - defaultValues: a list
+            - description: a string
+            - fieldId: a string
+            - jiraSchema: a dictionary
+            - name: a string
+            - required: a boolean
+            - validValues: a list
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('request_type_id')
@@ -1489,16 +1535,17 @@ class JiraCloud:
         )
         return response.json()
 
+    list_requesttypes_fields = get_requesttype_fields
+
     @api_call
     def list_servicedesk_organizations(
-        self, servicedesk_id: Union[str, int]
+        self, servicedesk_id: str
     ) -> List[Dict[str, Any]]:
-        """
-        Return the list of all service desk organizations.
+        """Return the list of all service desk organizations.
 
         # Required parameters
 
-        - servicedesk_id: an integer or a string
+        - servicedesk_id: a non-empty string
 
         # Returned value
 
@@ -1506,8 +1553,7 @@ class JiraCloud:
 
         Refer to #get_organization() for details on its structure.
         """
-
-        ensure_instance('servicedesk_id', (str, int))
+        ensure_nonemptystring('servicedesk_id')
 
         return self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/organization',
@@ -1517,12 +1563,11 @@ class JiraCloud:
     def get_organization(
         self, organization_id: Union[int, str]
     ) -> Dict[str, Any]:
-        """
-        Get a specific organization by its ID.
+        """Get a specific organization by its ID.
 
         # Required parameters
 
-        - organization_id: an integer or a string (the organization ID)
+        - organization_id: an integer or a string
 
         # Returned value
 
@@ -1535,7 +1580,6 @@ class JiraCloud:
         - scimManaged: a boolean
         - uuid: a string
         - _links: a dictionary
-
         """
         ensure_instance('organization_id', (int, str))
 
@@ -1548,8 +1592,7 @@ class JiraCloud:
 
     @api_call
     def create_organization(self, name: str) -> Dict[str, Any]:
-        """
-        Create a new organization.
+        """Create a new organization.
 
         # Required parameters
 
@@ -1560,9 +1603,10 @@ class JiraCloud:
         The created _organization_ details, a dictionary, with the
         following entries:
 
-        - id: a string
+        - id: an integer
         - name: a string
-        - scimManaged: a boolean (indicating if the organization is managed by SCIM)
+        - scimManaged: a boolean (indicating if the organization is
+          managed by SCIM)
         - _links: a dictionary
 
         """
@@ -1576,18 +1620,18 @@ class JiraCloud:
         return response.json()
 
     @api_call
-    def delete_organization(self, organization_id: int) -> bool:
+    def delete_organization(self, organization_id: Union[int, str]) -> bool:
         """Delete service desk organization.
 
         # Required parameters
 
-        - organization_id: a non-empty string
+        - organization_id: an integer or a string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_instance('organization_id', int)
+        ensure_instance('organization_id', (int, str))
 
         response = self.session().delete(
             join_url(
@@ -1599,21 +1643,21 @@ class JiraCloud:
 
     @api_call
     def add_servicedesk_organization(
-        self, servicedesk_id: Union[str, int], organization_id: int
+        self, servicedesk_id: str, organization_id: Union[int, str]
     ) -> bool:
         """Add organization to servicedesk.
 
         # Required parameters
 
-        - servicedesk_id: a non-empty string or an integer
-        - organization_id: an integer
+        - servicedesk_id: a non-empty string
+        - organization_id: an integer or a string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_instance('servicedesk_id', (str, int))
-        ensure_instance('organization_id', int)
+        ensure_nonemptystring('servicedesk_id')
+        ensure_instance('organization_id', (int, str))
 
         params = {
             'organizationId': organization_id,
@@ -1630,7 +1674,7 @@ class JiraCloud:
 
     @api_call
     def add_request_comment(
-        self, request_id_or_key: str, body: str, public: Optional[bool] = False
+        self, request_id_or_key: str, body: str, public: bool = False
     ) -> Dict[str, Any]:
         """Create public or private comment on request.
 
@@ -1673,10 +1717,9 @@ class JiraCloud:
         - iso8601: a string (an ISO8601 timestamp)
         - jira: a string (an ISO8601 timestamp)
         """
-
         ensure_nonemptystring('request_id_or_key')
         ensure_nonemptystring('body')
-        ensure_noneorinstance('public', bool)
+        ensure_instance('public', bool)
 
         params = {'body': body, 'public': public}
 
@@ -1691,7 +1734,7 @@ class JiraCloud:
         return response.json()
 
     ####################################################################
-    # JIRA Cloud helpers
+    # Jira Cloud helpers
 
     def _get_url(self, uri: str) -> str:
         """Return the full URL for a given URI."""

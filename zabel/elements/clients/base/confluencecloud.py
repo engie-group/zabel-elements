@@ -65,6 +65,9 @@ OPERATION_TARGET_VALUES = [
 class ConfluenceCloud:
     """Confluence Cloud Low-Level Wrapper.
 
+    An interface to Confluence Cloud, including users and groups
+    management.
+
     There can be as many Confluence Cloud instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -72,15 +75,12 @@ class ConfluenceCloud:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://developer.atlassian.com/cloud/confluence/rest/v2/>
-    <https://developer.atlassian.com/cloud/confluence/rest/v1/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v2/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v1/>
 
-    An interface to Confluence Cloud, including users and groups
-    management.
-
-    # Implemented features
+    ## Implemented features
 
     - pages
     - search
@@ -91,12 +91,14 @@ class ConfluenceCloud:
     Whenever applicable, the provided features handle pagination (i.e.,
     they return all relevant elements, not only the first n).
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import ConfluenceCloud
 
-    url = 'https://{instance}.atlassian.net/wiki/'
+    url = 'https://your-instance.atlassian.net/wiki/'
+    user = '...'
+    token = '...'
     confluencecloud = ConfluenceCloud(url, basic_auth=(user, token))
     confluencecloud.list_users()
     ```
@@ -112,8 +114,10 @@ class ConfluenceCloud:
 
         # Usage
 
-        `url` must be the URL of the Confluence Cloud instance, e.g.,
-        `https://{instance}.atlassian.net/wiki`.
+        `url` must be the URL of the Confluence Cloud instance.  For
+        example:
+
+            'https://{instance}.atlassian.net/wiki'
 
         `basic_auth` is a tuple containing the user name and the API
         token.  The API token can be generated in the Atlassian
