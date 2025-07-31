@@ -1172,13 +1172,13 @@ class GitHub:
     # GitHub action worflows
     #
     # create_workflow_dispatch_event
-    # list_repository_workflows
+    # list_workflows
     # get_workflow
     # list_workflow_runs
     # get_workflow_run
 
     @api_call
-    def list_repository_workflows(
+    def list_workflows(
         self,
         organization_name: str,
         repository_name: str,
@@ -1201,6 +1201,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/actions/workflows'
         ).json()
         return response['workflows']
+
+    list_repository_workflows = list_workflows
 
     @api_call
     def create_workflow_dispatch_event(
@@ -2874,12 +2876,49 @@ class GitHub:
     ####################################################################
     # GitHub repository git database
     #
+    # list_repository_references
     # create_repository_reference
     # delete_repository_reference
     # create_repository_tag
     # get_repository_reference
-    # get_repository_references
     # get_repository_tree
+
+    @api_call
+    def list_repository_references(
+        self, organization_name: str, repository_name: str, ref: str
+    ) -> List[Dict[str, Any]]:
+        """List a repository references.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (`'heads'` or `'tags'`)
+
+        # Returned value
+
+        A list of _references_.  A reference is a dictionary with the
+        following entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('ref', ('heads', 'tags'))
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
+        )
+        return result  # type: ignore
 
     @api_call
     def create_repository_reference(
@@ -3065,43 +3104,6 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def list_repository_references(
-        self, organization_name: str, repository_name: str, ref: str
-    ) -> List[Dict[str, Any]]:
-        """List a repository references.
-
-        # Required parameters
-
-        - organization_name: a non-empty string
-        - repository_name: a non-empty string
-        - ref: a non-empty string (`'heads'` or `'tags'`)
-
-        # Returned value
-
-        A list of _references_.  A reference is a dictionary with the
-        following entries:
-
-        - ref: a string
-        - node_id: a string
-        - url: a string
-        - object: a dictionary
-
-        The `object` dictionary has the following entries:
-
-        - type: a string
-        - sha: a string
-        - url: a string
-        """
-        ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repository_name')
-        ensure_in('ref', ('heads', 'tags'))
-
-        result = self._get(
-            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
-        )
-        return result  # type: ignore
-
-    @api_call
     def get_repository_tree(
         self,
         organization_name: str,
@@ -3163,22 +3165,22 @@ class GitHub:
     ####################################################################
     # GitHub hook operations
     #
-    # list_hooks
     # list_global_hooks
     # list_organization_hooks
+    # list_repository_hooks
     # get_organization_hook
-    # create_hook
     # create_global_hook
+    # create_repository_hook
     # create_organization_hook
-    # delete_hook
     # delete_global_hook
     # delete_organization_hook
-    # ping_hook
+    # delete_repository_hook
     # ping_global_hook
     # ping_organization_hook
+    # ping_repository_hook
 
     @api_call
-    def list_hooks(
+    def list_repository_hooks(
         self, organization_name: str, repository_name: str
     ) -> List[Dict[str, Any]]:
         """List web hooks for repository.
@@ -3224,6 +3226,8 @@ class GitHub:
         return self._collect_data(
             f'repos/{organization_name}/{repository_name}/hooks'
         )
+
+    list_hooks = list_repository_hooks
 
     @api_call
     def list_global_hooks(self) -> List[Dict[str, Any]]:
@@ -3314,7 +3318,7 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def create_hook(
+    def create_repository_hook(
         self,
         organization_name: str,
         repository_name: str,
@@ -3377,6 +3381,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks', json=data
         )
         return result  # type: ignore
+
+    create_hook = create_repository_hook
 
     @api_call
     def create_global_hook(
@@ -3498,7 +3504,7 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def delete_hook(
+    def delete_repository_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
         """Delete a web hook.
@@ -3521,6 +3527,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}'
         )
         return result.status_code == 204
+
+    delete_hook = delete_repository_hook
 
     @api_call
     def delete_global_hook(self, hook_id: int) -> bool:
@@ -3561,7 +3569,7 @@ class GitHub:
         return result.status_code == 204
 
     @api_call
-    def ping_hook(
+    def ping_repository_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
         """Ping a web hook.
@@ -3584,6 +3592,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}/pings'
         )
         return result.status_code == 204
+
+    ping_hook = ping_repository_hook
 
     @api_call
     def ping_global_hook(self, hook_id: int) -> bool:
@@ -3809,15 +3819,15 @@ class GitHub:
     def get_admin_stats(self, what: str = 'all') -> Dict[str, Any]:
         """Return admin stats.
 
+        Requires sysadmin rights.
+
         # Optional parameters
 
-        - what: a string (`'all'` by default)
+        - what: a non-empty string (`'all'` by default)
 
         `what` can be `'all'`, `'comments'`, `'gists'`, `'hooks'`,
         `'issues'`, `'milestones'`, `'orgs'`, `'pages'`, `'pulls'`,
         `'repos'`, `'security-products'`, or `'users'`.
-
-        Requires sysadmin rights.
 
         # Returned value
 

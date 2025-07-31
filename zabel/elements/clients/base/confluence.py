@@ -83,6 +83,13 @@ class Confluence:
     Whenever applicable, the provided features handle pagination (i.e.,
     they return all relevant elements, not only the first _n_).
 
+    ## Content types ans statuses
+
+    | Name               | Description
+    | ------------------ | -----------
+    | `CONTENT_TYPES`    | `'page'`, `'blogpost'`, `'comment'`, `'attachment'`
+    | `CONTENT_STATUSES` | `'current'`, `'trashed'`, `'historical'`, `'draft'`
+
     ## Examples
 
     ```python
@@ -220,11 +227,11 @@ class Confluence:
         Items are dictionaries with the following entries (assuming the
         default `expand` values):
 
+        - id: a string or an integer
+        - restrictions: a dictionary
+        - status: a string
         - title: a string
         - type: a string
-        - id: a string or an integer
-        - status: a string
-        - restrictions: a dictionary
 
         # Raised exceptions
 
@@ -575,11 +582,11 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for 'expand'):
 
-            type: a string
-            username: a string
-            userKey: a string
-            profilePicture: a dictionary
-            displayName: a string
+        - displayName: a string
+        - profilePicture: a dictionary
+        - type: a string
+        - userKey: a string
+        - username: a string
 
         It may also contains 'transient' entries (i.e., entries starting
         with `'_'`).
@@ -611,16 +618,16 @@ class Confluence:
         A _user profile.  A user profile is a dictionary with the
         following entries:
 
-        - userName: a string
-        - fullName: a string
-        - avatarUrl: a string
-        - url: a string
-        - email: a string
-        - department: a string
-        - userPreferences: a dictionary
-        - unknownUser: a boolean
         - about: a string
         - anonymous: a boolean
+        - avatarUrl: a string
+        - department: a string
+        - email: a string
+        - fullName: a string
+        - unknownUser: a boolean
+        - url: a string
+        - userName: a string
+        - userPreferences: a dictionary
 
         Some fields may be missing.
         """
@@ -890,8 +897,8 @@ class Confluence:
         A list of _groups_.  Groups are dictionaries with the following
         entries (assuming the default for `expand`):
 
-        - type: a string (`'group'`)
         - name: a string
+        - type: a string (`'group'`)
 
         Handles pagination (i.e., it returns all groups, not only the
         first _n_ groups the user is a member of).
@@ -922,11 +929,11 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - type: a string
-        - username: a string
-        - userKey: a string
-        - profilePicture: a dictionary
         - displayName: a string
+        - profilePicture: a dictionary
+        - type: a string
+        - userKey: a string
+        - username: a string
 
         It may also contains 'transient' entries (i.e., entries starting
         with `'_'`).
@@ -967,12 +974,12 @@ class Confluence:
         A list of _spaces_.  Each space is a dictionary with the
         following entries:
 
-        - key: a string
-        - type: a string
-        - name: a string
         - id: an integer
-        - _links: a dictionary
+        - key: a string
+        - name: a string
+        - type: a string
         - _expandable: a dictionary
+        - _links: a dictionary
 
         Handles pagination (i.e., it returns all spaces, not only the
         first _n_ spaces).
@@ -1034,16 +1041,16 @@ class Confluence:
 
         A dictionary with the following entries:
 
-        - page: a dictionary
         - blogpost: a dictionary
+        - page: a dictionary
         - _links: a dictionary
 
         `page` and `blogpost` are dictionaries with the following
         entries:
 
+        - limit: an integer
         - results: a list of dictionaries
         - size: an integer
-        - limit: an integer
         - start: an integer
         - _links: a dictionary
 
@@ -1163,16 +1170,16 @@ class Confluence:
         A list of _permissionsets_.  Each permissionset is a
         dictionary with the following entries:
 
-        - type: a string
         - spacePermissions: a list of dictionaries
+        - type: a string
 
         `type` is a space permission (as returned
         by #list_space_permissions()).
 
         Dictionaries in `spacePermissions` have the following entries:
 
-        - type: a string
         - groupName: a string
+        - type: a string
         - userName: a string
         """
         ensure_nonemptystring('space_key')
@@ -1210,11 +1217,11 @@ class Confluence:
 
         A dictionary with the following entries:
 
+        - description: a dictionary
         - id: an integer
         - key: a string
-        - name: a string
-        - description: a dictionary
         - metadata: a dictionary
+        - name: a string
         - _links: a dictionary
 
         Some entries may be missing, and there may be additional ones.
@@ -1419,11 +1426,11 @@ class Confluence:
         Assuming the default `expand` values, an item contains the
         following entries:
 
-        - title: a string
-        - type: a string
+        - extensions: a dictionary
         - id: an integer or a string
         - status: a string
-        - extensions: a dictionary
+        - title: a string
+        - type: a string
         """
         ensure_instance('space_key', str)
         ensure_in('status', ['current', 'any', 'trashed'])
@@ -1475,11 +1482,11 @@ class Confluence:
         Assuming the default `expand` values, an item contains the
         following entries:
 
-        - title: a string
-        - type: a string
+        - extensions: a dictionary
         - id: an integer or a string
         - status: a string
-        - extensions: a dictionary
+        - title: a string
+        - type: a string
         """
         ensure_instance('page_id', (str, int))
         ensure_in('typ', CONTENT_TYPES)
@@ -1520,27 +1527,27 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - type: a string
-        - title: a string
-        - id: a string
-        - version: a dictionary
         - body: a dictionary
+        - id: a string
+        - title: a string
+        - type: a string
+        - version: a dictionary
 
         `version` is a dictionary with the following entries:
 
         - by: a dictionary
-        - number: an integer
-        - minorEdit: a boolean
-        - when: a string (a timestamp)
-        - message: a string
         - hidden: a boolean
+        - message: a string
+        - minorEdit: a boolean
+        - number: an integer
+        - when: a string (a timestamp)
 
         `by` is a dictionary with the following entries:
 
-        - type: a string
-        - username: a string
-        - userkey: a string
         - displayName: a string
+        - type: a string
+        - userkey: a string
+        - username: a string
 
         `body` is a dictionary with the following entries:
 
@@ -1680,13 +1687,13 @@ class Confluence:
         A version contains the following entries:
 
         - by: a dictionary
-        - when: a datetime as a string
-        - message: a string
-        - number: an integer
-        - minorEdit: a boolean
+        - expandable: a dictionary
         - hidden: a boolean
         - links: a dictionary
-        - expandable: a dictionary
+        - message: a string
+        - minorEdit: a boolean
+        - number: an integer
+        - when: a datetime as a string
         """
         ensure_instance('page_id', (str, int))
 
@@ -1745,10 +1752,10 @@ class Confluence:
         The typical usage is:
 
         ```python
-        >>> page = confluence.get_page(n)
-        >>> page['body']['storage']['value'] = '....'
-        >>> page['version'] = {'number': page['version']['number']+1}
-        >>> confluence.update_page(n, page)
+        page = confluence.get_page(n)
+        page['body']['storage']['value'] = '....'
+        page['version'] = {'number': page['version']['number']+1}
+        confluence.update_page(n, page)
         ```
 
         See #get_page() for a description of the `page` dictionary.
@@ -1784,6 +1791,15 @@ class Confluence:
         - page_id: an integer or a string
         - labels: a non-empty list of dictionaries
 
+        # Returned value
+
+        A list of _labels_, one per label attached to the page.  Each
+        label is a dictionary with the following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - prefix: a string
+
         # Usage
 
         Dictionaries in `labels` have the following entries:
@@ -1793,15 +1809,6 @@ class Confluence:
 
         Labels in the list are added to the page.  Existing labels are
         not removed if they are not in the list.
-
-        # Returned value
-
-        A list of _labels_, one per label attached to the page.  Each
-        label is a dictionary with the following entries:
-
-        - id: an integer or a string
-        - name: a string
-        - prefix: a string
         """
         ensure_instance('page_id', (str, int))
         ensure_instance('labels', list)
@@ -1963,14 +1970,14 @@ class Confluence:
 
         A list of _restrictions_. Restrictions are structured as follow:
 
-        - type: a string, either `'Edit'` or `'View'`
         - contentPermissions: a list of _permissions_
+        - type: a string, either `'Edit'` or `'View'`
 
         Each permission is a dictionary with the following entries:
 
+        - groupName: a string, or None if userName is set
         - type: a string, either `'Edit'` or `'View'`
         - userName: a string, or None if groupName is set
-        - groupName: a string, or None if userName is set
 
         # See also
 
@@ -2136,12 +2143,12 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - id: a string
-        - name: a dictionary
         - elapsedTime: an integer
+        - id: a string
+        - messages: a list of dictionaries
+        - name: a dictionary
         - percentageComplete: an integer
         - successful: a boolean
-        - messages: a list of dictionaries
         - _links: a dictionary
         """
 
@@ -2166,11 +2173,11 @@ class Confluence:
 
         A dictionary with the following entries:
 
-        - finished: a boolean
-        - percentageComplete: an integer
         - elapsedTime: a string (a timestamp)
-        - remainingTime: a string (a timestamp)
+        - finished: a boolean
         - jobID: an integer
+        - percentageComplete: an integer
+        - remainingTime: a string (a timestamp)
         """
         self.session().headers['Content-Type'] = 'application/json'
         return (

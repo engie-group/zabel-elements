@@ -31,6 +31,7 @@ class SonarQube(Base):
     ## Reference URLs
 
     - <https://docs.sonarqube.org/display/DEV/Web+API>
+    - <https://next.sonarqube.com/sonarqube/web_api_v2>
 
     ### Web API URL
 
@@ -59,7 +60,7 @@ class SonarQube(Base):
     When using SonarCloud, the `organization_key` parameter must be
     specified for methods that declare it.
 
-    Tested on SonarQube v9.9.
+    Tested on SonarQube v9.9 anv v10.4.
 
     ## Conventions
 

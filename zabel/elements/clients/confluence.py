@@ -63,6 +63,13 @@ class Confluence(Base):
     Whenever applicable, the provided features handle pagination (i.e.,
     they return all relevant elements, not only the first _n_).
 
+    ## Content types ans statuses
+
+    | Name               | Description
+    | ------------------ | -----------
+    | `CONTENT_TYPES`    | `'page'`, `'blogpost'`, `'comment'`, `'attachment'`
+    | `CONTENT_STATUSES` | `'current'`, `'trashed'`, `'historical'`, `'draft'`
+
     ## Examples
 
     ```python

@@ -97,6 +97,7 @@ class SonarQube:
     ## Reference URLs
 
     - <https://docs.sonarqube.org/display/DEV/Web+API>
+    - <https://next.sonarqube.com/sonarqube/web_api_v2>
 
     ### Web API URLs
 
@@ -125,7 +126,7 @@ class SonarQube:
     When using SonarCloud, the `organization_key` parameter must be
     specified for methods that declare it.
 
-    Tested on SonarQube v9.9.
+    Tested on SonarQube v9.9 and v10.4.
 
     ## Conventions
 
@@ -279,11 +280,11 @@ class SonarQube:
 
         # Required parameters
 
-        - key: a string
+        - key: a non-empty string
 
         # Optional parameters
 
-        - branch: a string or None (None by default)
+        - branch: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -409,7 +410,7 @@ class SonarQube:
         metric_keys: str,
         additional_fields: Optional[str] = None,
         branch: Optional[str] = None,
-        pull_request: Optional[int] = None,
+        pull_request: Optional[Union[int, str]] = None,
     ) -> List[Dict[str, Any]]:
         """Return component with specified measures.
 
@@ -420,9 +421,9 @@ class SonarQube:
 
         # Optional parameters
 
-        - additional_fields: a string
-        - branch: a string
-        - pull_request: a string
+        - additional_fields: a string or None (None by default)
+        - branch: a string or None (None by default)
+        - pull_request: a integer or a string or None (None by default)
 
         # Returned value
 
@@ -451,6 +452,7 @@ class SonarQube:
     def add_permission_group(
         self,
         permission: str,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         project_id: Optional[int] = None,
@@ -497,6 +499,7 @@ class SonarQube:
         self,
         permission: str,
         login: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -537,6 +540,7 @@ class SonarQube:
     def remove_permission_group(
         self,
         permission: str,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         project_id: Optional[int] = None,
@@ -583,6 +587,7 @@ class SonarQube:
         self,
         permission: str,
         login: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -785,9 +790,9 @@ class SonarQube:
 
         # Required parameters
 
-        - template_name: a string
-        - group_name: a string
-        - permission: a string
+        - template_name: a non-empty string
+        - group_name: a non-empty string
+        - permission: a non-empty string
         """
         ensure_nonemptystring('template_name')
         ensure_nonemptystring('group_name')
@@ -809,6 +814,7 @@ class SonarQube:
     def apply_permissionstemplate(
         self,
         template_name: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -816,9 +822,12 @@ class SonarQube:
 
         # Required parameters
 
-        - `template_name`: a string
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - template_name: a non-empty string
+        - project_id: an integer or None
+        - project_key: a non-empty string or None (None by default)
+
+        One and only one of `project_id` or `project_key` must be
+        provided.
         """
         ensure_nonemptystring('template_name')
         ensure_onlyone('project_id', 'project_key')
@@ -1527,7 +1536,8 @@ class SonarQube:
     ) -> List[Dict[str, Any]]:
         """Return a list of matching projects.
 
-        `organization_key` is required querying a SonarCloud instance.
+        `organization_key` is required when querying a SonarCloud
+        instance.
 
         # Optional parameters
 
@@ -1536,9 +1546,9 @@ class SonarQube:
         - on_provisioned_only: a boolean (False by default)
         - projects: a string (comma-separated list of project keys) or
           None (None by default)
-        - organization_key: a non-empty string or None (None by default)
         - qualifiers: a string (comma-separated list, `'TRK'` by
           default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -1575,9 +1585,10 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_key` : a string
+        - project_key: a non-empty string
         """
         ensure_nonemptystring('project_key')
+
         return self._post('projects/delete', {'project': project_key})
 
     ####################################################################
@@ -1646,13 +1657,14 @@ class SonarQube:
         )
 
     ####################################################################
-    # SonarQube projectlinks
+    # SonarQube project links
     #
     # list_projectlinks
 
     @api_call
     def list_projectlinks(
         self,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> List[Dict[str, str]]:
@@ -1660,12 +1672,15 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - project_id: an integer or None (None by default)
+        - project_key: a non-empty string or None (None by defult)
+
+        One and only one of `project_id` or `project_key` must be
+        provided.
 
         # Returned value
 
-        A list of _project links_. Each project links_ is a dictionary
+        A list of _project links_.  Each project links_ is a dictionary
         with the following four entries:
 
         - id: a string
@@ -1680,10 +1695,10 @@ class SonarQube:
         add_if_specified(params, 'projectKey', project_key)
 
         result = self._get('project_links/search', params=params).json()
-        return result.get('links', {})
+        return result.get('links', [])
 
     ####################################################################
-    # SonarQube projectBranches
+    # SonarQube project branches
     #
     # list_projectbranches
 
@@ -1696,7 +1711,7 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_key` : a string
+        - project_key: a non-empty string
 
         # Returned value
 
@@ -1715,7 +1730,7 @@ class SonarQube:
         result = self._get(
             'project_branches/list', params={'project': project_key}
         ).json()
-        return result.get('branches', {})
+        return result.get('branches', [])
 
     ####################################################################
     # SonarQube usergroups
@@ -1773,6 +1788,7 @@ class SonarQube:
     @api_call
     def add_usergroup_user(
         self,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         login: Optional[str] = None,
@@ -1786,8 +1802,8 @@ class SonarQube:
 
         # Required parameters
 
-        - group_id: an integer or None
-        - group_name: a string or None
+        - group_id: an integer or None (None by default)
+        - group_name: a string or None (None by default)
 
         One and only one of `group_id` or `group_name` must be provided.
 
@@ -1813,6 +1829,7 @@ class SonarQube:
     @api_call
     def remove_usergroup_user(
         self,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         login: Optional[str] = None,
@@ -1826,8 +1843,8 @@ class SonarQube:
 
         # Required parameters
 
-        - group_id: an integer or None
-        - group_name: a string or None
+        - group_id: an integer or None (None by default)
+        - group_name: a string or None (None by default)
 
         One and only one of `group_id` or `group_name` must be provided.
 
@@ -1849,13 +1866,19 @@ class SonarQube:
 
     @api_call
     def delete_usergroup(
-        self, group_id: Optional[int] = None, group_name: Optional[str] = None
+        self,
+        *,
+        group_id: Optional[int] = None,
+        group_name: Optional[str] = None,
     ) -> None:
         """Delete a group.
 
         # Required parameters
 
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None (None by default)
+        - group_name: an non-empty string or None (None by default)
+
+        One and only one of `group_id` or `group_name` must be provided.
         """
         ensure_onlyone('group_id', 'group_name')
 
