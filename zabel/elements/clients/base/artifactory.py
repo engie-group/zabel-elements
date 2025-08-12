@@ -1341,9 +1341,32 @@ class Artifactory:
         map size is shorter than `pos` the repository is the last one
         (default).
 
-        Legend: `'+'` = required entry, `'-'` = optional entry.
+        <h5>Minimal direct interface</h5>
 
-        JSON for a local repository:
+        When using the direct interface, `name`, `rclass`, and
+        `package_type` are required parameters, and `json` must not be
+        specified.
+
+        `url` is required for remote repositories.
+
+        `repositories` and `default_deployment_repo` are only
+        applicable to virtual repositories.
+
+        <h5>Full interface</h5>
+
+        When using the full interface, only `name` and `json` are
+        required parameters, and `pos` is the only allowed optional
+        parameter.
+
+        The `json` content depends of the desired repository class.
+
+        The following sections describe the JSON content for the
+        different repository classes (local, remote, virtual, and
+        federated).
+
+        > Legend: `'+'` = required entry, `'-'` = optional entry.
+
+        <h6>JSON for a local repository</h6>
 
         ```text
         {
@@ -1367,13 +1390,13 @@ class Artifactory:
           - "repoLayoutRef": "maven-2-default" (default),
           - "debianTrivialLayout": false,
           - "checksumPolicyType": "client-checksums" (default)
-                                  | "server-generated-checksums",
+                           | "server-generated-checksums",
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
           - "maxUniqueTags": 0 (default),
           - "snapshotVersionBehavior": "unique" (default) | "non-unique"
-                                       | "deployer",
+                           | "deployer",
           - "suppressPomConsistencyChecks": false (default),
           - "blackedOut": false (default),
           - "xrayIndex": false       (default),
@@ -1382,7 +1405,7 @@ class Artifactory:
           - "calculateYumMetadata": false,
           - "yumRootDepth": 0,
           - "dockerApiVersion": "V2" (default),
-          - "terraformType": "MODULE"|"PROVIDER",
+          - "terraformType": "MODULE" | "PROVIDER",
           - "enableFileListsIndexing": "false" (default),
           - "optionalIndexCompressionFormats": ["bz2", "lzma", "xz"],
           - "downloadRedirect": "false" (default),
@@ -1393,11 +1416,14 @@ class Artifactory:
           - "forceNugetAuthentication": false (default),
           - "forceP2Authentication": false (default),
           - "forceConanAuthentication": false (default),
-          - "priorityResolution": "false" (default)
+          - "encryptStates": true (default),
+          - "priorityResolution": "false" (default, Applies to all
+            repository types excluding CocoaPods, Git LFS, NuGet V2,
+            Opkg, Rust, Vagrant and VCS repositories)
         }
         ```
 
-        JSON for a remote repository:
+        <h6>JSON for a remote repository</h6>
 
         ```text
         {
@@ -1463,8 +1489,8 @@ class Artifactory:
           - "pyPIRegistryUrl": "https://pypi.org" (default),
           - "vcsType": "GIT" (default),
           - "vcsGitProvider": "GITHUB" (default) | "GITHUBENTERPRISE"
-                              | "BITBUCKET" | "OLDSTASH" | "STASH"
-                              | "ARTIFACTORY" | "CUSTOM",
+                           | "BITBUCKET" | "OLDSTASH" | "STASH"
+                           | "ARTIFACTORY" | "CUSTOM",
           - "vcsGitDownloadUrl": "" (default),
           - "bypassHeadRequests" : false (default),
           - "clientTlsCertificate": "" (default),
@@ -1482,22 +1508,22 @@ class Artifactory:
           - "contentSynchronisation": {
               "enabled": false (default),
               "statistics": {
-                  "enabled": false (default)
+                "enabled": false (default)
               },
               "properties": {
-                  "enabled": false (default)
+                "enabled": false (default)
               },
               "source": {
-                  "originAbsenceDetection": false (default)
+                "originAbsenceDetection": false (default)
               }
-                },
+            },
            - "blockPushingSchema1": false,
            - "priorityResolution": false (default),
            - "disableUrlNormalization": false (default)
         }
         ```
 
-        JSON for a virtual repository:
+        <h6>JSON for a virtual repository</h6>
 
         ```text
         {
@@ -1540,7 +1566,7 @@ class Artifactory:
         }
         ```
 
-        JSON for a federated repository:
+        <h6>JSON for a federated repository</h6>
 
         ```text
         {
@@ -1557,8 +1583,11 @@ class Artifactory:
                            | "ansible" | "conan" | "conda" | "chef"
                            | "puppet" | "generic" (default)
           - "members": [
-              {"url": "http://targetartifactory/artifactory/repositoryName", "enabled":"true"}
-            ]
+              {
+                "url": "http://targetartifactory/artifactory/repositoryName",
+                "enabled":"true"
+              }
+            ],
           - "description": "The federated repository public description",
           - "proxy": "proxy-key",
           - "disableProxy": false (default),
@@ -1567,12 +1596,14 @@ class Artifactory:
           - "excludesPattern": "" (default),
           - "repoLayoutRef" : "maven-2-default" (default),
           - "debianTrivialLayout" : false,
-          - "checksumPolicyType": "client-checksums" (default) | "server-generated-checksums"
+          - "checksumPolicyType": "client-checksums" (default)
+                           | "server-generated-checksums"
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
           - "maxUniqueTags": 0 (default),
-          - "snapshotVersionBehavior": "unique" (default) | "non-unique" | "deployer",
+          - "snapshotVersionBehavior": "unique" (default) | "non-unique"
+                           | "deployer",
           - "suppressPomConsistencyChecks": false (default),
           - "blackedOut": false (default),
           - "xrayIndex" : false (default),
@@ -1772,6 +1803,9 @@ class Artifactory:
 
         `principals` is a dictionary or None:
 
+        > Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy,
+        > `'n'`=annotate, `'r'`=read.
+
         ```json
         {
           "users" : {
@@ -1784,9 +1818,6 @@ class Artifactory:
           }
         }
         ```
-
-        Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy, `'n'`=annotate,
-        `'r'`=read.
         """
         ensure_nonemptystring('permission_name')
 
@@ -1918,7 +1949,7 @@ class Artifactory:
         - include_reference_token: a boolean (False by default)
 
         `expires_in` is in seconds (1 hour by default). Administrators
-        can set it to 0 so that the token never expires.
+        can set it to `0` so that the token never expires.
 
         # Returned value
 
@@ -2283,8 +2314,8 @@ class Artifactory:
         - indexed_repos: a list of dictionaries
         - non_indexed_repos: a list of dictionaries
 
-        Entries in the `indexed_repos` and `non_indexed_repositories`
-        have the following entries:
+        Items in `indexed_repos` and `non_indexed_repositories` have the
+        following entries:
 
         - name: a string
         - pkg_type: a string

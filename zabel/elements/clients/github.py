@@ -59,14 +59,16 @@ class GitHub(Base):
 
     ## Implemented features
 
-    - users
-    - organizations
-    - repositories
+    - apps
     - branches
+    - copilot
+    - hooks
+    - organizations
     - pullrequests
     - references
-    - hooks
-    - copilot
+    - repositories
+    - users
+    - workflows
     - misc. operations (version, staff reports & stats)
 
     Some methods require an Enterprise Cloud account.

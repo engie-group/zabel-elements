@@ -2147,31 +2147,34 @@ class Jira:
         - project_id_or_key: an integer or a non-empty string
         - project: a dictionary
 
-        `project` is dictionary with the following optional entries:
-
-        - name
-        - projectTypeKey
-        - projectTemplateKey
-        - description
-        - lead
-        - url
-        - assigneeType
-        - avatarId
-        - issueSecurityScheme
-        - permissionScheme
-        - notificationScheme
-        - categoryId
-
-        This dictionary respects the format returned by
-        #list_projects().
-
-        If an entry is not specified or is None, its corresponding
-        value in the project will remain unchanged.
-
         # Returned value
 
         A dictionary.  See #list_projects() for details on its
         structure.
+
+        # Usage
+
+        `project` is dictionary with the following optional entries:
+
+        - assigneeType: a string (`'PROJECT_LEAD'` or `'UNASSIGNED'`)
+        - avatarId: an integer
+        - categoryId: an integer
+        - description: a string
+        - issueSecurityScheme: an integer
+        - key: a string
+        - lead: a string
+        - name: a string
+        - notificationScheme: an integer
+        - permissionScheme: an integer
+        - projectTemplateKey: a string
+        - projectTypeKey: a string
+        - url: a string
+
+        This dictionary respects the format returned by
+        #list_projects().
+
+        If an entry is not specified, its corresponding value in the
+        project will remain unchanged.
         """
         ensure_instance('project_id_or_key', (str, int))
 
@@ -3537,7 +3540,7 @@ class Jira:
         following entries:
 
         - key: a string
-        - id: a string (or an int)
+        - id: a string (or an integer)
         - avatarUrls: a dictionary
         - name: a string
         - self: a string
@@ -4517,7 +4520,7 @@ class Jira:
     def delete_sprint(self, sprint_id: int) -> bool:
         """Delete sprint.
 
-        !!! important
+        !!! note
             Only future sprints can be deleted.
 
         # Required parameters

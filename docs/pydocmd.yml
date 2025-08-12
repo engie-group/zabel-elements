@@ -87,6 +87,7 @@ theme:
 extra_javascript:
   - js/github-links.js
 extra_css:
+  - css/extra.css
   - css/github-links.css
 
 markdown_extensions:

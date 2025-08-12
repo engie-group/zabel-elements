@@ -615,7 +615,7 @@ class Confluence:
 
         # Returned value
 
-        A _user profile.  A user profile is a dictionary with the
+        A _user profile_.  A user profile is a dictionary with the
         following entries:
 
         - about: a string
