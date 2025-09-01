@@ -18,10 +18,12 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Tuple,
     Union,
 )
 
 import requests
+
 from zabel.commons.sessions import prepare_session
 from zabel.commons.utils import (
     api_call,
@@ -33,15 +35,15 @@ from zabel.commons.utils import (
     BearerAuth,
 )
 
-########################################################################
-########################################################################
 
+########################################################################
+########################################################################
 
 # Atlassian Cloud low-level api
 
 
 class Atlassian:
-    """Atlassian Base-Level Wrapper.
+    """Atlassian Low-Level Wrapper.
 
     ## Reference URLs
 
@@ -67,13 +69,13 @@ class Atlassian:
         self,
         url: str,
         *,
-        basic_auth: Optional[Mapping[str, str]] = None,
+        basic_auth: Optional[Tuple[str, str]] = None,
         bearer_auth: Optional[str] = None,
     ) -> None:
         """Create an Atlassian instance object.
 
         You can specify either `basic_auth` or `bearer_auth`.
-    
+
         # Required parameters
 
         - url: a non-empty string
@@ -87,16 +89,18 @@ class Atlassian:
             'https://api.atlassian.com/admin/v1/'
         """
         ensure_nonemptystring('url')
-        ensure_noneornonemptystring('bearer_auth')
-        ensure_noneorinstance('basic_auth',  tuple)
         ensure_onlyone('bearer_auth', 'basic_auth')
+        ensure_noneornonemptystring('bearer_auth')
+        ensure_noneorinstance('basic_auth', tuple)
 
         self.url = url
-        if basic_auth:
-            self.auth = basic_auth
-        if bearer_auth:
-            self.auth = bearer_auth
+        self.basic_auth = basic_auth
+        self.bearer_auth = bearer_auth
 
+        if basic_auth is not None:
+            self.auth = basic_auth
+        if bearer_auth is not None:
+            self.auth = BearerAuth(bearer_auth)
         self.session = prepare_session(self.auth)
 
     def __str__(self) -> str:
@@ -138,13 +142,15 @@ class Atlassian:
         """
         ensure_nonemptystring('org_id')
 
-        return self._get(f'orgs/{org_id}/users')
+        return self._get(f'orgs/{org_id}/users')  # type: ignore
 
     ####################################################################
     # atlassian sites
 
     @api_call
-    def list_site_users(self, site_url: str, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_site_users(
+        self, site_url: str, query: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """List site users.
 
         # Required parameters
@@ -177,7 +183,7 @@ class Atlassian:
             params = None
 
         api_url = join_url(site_url, 'rest/api/3/users/search')
-        return self.session().get(api_url, params)
+        return self.session().get(api_url, params=params)
 
     ####################################################################
     # atlassian private helpers
