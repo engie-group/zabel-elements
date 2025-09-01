@@ -26,6 +26,9 @@ from zabel.commons.sessions import prepare_session
 from zabel.commons.utils import (
     api_call,
     ensure_nonemptystring,
+    ensure_noneorinstance,
+    ensure_noneornonemptystring,
+    ensure_onlyone,
     join_url,
     BearerAuth,
 )
@@ -63,13 +66,18 @@ class Atlassian:
     def __init__(
         self,
         url: str,
-        bearer_auth: str,
+        *,
+        basic_auth: Optional[Mapping[str, str]] = None,
+        bearer_auth: Optional[str] = None,
     ) -> None:
         """Create an Atlassian instance object.
 
+        You can specify either `basic_auth` or `bearer_auth`.
+    
         # Required parameters
 
         - url: a non-empty string
+        - basic_auth: a strings tuple (user, token)
         - bearer_auth: a string
 
         # Usage
@@ -79,18 +87,27 @@ class Atlassian:
             'https://api.atlassian.com/admin/v1/'
         """
         ensure_nonemptystring('url')
-        ensure_nonemptystring('bearer_auth')
+        ensure_noneornonemptystring('bearer_auth')
+        ensure_noneorinstance('basic_auth',  tuple)
+        ensure_onlyone('bearer_auth', 'basic_auth')
 
         self.url = url
-        self.bearer_auth = BearerAuth(bearer_auth)
-        self.session = prepare_session(self.bearer_auth)
+        if basic_auth:
+            self.auth = basic_auth
+        if bearer_auth:
+            self.auth = bearer_auth
+
+        self.session = prepare_session(self.auth)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}: {self.url}'
 
     def __repr__(self) -> str:
-        auth = self.bearer_auth.pat[:10] + '...' + self.bearer_auth.pat[-10:]
-        return f'<{self.__class__.__name__}: {self.url!r}, {auth!r}>'
+        if self.basic_auth:
+            rep = self.basic_auth[0]
+        elif self.bearer_auth:
+            rep = f'***{self.bearer_auth[-6:]}'
+        return f'<{self.__class__.__name__}: {self.url!r}, {rep!r}>'
 
     ####################################################################
     # atlassian users
@@ -127,12 +144,16 @@ class Atlassian:
     # atlassian sites
 
     @api_call
-    def list_site_users(self, site_url: str) -> List[Dict[str, Any]]:
+    def list_site_users(self, site_url: str, query: Optional[str] = None) -> List[Dict[str, Any]]:
         """List site users.
 
         # Required parameters
 
         - site_url: a non-empty string (of the form `https://...`)
+
+        # Optional parameters
+
+        - query: a string or None (None by default)
 
         # Returned value
 
@@ -148,9 +169,15 @@ class Atlassian:
         - `locale`: a string
         """
         ensure_nonemptystring('site_url')
+        ensure_noneornonemptystring('query')
+
+        if query:
+            params = {'query': query}
+        else:
+            params = None
 
         api_url = join_url(site_url, 'rest/api/3/users/search')
-        return self.session().get(api_url)
+        return self.session().get(api_url, params)
 
     ####################################################################
     # atlassian private helpers
