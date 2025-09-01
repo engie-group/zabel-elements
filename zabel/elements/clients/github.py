@@ -42,9 +42,9 @@ MAX_ATTEMPTS = 3
 
 
 class GitHub(Base):
-    """GitHub Low-Level Wrapper.
+    """GitHub Enterprise Server Low-Level Wrapper.
 
-    There can be as many GitHub instances as needed.
+    There can be as many GitHub Enterprise Server instances as needed.
 
     This class depends on the public **requests** library.  It also
     depends on three **zabel-commons** modules,

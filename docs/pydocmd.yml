@@ -54,8 +54,9 @@ pages:
         - CloudBeesJenkins: clients/jenkins.md
         - Confluence: clients/confluence.md
         - ConfluenceCloud: clients/confluencecloud.md
-        - GitHub: clients/github.md
         - GitHubCloud: clients/githubcloud.md
+        - GitHubCloudDR: clients/githubcloud2.md
+        - GitHubServer: clients/github.md
         - GitLab: clients/gitlab.md
         - Jira: clients/jira.md
         - JiraCloud: clients/jiracloud.md

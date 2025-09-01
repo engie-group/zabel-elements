@@ -124,6 +124,35 @@ class Atlassian:
         return self._get(f'orgs/{org_id}/users')
 
     ####################################################################
+    # atlassian sites
+
+    @api_call
+    def list_site_users(self, site_url: str) -> List[Dict[str, Any]]:
+        """List site users.
+
+        # Required parameters
+
+        - site_url: a non-empty string (of the form `https://...`)
+
+        # Returned value
+
+        A list of _users_.  Each user is a dictionary with the
+        following entries:
+
+        - `accountId`: a string
+        - `accountType`: a string
+        - `emailAddress`: a string
+        - `avatarUrls`: a dictionary
+        - `displayName`: a string
+        - `active`: a boolean
+        - `locale`: a string
+        """
+        ensure_nonemptystring('site_url')
+
+        api_url = join_url(site_url, 'rest/api/3/users/search')
+        return self.session().get(api_url)
+
+    ####################################################################
     # atlassian private helpers
 
     def _get(

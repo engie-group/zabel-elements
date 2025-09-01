@@ -30,11 +30,11 @@ from .base.githubcloud import GitHubCloud as Base
 
 
 class GitHubCloud(Base):
-    """GitHubCloud Low-Level Wrapper.
+    """GitHub Enterprise Cloud Low-Level Wrapper.
 
-    A class wrapping the GitHub Cloud APIs.
+    A class wrapping the GitHub Enterprise Cloud APIs.
 
-    There can be as many GitHub Cloud instances as needed.
+    There can be as many GitHub Enterprise Cloud instances as needed.
 
     This module depends on the **requests** public library. It also
     depends on three **zabel-commons** modules,
