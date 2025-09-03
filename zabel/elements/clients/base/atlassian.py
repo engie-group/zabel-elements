@@ -148,18 +148,12 @@ class Atlassian:
     # atlassian sites
 
     @api_call
-    def list_site_users(
-        self, site_url: str, query: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def list_site_users(self, site_url: str) -> List[Dict[str, Any]]:
         """List site users.
 
         # Required parameters
 
         - site_url: a non-empty string (of the form `https://...`)
-
-        # Optional parameters
-
-        - query: a string or None (None by default)
 
         # Returned value
 
@@ -175,14 +169,35 @@ class Atlassian:
         - `locale`: a string
         """
         ensure_nonemptystring('site_url')
-        ensure_noneornonemptystring('query')
-
-        if query:
-            params = {'query': query}
-        else:
-            params = None
 
         api_url = join_url(site_url, 'rest/api/3/users/search')
+        return self.session().get(api_url)
+
+    @api_call
+    def get_user(self, site_url: str, query: str) -> Dict[str, Any]:
+        """Get user details.
+
+        # Required parameters
+
+        - query: a non-empty string
+
+        # Returned value
+
+        A _user_ dictionary with the following entries:
+
+        - `accountId`: a string
+        - `accountType`: a string
+        - `emailAddress`: a string
+        - `avatarUrls`: a dictionary
+        - `displayName`: a string
+        - `active`: a boolean
+        - `locale`: a string
+        """
+        ensure_nonemptystring('site_url')
+        ensure_nonemptystring('query')
+        params = {'query': query}
+
+        api_url = join_url(site_url, 'rest/api/3/user/search')
         return self.session().get(api_url, params=params)
 
     ####################################################################
