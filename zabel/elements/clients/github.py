@@ -337,7 +337,7 @@ class GitHub(Base):
         both).
 
         If `sha` is not specified, the sha is retrieved from the
-        `branch` branch, and up to `MAX_ATTMEPTS` attempts are made to
+        `branch` branch, and up to `MAX_ATTEMPTS` attempts are made to
         update the file, in case the branch is updated between the
         retrieval of the sha and the update of the file.
 

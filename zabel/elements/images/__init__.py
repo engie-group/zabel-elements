@@ -47,15 +47,17 @@ __all__ = [
 ]
 
 
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Optional, Union
 
 import json
 import os
 
+from zabel.commons.interfaces import Image
+from zabel.commons.servers import ApiApp, entrypoint
 from zabel.commons.utils import api_call
-from zabel.commons.interfaces import ManagedService, Utility
 
 from zabel.elements import clients
+
 
 ########################################################################
 # Helpers
@@ -74,6 +76,169 @@ def _maybe_get_credential(key: str) -> Optional[str]:
 
 def _has_credentials(*keys) -> bool:
     return all(os.environ.get(key) for key in keys)
+
+
+########################################################################
+# Interfaces
+
+
+class Utility(ApiApp, Image):
+    """Abstract Utility API app."""
+
+
+class ManagedService(ApiApp, Image):
+    """Abstract Managed Service API app.
+
+    This class extends #ApiApp and is abstract.  It declares a
+    minimal set of features a managed service must provide, in addition
+    to the #ApiApp ones:
+
+    - canonical user names management
+    - members getters
+    - project push and pull
+
+    # Added Methods
+
+    | Method name                | Default implementation? | Exposed? |
+    | -------------------------- | ------------------------| -------- |
+    | #get_canonical_member_id() | No                      | No       |
+    | #get_internal_member_id()  | No                      | No       |
+    | #list_members()            | No                      | Yes      |
+    | #get_member()              | No                      | Yes      |
+    | #push_project()            | No                      | Yes      |
+    | #push_users()              | No                      | Yes      |
+    | #pull_project()            | No                      | Yes      |
+    | #pull_users()              | No                      | Yes      |
+
+    Unimplemented features will raise a _NotImplementedError_
+    exception.
+    """
+
+    def get_canonical_member_id(self, user: Any) -> str:
+        """Return the canonical member ID.
+
+        # Required parameters
+
+        - user: a service-specific user representation
+
+        `user` is the service internal user representation. It may be
+        a service-specific object or class.
+
+        # Returned value
+
+        A string.
+        """
+        raise NotImplementedError
+
+    def get_internal_member_id(self, member_id: str) -> Union[str, int]:
+        """Return the internal name.
+
+        # Required parameters
+
+        - member_id: a string
+
+        `member_id` is the canonical member ID.
+
+        # Returned value
+
+        A string or an integer, depending on the service internals.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/members')
+    def list_members(self) -> Dict[str, Any]:
+        """Return the members on the service.
+
+        # Returned value
+
+        A dictionary.  The keys are the canonical IDs and the values are
+        the representations of a user for the service.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/members/{member_id}')
+    def get_member(self, member_id: str) -> Any:
+        """Return details on user.
+
+        # Required parameters
+
+        - member_id: a string
+
+        `member_id` is the canonical member ID.
+
+        # Returned value
+
+        The representation of the user for the service, which is
+        service-specific.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/managedprojects/{project}', methods=['PUT'])
+    def push_project(self, project: str) -> None:
+        """Push (aka publish) managed project on service.
+
+        Members defined for the project are not pushed on service.  Use
+        #push_users() for that purpose.
+
+        # Required parameters
+
+        - project: a managed project definition name
+
+        # Raised exceptions
+
+        Raises an exception if the managed project is not successfully
+        pushed.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/managedprojects/{project}/members', methods=['PUT'])
+    def push_users(self, project: str) -> None:
+        """Push (aka publish) managed project users on service.
+
+        It assumes the project has been previously successfully pushed.
+        It may fail otherwise.
+
+        # Required parameters
+
+        - project: a managed project definition name
+
+        It assumes the project has been previously successfully pushed
+        on the service.
+
+        # Raised exceptions
+
+        Raises an exception if the managed project users are not
+        successfully pushed.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/managedprojects/{project}', methods=['GET'])
+    def pull_project(self, project: str) -> Any:
+        """Pull (aka extract) managed project users on service.
+
+        # Required parameters
+
+        - project: a managed project definition name
+
+        # Returned value
+
+        A service-specific result.
+        """
+        raise NotImplementedError
+
+    @entrypoint('/v1/managedprojects/{project}/members', methods=['GET'])
+    def pull_users(self, project: str) -> Any:
+        """Pull (aka extract) managed project definition on service.
+
+        # Required parameters
+
+        - project: a managed project definition name
+
+        # Returned value
+
+        A service-specific result.
+        """
+        raise NotImplementedError
 
 
 ########################################################################

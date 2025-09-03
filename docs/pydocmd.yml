@@ -1,13 +1,14 @@
 site_name: Zabel Elements
 
 sort: name
+
 external_links:
   zabel.commons.exceptions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/exceptions
   zabel.commons.sessions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/sessions
   zabel.commons.utils: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/utils
 
 generate:
-  - clients.md:
+  - clients/index.md:
     - zabel.elements.clients++
   - clients/artifactory.md:
     - zabel.elements.clients.Artifactory@
@@ -47,24 +48,23 @@ pages:
   - Installation: installation.md << installation.md
   - API Documentation:
     - Clients:
-      - Overview: clients.md
-      - Tools:
-        - Artifactory: clients/artifactory.md
-        - Atlassian: clients/atlassian.md
-        - CloudBeesJenkins: clients/jenkins.md
-        - Confluence: clients/confluence.md
-        - ConfluenceCloud: clients/confluencecloud.md
-        - GitHubCloud: clients/githubcloud.md
-        - GitHubCloudDR: clients/githubcloud2.md
-        - GitHubServer: clients/github.md
-        - GitLab: clients/gitlab.md
-        - Jira: clients/jira.md
-        - JiraCloud: clients/jiracloud.md
-        - Kubernetes: clients/kubernetes.md
-        - Okta: clients/okta.md
-        - SonarQube: clients/sonarqube.md
-        - SonatypeNexus: clients/sonatypenexus.md
-        - SquashTM: clients/squashtm.md
+      - Clients Overview: clients/index.md
+      - Artifactory: clients/artifactory.md
+      - Atlassian: clients/atlassian.md
+      - CloudBeesJenkins: clients/jenkins.md
+      - Confluence: clients/confluence.md
+      - ConfluenceCloud: clients/confluencecloud.md
+      - GitHubCloud: clients/githubcloud.md
+      - GitHubCloudDR: clients/githubcloud2.md
+      - GitHubServer: clients/github.md
+      - GitLab: clients/gitlab.md
+      - Jira: clients/jira.md
+      - JiraCloud: clients/jiracloud.md
+      - Kubernetes: clients/kubernetes.md
+      - Okta: clients/okta.md
+      - SonarQube: clients/sonarqube.md
+      - SonatypeNexus: clients/sonatypenexus.md
+      - SquashTM: clients/squashtm.md
     - Images:
       - Overview: images.md
 

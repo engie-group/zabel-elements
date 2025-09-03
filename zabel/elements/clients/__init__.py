@@ -12,11 +12,11 @@ The **zabel.elements.clients** library provides a wrapper class per
 tool.
 
 It relies on the **zabel-commons** library, using its
-#::zabel.commons.exceptions module for the _ApiError_ exception class,
+#::zabel.commons.exceptions module for the exception class,
 its #::zabel.commons.sessions module for HTTPS session handling,
 and its #::zabel.commons.utils module that contains useful functions.
 
-# Conventions
+## Conventions
 
 If an existing library already provides all the needed functionality,
 there is no need to add it to this clients library.

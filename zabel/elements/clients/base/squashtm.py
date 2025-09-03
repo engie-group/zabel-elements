@@ -174,6 +174,7 @@ class SquashTM:
     # list_projects
     # get_project
     # create_project
+    # delete_project
     # get_project_permissions
     # add_project_permission
     # list_project_requirements
@@ -222,6 +223,18 @@ class SquashTM:
         return self._get(f'projects/{project_id}')  # type: ignore
 
     @api_call
+    def delete_project(self, project_id: int) -> None:
+        """Delete project.
+
+        # Required parameters
+
+        - project_id: an integer
+        """
+        ensure_instance('project_id', int)
+
+        self._delete(f'projects/{project_id}')
+
+    @api_call
     def list_project_requirements(
         self, project_id: int
     ) -> List[Dict[str, Any]]:
@@ -236,6 +249,7 @@ class SquashTM:
         A list of _requirements_.  Each requirement is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/requirements', 'requirements'
         )
@@ -253,6 +267,7 @@ class SquashTM:
         A list of _campaigns_.  Each campaign is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/campaigns', 'campaigns'
         )
@@ -270,6 +285,7 @@ class SquashTM:
         A list of _test cases_.  Each test case is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/test-cases', 'test-cases'
         )
@@ -781,7 +797,6 @@ class SquashTM:
         - id: an integer
         - name: a string
         """
-
         return self._collect_data('requirements', 'requirements')
 
     @api_call
