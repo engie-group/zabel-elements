@@ -608,7 +608,7 @@ class JiraCloud:
         - name: a string
         - description: a string
         """
-        ensure_instance(project_id_or_key, (int, str))
+        ensure_instance('project_id_or_key', (int, str))
 
         pid = self._get_project_id(project_id_or_key)
         resp = self._get(
@@ -761,7 +761,9 @@ class JiraCloud:
 
     @api_call
     def set_project_workflowscheme(
-        self, project_id_or_key: Union[int, str], workflowscheme_id: str
+        self,
+        project_id_or_key: Union[int, str],
+        workflowscheme_id: Union[int, str],
     ) -> bool:
         """Set the workflow scheme associated to project.
 
@@ -775,7 +777,7 @@ class JiraCloud:
         A boolean.  True if successful, False otherwise.
         """
         ensure_instance('project_id_or_key', (int, str))
-        ensure_nonemptystring('workflowscheme_id')
+        ensure_instance('workflowscheme_id', (int, str))
 
         pid = self._get_project_id(project_id_or_key)
         response = self._put(
@@ -789,7 +791,9 @@ class JiraCloud:
 
     @api_call
     def set_project_issuetypescheme(
-        self, project_id_or_key: Union[int, str], issuetypescheme_id: str
+        self,
+        project_id_or_key: Union[int, str],
+        issuetypescheme_id: Union[int, str],
     ) -> bool:
         """Set issue type scheme associated to project.
 
@@ -803,7 +807,7 @@ class JiraCloud:
         A boolean.  True if successful, False otherwise.
         """
         ensure_instance('project_id_or_key', (int, str))
-        ensure_nonemptystring('issuetypescheme_id')
+        ensure_instance('issuetypescheme_id', (int, str))
 
         pid = self._get_project_id(project_id_or_key)
         response = self._put(
@@ -817,7 +821,9 @@ class JiraCloud:
 
     @api_call
     def set_project_issuetypescreenscheme(
-        self, project_id_or_key: Union[int, str], issuetypescreenscheme_id: str
+        self,
+        project_id_or_key: Union[int, str],
+        issuetypescreenscheme_id: Union[int, str],
     ) -> bool:
         """Set the issue type screen scheme associated to project.
 
@@ -831,7 +837,7 @@ class JiraCloud:
         A boolean.  True if successful, False otherwise.
         """
         ensure_instance('project_id_or_key', (int, str))
-        ensure_nonemptystring('issuetypescreenscheme_id')
+        ensure_instance('issuetypescreenscheme_id', (int, str))
 
         pid = self._get_project_id(project_id_or_key)
         response = self._put(
@@ -844,7 +850,9 @@ class JiraCloud:
         return response.status_code == 204
 
     def set_project_permissionscheme(
-        self, project_id_or_key: Union[int, str], permissionscheme_id: str
+        self,
+        project_id_or_key: Union[int, str],
+        permissionscheme_id: union[int, str],
     ) -> bool:
         """Set the permission scheme associated to project.
 
@@ -858,7 +866,7 @@ class JiraCloud:
         A boolean.  True if successful, False otherwise.
         """
         ensure_instance('project_id_or_key', (int, str))
-        ensure_nonemptystring('permissionscheme_id')
+        ensure_instance('permissionscheme_id', (int, str))
 
         response = self._put(
             f'project/{project_id_or_key}/permissionscheme',
