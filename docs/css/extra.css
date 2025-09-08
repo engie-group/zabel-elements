@@ -5,3 +5,61 @@
 .md-typeset__table table:not([class]) {
   display: table
 }
+
+h2.dinkus {
+  position: relative;
+  text-align: center;
+  margin: 2em 0 0 0;
+  font-size: smaller;
+}
+
+a[target=_blank]::after
+{
+  content: "";
+  width: 12px;
+  height: 12px;
+  margin-left: 1px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23629FA3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-external-link'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 3 21 9'%3E%3C/polyline%3E%3Cline x1='10' y1='14' x2='21' y2='3'%3E%3C/line%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  display: inline-block;
+}
+
+/* linear */
+/*
+th.xs  { width: 10%; }
+th.s   { width: 20%; }
+th.m   { width: 30%; }
+th.l   { width: 40%; }
+th.xl  { width: 50%; }
+th.xxl { width: 60%; }
+*/
+
+/* fibonacci-ish */
+th.xs  { width: 12.5%; }
+th.s   { width: 20%; }
+th.m   { width: 33%; }
+th.l   { width: 45%; }
+th.xl  { width: 55%; }
+th.xxl { width: 67%; }
+
+/* golden ratio */
+/*
+th.xs  { width: 10%; }
+th.s   { width: 16.18%; }
+th.m   { width: 26.18%; }
+th.l   { width: 42.36%; }
+th.xl  { width: 68.54%; }
+th.xxl { width: 100%; }
+*/
+
+/* nonlinear (T-shirt size inspired) */
+/*
+th.xs  { width: 16%; }
+th.s   { width: 24%; }
+th.m   { width: 32%; }
+th.l   { width: 40%; }
+th.xl  { width: 52%; }
+th.xxl { width: 64%; }
+*/

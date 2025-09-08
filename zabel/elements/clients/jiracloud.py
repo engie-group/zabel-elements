@@ -95,10 +95,7 @@ class JiraCloud(Base):
     url = 'https://your-domain.atlassian.net'
     user = '...'
     token = '...'
-    jc = JiraCloud(
-        url,
-        basic_auth=(user, token),
-    )
+    jc = JiraCloud(url, basic_auth=(user, token))
     jc.list_projects()
     ```
     """

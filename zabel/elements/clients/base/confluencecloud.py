@@ -1191,9 +1191,9 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - account_id: a string
-        - limit: an integer (default 100)
-        - start: an integer (default 0)
+        - cql: a string (default `'type=user'`)
+        - limit: an integer (default `100`)
+        - start: an integer (default `0`)
         - expand: a list of strings
 
         # Returned value
@@ -1201,7 +1201,7 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a user.
         Please refer to #get_user() for more.
         """
-
+        ensure_instance('cql', str)
         ensure_instance('limit', int)
         ensure_instance('start', int)
         ensure_noneorinstance('expand', list)

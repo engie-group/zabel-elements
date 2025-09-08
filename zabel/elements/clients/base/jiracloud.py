@@ -128,6 +128,7 @@ class JiraCloud:
     def __init__(
         self,
         url: str,
+        *,
         basic_auth: Tuple[str, str],
         verify: bool = True,
     ) -> None:
@@ -195,7 +196,7 @@ class JiraCloud:
         # Optional parameters
 
         - query: a string (optional, used for filtering group names)
-        - max_results: an integer (default: 9999)
+        - max_results: an integer (default: `9999`)
 
         # Returned value
 
@@ -335,8 +336,8 @@ class JiraCloud:
 
         # Returned value
 
-        A list of dictionaries, each representing a user.  Each user
-        dictionary has the following entries:
+        A list of _users_.  Each user is a dictionary with the following
+        entries:
 
         - accountId: a string
         - accountType: a string
@@ -359,8 +360,7 @@ class JiraCloud:
 
         # Returned value
 
-        A dictionary representing the user.  See
-        #list_users() for details on its structure.
+        A _user_.  See #list_users() for details on its structure.
         """
         ensure_nonemptystring('account_id')
 
@@ -377,7 +377,7 @@ class JiraCloud:
 
         # Returned value
 
-        A dictionary.  Refer to #get_user() for details.
+        A _user_.  Refer to #list_users() for details on its structure.
         """
         ensure_noneorinstance('expand', str)
 
@@ -407,7 +407,8 @@ class JiraCloud:
 
         # Returned value
 
-        A list of dictionaries, each representing a user.
+        A list of _users_.  Refer to #list_user() for details on its
+        structure.
         """
         ensure_noneornonemptystring('query')
         ensure_noneorinstance('start_at', int)
@@ -428,11 +429,16 @@ class JiraCloud:
     # list_projects
     # get_project
     # create_project
+    # get_project_issuetypescheme
+    # get_project_issuetypescreenscheme
+    # get_project_notificationscheme
+    # get_project_permissionscheme
+    # get_project_workflowscheme
     # update_project
-    # update_project_workflowscheme
-    # update_project_issuetypescheme
-    # update_project_issuetypescreenscheme
-    #
+    # set_project_workflowscheme
+    # set_project_issuetypescheme
+    # set_project_issuetypescreenscheme
+    # set_project_permissionscheme
     # get_project_role
     # add_project_role_actors
     # remove_project_role_actor
@@ -440,6 +446,7 @@ class JiraCloud:
     @api_call
     def list_projects(
         self,
+        *,
         expand: str = PROJECTS_EXPAND,
         query: Optional[str] = None,
         order_by: Optional[str] = None,
@@ -529,6 +536,7 @@ class JiraCloud:
         project_type_key: str,
         name: str,
         lead_account_id: Optional[str] = None,
+        *,
         url: Optional[str] = None,
         assignee_type: Optional[str] = None,
         avatar_id: Optional[int] = None,
@@ -809,8 +817,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id: a non-empty string
-        - workflowscheme_id: a non-empty string
+        - project_id_or_key: an integer or a non-empty string
+        - workflowscheme_id: an integer or a non-empty string
 
         # Returned value
 
@@ -839,8 +847,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: a non-empty string
-        - issuetypescheme_id: a non-empty string
+        - project_id_or_key: an integer or a non-empty string
+        - issuetypescheme_id: an integer or a non-empty string
 
         # Returned value
 
@@ -869,8 +877,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: a non-empty string
-        - issuetypescreenscheme_id: a non-empty string
+        - project_id_or_key: an integer or a  non-empty string
+        - issuetypescreenscheme_id: an integer or a non-empty string
 
         # Returned value
 
@@ -898,8 +906,8 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: a non-empty string or an integer
-        - permissionscheme_id: a non-empty string
+        - project_id_or_key: an integer or a non-empty string
+        - permissionscheme_id: an integer or a non-empty string
 
         # Returned value
 
@@ -922,7 +930,7 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: an integer or a string
+        - project_id_or_key: an integer or a non-empty string
         - role_id: an integer or a string
 
         # Returned value
@@ -967,7 +975,7 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: an integer or a string
+        - project_id_or_key: an integer or a non-empty string
         - role_id: an integer or a string
 
         # Optional parameters
@@ -1009,7 +1017,7 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: an integer or a string
+        - project_id_or_key: an integer or a non-empty string
         - role_id: an integer or a string
 
         # Optional parameters
@@ -1040,9 +1048,6 @@ class JiraCloud:
     # create_filter
     # list_boards
     # create_board
-    # set_board_admins
-    # set_board_columns
-    # set_board_daysincolumn
 
     @api_call
     def list_project_boards(
@@ -1052,7 +1057,7 @@ class JiraCloud:
 
         # Required parameters
 
-        - project_id_or_key: an integer or a string
+        - project_id_or_key: an integer or a non-empty string
 
         # Returned value
 
@@ -1069,7 +1074,7 @@ class JiraCloud:
         Browse project permission required (will raise an _ApiError_
         otherwise).
         """
-        ensure_nonemptystring('project_id_or_key')
+        ensure_instance('project_id_or_key', (int, str))
 
         return self._collect_agile_data(
             'board', params={'projectKeyOrId': project_id_or_key}
@@ -1087,22 +1092,23 @@ class JiraCloud:
 
         # Required parameters
 
+        - project_id_or_key: an integer or a non-empty string
         - name: a non-empty string (the board name)
-        - project_id_or_key: an integer or a string
         - type: a string (the board type, e.g., `'scrum'`, `'kanban'`,
           `'simple'`)
 
         # Optional parameters
 
-        - filter_id: an integer (the filter ID)
+        - filter_id: an integer or a string (the filter ID)
 
         # Returned value
 
         A dictionary representing the created board.
         """
-        ensure_nonemptystring('project_id_or_key')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_nonemptystring('name')
         ensure_nonemptystring('type')
+        ensure_noneorinstance('filter_id', (int, str))
 
         return self.create_board(
             name=name,
@@ -1119,6 +1125,7 @@ class JiraCloud:
         self,
         name: str,
         jql: str,
+        *,
         share_permissions: Optional[List[Dict[str, Any]]] = None,
         edit_permissions: Optional[List[Dict[str, Any]]] = None,
         description: Optional[str] = None,
@@ -1168,6 +1175,16 @@ class JiraCloud:
 
         - params: a dictionary or None (None by default)
 
+        # Returned value
+
+        A list of _boards_.  Each board is a dictionary with the
+        following entries:
+
+        - name: a string
+        - type: a string (`'scrum'` or `'kanban'` or `'simple'`)
+        - id: an integer
+        - self: a string (URL)
+
         # Usage
 
         `params`, if provided, is a dictionary with at least one of the
@@ -1185,16 +1202,6 @@ class JiraCloud:
         - projectLocation: a string
         - startAt: an integer
         - type: a string
-
-        # Returned value
-
-        A list of _boards_.  Each board is a dictionary with the
-        following entries:
-
-        - name: a string
-        - type: a string (`'scrum'` or `'kanban'` or `'simple'`)
-        - id: an integer
-        - self: a string (URL)
         """
         ensure_noneorinstance('params', dict)
 
@@ -1205,6 +1212,7 @@ class JiraCloud:
         self,
         name: str,
         type: str,
+        *,
         filter_id: Optional[int] = None,
         location: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
@@ -1253,6 +1261,7 @@ class JiraCloud:
     @api_call
     def list_issuetypescreenschemes(
         self,
+        *,
         start_at: int = 0,
         max_results: int = 50,
         ids: Optional[List[int]] = None,
@@ -1312,14 +1321,14 @@ class JiraCloud:
 
     @api_call
     def list_workflowschemes(
-        self, start_at: int = 0, max_results: int = 50
+        self, *, start_at: int = 0, max_results: int = 50
     ) -> List[Dict[str, Any]]:
         """Return the list of all workflow schemes.
 
         # Optional parameters
 
-        - start_at: an integer (default: 0)
-        - max_results: an integer (default: 50, maximum: 100)
+        - start_at: an integer (default: `0`)
+        - max_results: an integer (default: `50`, maximum: `100`)
 
         # Returned value
 
@@ -1335,14 +1344,14 @@ class JiraCloud:
 
     @api_call
     def list_issuetypeschemes(
-        self, start_at: int = 0, max_results: int = 50
+        self, *, start_at: int = 0, max_results: int = 50
     ) -> List[Dict[str, Any]]:
         """List issue type schemes.
 
         # Optional parameters
 
-        - start_at: an integer (default: 0)
-        - max_results: an integer (default: 50, maximum: 100)
+        - start_at: an integer (default: `0`)
+        - max_results: an integer (default: `50`, maximum: `100`)
 
         # Returned value
 
@@ -1358,14 +1367,14 @@ class JiraCloud:
 
     @api_call
     def list_notificationschemes(
-        self, start_at: int = 0, max_results: int = 50
+        self, *, start_at: int = 0, max_results: int = 50
     ) -> List[Dict[str, Any]]:
         """List notification schemes.
 
         # Optional parameters
 
-        - start_at: an integer (default: 0)
-        - max_results: an integer (default: 50, maximum: 100)
+        - start_at: an integer (default: `0`)
+        - max_results: an integer (default: `50`, maximum: `100`)
 
         # Returned value
 
@@ -1619,8 +1628,8 @@ class JiraCloud:
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_instance('participants', list)
         ensure_nonemptystring('request_id_or_key')
+        ensure_instance('participants', list)
 
         params = {'accountIds': participants}
 
@@ -1636,9 +1645,7 @@ class JiraCloud:
 
     @api_call
     def list_queues(
-        self,
-        servicedesk_id: str,
-        include_count: bool = False,
+        self, servicedesk_id: str, include_count: bool = False
     ) -> List[Dict[str, Any]]:
         """List queues for a service desk.
 
@@ -1673,9 +1680,7 @@ class JiraCloud:
 
     @api_call
     def list_queue_issues(
-        self,
-        servicedesk_id: str,
-        queue_id: str,
+        self, servicedesk_id: str, queue_id: str
     ) -> List[Dict[str, Any]]:
         """Return the list of all issues in a given queue.
 
@@ -1697,9 +1702,7 @@ class JiraCloud:
 
     @api_call
     def list_requesttypes(
-        self,
-        servicedesk_id: str,
-        search_query: Optional[str] = None,
+        self, servicedesk_id: str, search_query: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """List request types for a service desk.
 
@@ -1900,7 +1903,7 @@ class JiraCloud:
     def add_servicedesk_organization(
         self, servicedesk_id: str, organization_id: Union[int, str]
     ) -> bool:
-        """Add organization to servicedesk.
+        """Add organization to service desk.
 
         # Required parameters
 

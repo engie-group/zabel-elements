@@ -174,24 +174,17 @@ class Atlassian:
         return self.session().get(api_url)
 
     @api_call
-    def get_user(self, site_url: str, query: str) -> Dict[str, Any]:
-        """Get user details.
+    def search_site_user(self, site_url: str, query: str) -> Dict[str, Any]:
+        """Search for site user details.
 
         # Required parameters
 
+        - site_url: a non-empty string
         - query: a non-empty string
 
         # Returned value
 
-        A _user_ dictionary with the following entries:
-
-        - `accountId`: a string
-        - `accountType`: a string
-        - `emailAddress`: a string
-        - `avatarUrls`: a dictionary
-        - `displayName`: a string
-        - `active`: a boolean
-        - `locale`: a string
+        A _user_.  See #list_site_users() for details on its structure.
         """
         ensure_nonemptystring('site_url')
         ensure_nonemptystring('query')
@@ -199,6 +192,8 @@ class Atlassian:
 
         api_url = join_url(site_url, 'rest/api/3/user/search')
         return self.session().get(api_url, params=params)
+
+    get_user = search_site_user
 
     ####################################################################
     # atlassian private helpers
