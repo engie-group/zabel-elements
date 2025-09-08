@@ -852,7 +852,7 @@ class JiraCloud:
     def set_project_permissionscheme(
         self,
         project_id_or_key: Union[int, str],
-        permissionscheme_id: union[int, str],
+        permissionscheme_id: Union[int, str],
     ) -> bool:
         """Set the permission scheme associated to project.
 
