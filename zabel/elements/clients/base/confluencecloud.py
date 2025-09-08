@@ -268,7 +268,8 @@ class ConfluenceCloud:
         - type: a string
         - _links: a dictionary
         """
-        ensure_instance('space_id', int)
+
+        # ensure_instance('space_id', int)
         ensure_noneorinstance('description_format', str)
         ensure_instance('include_icon', bool)
         ensure_instance('include_labels', bool)
@@ -287,9 +288,9 @@ class ConfluenceCloud:
         add_if_specified(
             params, 'include-role-assignments', include_role_assignments
         )
-
-        result = self._get(f'spaces/{space_id}', params=params)
-        return result
+        url = join_url(self.url, f'rest/api/space/{space_id}')
+        response = self.session().get(url, params=params)
+        return response.json()
 
     @api_call
     def list_space_pages(
@@ -1179,6 +1180,39 @@ class ConfluenceCloud:
     # get_user_groups
 
     @api_call
+    def search_users(
+        self,
+        cql: str = 'type=user',
+        limit: int = 100,
+        start: int = 0,
+        expand: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return a list of users.
+
+        # Optional parameters
+
+        - account_id: a string
+        - limit: an integer (default 100)
+        - start: an integer (default 0)
+        - expand: a list of strings
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more.
+        """
+
+        ensure_instance('limit', int)
+        ensure_instance('start', int)
+        ensure_noneorinstance('expand', list)
+
+        params = {'limit': limit, 'start': start, 'cql': cql}
+        add_if_specified(params, 'expand', expand)
+
+        url = join_url(self.url, 'rest/api/search/user')
+        return self.session().get(url, params=params)
+
+    @api_call
     def get_user(
         self, account_id: str, expand: Optional[List[str]] = None
     ) -> Dict[str, Any]:
@@ -1405,9 +1439,7 @@ class ConfluenceCloud:
         params = {'limit': limit}
         add_if_specified(params, 'expand', expand)
 
-        url = join_url(
-            self.url, f'rest/api/group/{group_name}/membersByGroupId'
-        )
+        url = join_url(self.url, f'rest/api/group/{group_name}/member')
         result = self.session().get(url, params=params)
         return result
 
