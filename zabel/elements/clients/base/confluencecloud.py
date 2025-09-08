@@ -260,7 +260,7 @@ class ConfluenceCloud:
         - _links: a dictionary
         """
 
-        #ensure_instance('space_id', int)
+        # ensure_instance('space_id', int)
         ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('include_icon', bool)
         ensure_noneorinstance('include_labels', bool)
@@ -1197,12 +1197,10 @@ class ConfluenceCloud:
     # get_current_user
     # get_user_groups
 
-
-
     @api_call
     def search_users(
         self,
-        cql: str= 'type=user',
+        cql: str = 'type=user',
         limit: int = 100,
         start: int = 0,
         expand: Optional[List[str]] = None,
@@ -1231,6 +1229,7 @@ class ConfluenceCloud:
 
         url = join_url(self.url, 'rest/api/search/user')
         return self.session().get(url, params=params)
+
     @api_call
     def get_user(
         self,
@@ -1465,9 +1464,7 @@ class ConfluenceCloud:
         params = {'limit': limit}
         add_if_specified(params, 'expand', expand)
 
-        url = join_url(
-            self.url, f'rest/api/group/{group_name}/member'
-        )
+        url = join_url(self.url, f'rest/api/group/{group_name}/member')
         result = self.session().get(url, params=params)
         return result
 

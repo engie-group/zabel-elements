@@ -582,125 +582,139 @@ class JiraCloud:
         response = self._post('project', json=params)
         return response.json()
 
-    def _ensure_project_id(self, project_id_or_key: Union[int, str]) -> str:
-
-        if (
-            isinstance(project_id_or_key, int)
-            or str(project_id_or_key).isdigit()
-        ):
+    def _get_project_id(self, project_id_or_key: Union[int, str]) -> str:
+        """Get numerical project ID."""
+        if isinstance(project_id_or_key, int) or project_id_or_key.isdigit():
             return str(project_id_or_key)
 
         p = self.get_project(str(project_id_or_key))
-        return str(p["id"])
+        return str(p['id'])
 
     @api_call
     def get_project_issuetypescheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Return the issue type screen scheme of a project.
+        """Get the issue type scheme assigned to project.
+
         # Required parameters
 
         - project_id_or_key: an integer or a non-empty string
+
         # Returned value
 
         A dictionary with the following entries:
+
         - id: a string
         - name: a string
         - description: a string
         """
+        ensure_instance(project_id_or_key, (int, str))
 
-        pid = self._ensure_project_id(project_id_or_key)
+        pid = self._get_project_id(project_id_or_key)
         resp = self._get(
             'issuetypescheme/project', params={'projectId': pid}
         ).json()
-        return resp.get('values', [])
+        return resp.get('values', [])[0]
 
     @api_call
     def get_project_issuetypescreenscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Return the issue type screen scheme of a project.
+        """Get the issue type screen scheme assigned to project.
 
         # Required parameters
+
         - project_id_or_key: an integer or a non-empty string
 
         # Returned value
+
         A dictionary with the following entries:
+
         - id: a string
         - name: a string
         - description: a string
         """
         ensure_instance('project_id_or_key', (int, str))
-        pid = self._ensure_project_id(project_id_or_key)
+
+        pid = self._get_project_id(project_id_or_key)
         resp = self._get(
             'issuetypescreenscheme/project', params={'projectId': pid}
         ).json()
-        return resp.get('values', [])
+        return resp.get('values', [])[0]
 
     @api_call
     def get_project_notificationscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Return the notification scheme of a project.
+        """Get the notification scheme assigned to project.
 
         # Required parameters
+
         - project_id_or_key: an integer or a non-empty string
 
         # Returned value
+
         A dictionary with the following entries:
+
         - id: a string
         - name: a string
         - description: a string
         """
         ensure_instance('project_id_or_key', (int, str))
-        pid = self._ensure_project_id(project_id_or_key)
+
+        pid = self._get_project_id(project_id_or_key)
         resp = self._get(
             'notificationscheme/project', params={'projectId': pid}
         ).json()
-        return resp.get('values', [])
+        return resp.get('values', [])[0]
 
     @api_call
     def get_project_permissionscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Return the permission scheme of a project.
+        """Get the permission scheme assigned to project.
 
         # Required parameters
+
         - project_id_or_key: an integer or a non-empty string
 
         # Returned value
+
         A dictionary with the following entries:
+
         - id: a string
         - name: a string
         - description: a string
         """
-
         ensure_instance('project_id_or_key', (int, str))
-        pid = self._ensure_project_id(project_id_or_key)
-        resp = self._get(f'project/{pid}/permissionscheme')
-        return resp.json()
+
+        return self._get(f'project/{project_id_or_key}/permissionscheme')
 
     @api_call
     def get_project_workflowscheme(
         self, project_id_or_key: Union[int, str]
     ) -> Dict[str, Any]:
-        """Return the workflow scheme of a project.
+        """Get the workflow scheme assigned to project.
 
         # Required parameters
+
         - project_id_or_key: an integer or a non-empty string
 
         # Returned value
+
         A dictionary with the following entries:
+
         - id: a string
         - name: a string
         - description: a string
         """
         ensure_instance('project_id_or_key', (int, str))
-        pid = self._ensure_project_id(project_id_or_key)
+
+        pid = self._get_project_id(project_id_or_key)
         resp = self._get(
             'workflowscheme/project', params={'projectId': pid}
         ).json()
-        return resp.get('values', [])
+        return resp.get('values', [])[0]
 
     @api_call
     def update_project(
@@ -746,10 +760,10 @@ class JiraCloud:
         return result  # type: ignore
 
     @api_call
-    def update_project_workflowscheme(
-        self, project_id: str, workflowscheme_id: str
+    def set_project_workflowscheme(
+        self, project_id_or_key: Union[int, str], workflowscheme_id: str
     ) -> bool:
-        """Update the workflow scheme of a project.
+        """Set the workflow scheme associated to project.
 
         # Required parameters
 
@@ -760,91 +774,94 @@ class JiraCloud:
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_nonemptystring('project_id_or_key')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_nonemptystring('workflowscheme_id')
 
+        pid = self._get_project_id(project_id_or_key)
         response = self._put(
             'workflowscheme/project',
             json={
-                'projectId': project_id,
+                'projectId': pid,
                 'workflowSchemeId': workflowscheme_id,
             },
         )
         return response.status_code == 204
 
     @api_call
-    def update_project_issuetypescheme(
-        self, project_id: str, issuetypescheme_id: str
+    def set_project_issuetypescheme(
+        self, project_id_or_key: Union[int, str], issuetypescheme_id: str
     ) -> bool:
-        """Update the issue type scheme of a project.
+        """Set issue type scheme associated to project.
 
         # Required parameters
 
-        - project_id: a non-empty string
+        - project_id_or_key: a non-empty string
         - issuetypescheme_id: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_nonemptystring('project_id')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_nonemptystring('issuetypescheme_id')
 
+        pid = self._get_project_id(project_id_or_key)
         response = self._put(
             'issuetypescheme/project',
             json={
-                'projectId': project_id,
+                'projectId': pid,
                 'issueTypeSchemeId': issuetypescheme_id,
             },
         )
         return response.status_code == 204
 
     @api_call
-    def update_project_issuetypescreenscheme(
-        self, project_id: str, issuetypescreenscheme_id: str
+    def set_project_issuetypescreenscheme(
+        self, project_id_or_key: Union[int, str], issuetypescreenscheme_id: str
     ) -> bool:
-        """Update the issue type screen scheme of a project.
+        """Set the issue type screen scheme associated to project.
 
         # Required parameters
 
-        - project_id: a non-empty string
+        - project_id_or_key: a non-empty string
         - issuetypescreenscheme_id: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_nonemptystring('project_id')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_nonemptystring('issuetypescreenscheme_id')
 
+        pid = self._get_project_id(project_id_or_key)
         response = self._put(
             'issuetypescreenscheme/project',
             json={
-                'projectId': project_id,
+                'projectId': pid,
                 'issueTypeScreenSchemeId': issuetypescreenscheme_id,
             },
         )
         return response.status_code == 204
 
-    def update_project_permissionscheme(
-        self, project_id: str, permissionscheme_id: str
+    def set_project_permissionscheme(
+        self, project_id_or_key: Union[int, str], permissionscheme_id: str
     ) -> bool:
-        """Update the permission scheme of a project.
+        """Set the permission scheme associated to project.
 
         # Required parameters
 
-        - project_id: a non-empty string
+        - project_id_or_key: a non-empty string or an integer
         - permissionscheme_id: a non-empty string
 
         # Returned value
 
         A boolean.  True if successful, False otherwise.
         """
-        ensure_nonemptystring('project_id')
+        ensure_instance('project_id_or_key', (int, str))
         ensure_nonemptystring('permissionscheme_id')
 
         response = self._put(
-            f'project/{project_id}/permissionscheme',
+            f'project/{project_id_or_key}/permissionscheme',
             json={'id': permissionscheme_id},
         )
         return response.status_code == 204
@@ -1177,9 +1194,9 @@ class JiraCloud:
     #
     # list_issuetypeschemes
     # list_issuetypescreenschemes
-    # list_workflowschemes
-    # list_permissionschemes
     # list_notificationschemes
+    # list_permissionschemes
+    # list_workflowschemes
 
     @api_call
     def list_issuetypescreenschemes(
@@ -1236,8 +1253,7 @@ class JiraCloud:
         - description: a string (optional)
         - self: a string (an URL)
         """
-        response = self._get('permissionscheme')
-        return response.json()
+        return self._get('permissionscheme')  # type: ignore
 
     @api_call
     def list_workflowschemes(
@@ -1254,6 +1270,7 @@ class JiraCloud:
 
         A list of _workflow schemes_.  Each workflow scheme is a
         dictionary with the following entries:
+
         - id: an integer
         - name: a string
         - description: a string
@@ -1265,7 +1282,8 @@ class JiraCloud:
     def list_issuetypeschemes(
         self, start_at: int = 0, max_results: int = 50
     ) -> List[Dict[str, Any]]:
-        """List issue type schemes (Jira Cloud).
+        """List issue type schemes.
+
         # Optional parameters
 
         - start_at: an integer (default: 0)
@@ -1275,14 +1293,13 @@ class JiraCloud:
 
         A list of _issue type schemes_.  Each issue type scheme is a
         dictionary with the following entries:
+
         - id: an integer
         - name: a string
         - description: a string
         """
-        return self._collect_data(
-            'issuetypescheme',
-            params={'startAt': start_at, 'maxResults': max_results},
-        )
+        params = {'startAt': start_at, 'maxResults': max_results}
+        return self._collect_data('issuetypescheme', params=params)
 
     @api_call
     def list_notificationschemes(
@@ -1299,16 +1316,13 @@ class JiraCloud:
 
         A list of _notification schemes_.  Each notification scheme is a
         dictionary with the following entries:
+
         - id: an integer
         - name: a string
         - description: a string
         """
         params = {'startAt': start_at, 'maxResults': max_results}
-        return self._collect_data(
-            'notificationscheme',
-            params=params,
-            key='values',
-        )
+        return self._collect_data('notificationscheme', params=params)
 
     ####################################################################
     # JIRA Cloud roles
