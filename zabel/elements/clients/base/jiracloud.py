@@ -872,7 +872,7 @@ class JiraCloud:
             f'project/{project_id_or_key}/permissionscheme',
             json={'id': permissionscheme_id},
         )
-        return response.status_code == 204
+        return response.status_code == 200
 
     @api_call
     def get_project_role(
