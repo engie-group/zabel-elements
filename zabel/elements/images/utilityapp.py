@@ -15,7 +15,7 @@ from zabel.commons.servers import ApiApp
 
 
 ########################################################################
-# Interfaces
+# Interface
 
 
 class UtilityApp(ApiApp, Image):

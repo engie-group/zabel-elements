@@ -105,9 +105,6 @@ class ManagedServiceApp(ApiApp, Image):
     def push_managedproject(self, project_id: str) -> None:
         """Push (aka publish) managed project on service.
 
-        Members defined for the project are not pushed on service.  Use
-        #push_users() for that purpose.
-
         # Required parameters
 
         - project_id: a managed project definition name
