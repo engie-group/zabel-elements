@@ -220,7 +220,7 @@ class ConfluenceCloud:
     @api_call
     def get_space(
         self,
-        space_id: int,
+        space_id: str,
         description_format: Optional[str] = None,
         include_icon: Optional[bool] = False,
         include_labels: Optional[bool] = False,
@@ -233,7 +233,7 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_id: an integer
+        - space_id: a string
 
         # Optional parameters
 
@@ -260,7 +260,7 @@ class ConfluenceCloud:
         - _links: a dictionary
         """
 
-        # ensure_instance('space_id', int)
+        ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('include_icon', bool)
         ensure_noneorinstance('include_labels', bool)
@@ -1465,8 +1465,8 @@ class ConfluenceCloud:
         add_if_specified(params, 'expand', expand)
 
         url = join_url(self.url, f'rest/api/group/{group_name}/member')
-        result = self.session().get(url, params=params)
-        return result
+        result = self.session().get(url, params=params).json()
+        return result['results']
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
