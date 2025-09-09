@@ -27,7 +27,7 @@ in many workplaces, namely:
 - SonatypeNexus
 - SquashTM
 
-Elements are of two kinds: _ManagedServices_, which represent services that
+Elements are of two kinds: _Managed services_, which represent services that
 are managed by Zabel, and _Utilities_, which represent services that are used
 by Zabel.
 
@@ -40,8 +40,8 @@ services necessary for the managed services to function, but otherwise not
 seen by project members.  An LDAP server would probably be a utility, used
 both as a reference and as an access control tool.
 
-In the above list, Kubernetes and Okta are utilities.  The other elements are
-managed services.
+In the above list, Atlassian, Kubernetes and Okta are utilities.  The other
+elements are managed services.
 
 You can use this library independently of the Zabel platform, as it has no
 specific dependencies on it.  In particular, the **zabel.elements.clients**
@@ -58,9 +58,9 @@ It contains two parts:
 - The **zabel.elements.clients** module
 - The **zabel.elements.images** base classes module
 
-There is one _image_ per client (hence one image per element).  Images are
-classes with a standardized constructor and a `run()` method and are how code
-is packaged so that it can be deployed on the Zabel platform.
+There is one _image_ per client (hence one image per element).  Images are classes
+with a standardized constructor taking no parameters and a `run()` method and are
+how code is packaged so that it can be deployed on the Zabel platform.
 
 ## zabel.elements.clients
 
@@ -124,7 +124,7 @@ Those abstract image wrappers implement an `__init__()` constructor with no
 parameter and a default `run()` method that can be overridden.
 
 Managed services also implement at least the `list_members()` method of
-the _ManagedService_ interface.  They may provide `get_member()` if a fast
+the _ManagedServiceApp_ interface.  They may provide `get_member()` if a fast
 implementation is available.
 
 Concrete classes deriving those abstract managed services wrappers should
@@ -134,12 +134,12 @@ well as a `get_internal_member_id()` method that takes a canonical user ID
 and returns the internal key for that user.
 
 They should also provide concrete implementations for the remaining methods
-provided by the _ManagedService_ interface.
+provided by the _ManagedServiceApp_ interface.
 
 ### Conventions for Images
 
-Utilities must implement the _Utility_ interface and managed services must
-implement the _ManagedService_ interface.
+Utilities images must implement the _UtilityApp_ interface and managed services
+images must implement the _ManagedServiceApp_ interface.
 
 ## License
 

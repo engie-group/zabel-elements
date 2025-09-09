@@ -40,8 +40,30 @@ generate:
     - zabel.elements.clients.SonatypeNexus@
   - clients/squashtm.md:
     - zabel.elements.clients.SquashTM@
-  - images.md:
-    - zabel.elements.images++
+  - images/index.md:
+    - zabel.elements.images
+  - images/utilityapp.md:
+    - zabel.elements.images.UtilityApp++
+  - images/managedserviceapp.md:
+    - zabel.elements.images.ManagedServiceApp++
+  - images/artifactory.md:
+    - zabel.elements.images.Artifactory++
+  - images/cloudbeesjenkins.md:
+    - zabel.elements.images.CloudBeesJenkins++
+  - images/confluence.md:
+    - zabel.elements.images.Confluence++
+  - images/github.md:
+    - zabel.elements.images.GitHub++
+  - images/kubernetes.md:
+    - zabel.elements.images.Kubernetes++
+  - images/jira.md:
+    - zabel.elements.images.Jira++
+  - images/sonarqube.md:
+    - zabel.elements.images.SonarQube++
+  - images/squashtm.md:
+    - zabel.elements.images.SquashTM++
+  - images/okta.md:
+    - zabel.elements.images.Okta++
 
 pages:
   - Home: index.md << ../README.md
@@ -66,7 +88,18 @@ pages:
       - SonatypeNexus: clients/sonatypenexus.md
       - SquashTM: clients/squashtm.md
     - Images:
-      - Overview: images.md
+      - Images Overview: images/index.md
+      - ManagedServiceApp: images/managedserviceapp.md
+      - UtilityApp: images/utilityapp.md
+      - Artifactory: images/artifactory.md
+      - CloudBeesJenkins: images/cloudbeesjenkins.md
+      - Confluence: images/confluence.md
+      - GitHub: images/github.md
+      - Kubernetes: images/kubernetes.md
+      - Jira: images/jira.md
+      - SonarQube: images/sonarqube.md
+      - SquashTM: images/squashtm.md
+      - Okta: images/okta.md
 
 theme:
   features:

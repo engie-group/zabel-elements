@@ -12,12 +12,12 @@ The **zabel.elements.images** base classes library.
 It provides wrappers for the built-in low-level clients classes (those
 defined in the **zabel.elements.clients** module).
 
-Those abstract service wrappers implement an `__init__` constructor with
-no parameter.
+Those abstract service wrappers implement an `__init__()` constructor
+with no parameter.
 
 Managed services also implement at least the `list_members()` method of
-the #::ManagedService interface.  They may provide `get_member()` if a
-fast implementation is available.
+the #::ManagedServiceApp interface.  They may provide `get_member()` if
+a fast implementation is available.
 
 Concrete classes deriving those abstract managed services wrappers
 should provide a `get_canonical_member_id()` method that takes a
@@ -26,15 +26,17 @@ canonical user ID, as well as a `get_internal_member_id()` method that
 takes a canonical user ID and returns the internal key for that user.
 
 They should also provide concrete implementations for the remaining
-methods provided by the #::ManagedService interface.
+methods provided by the #::ManagedServiceApp interface.
 
-# Conventions
+## Conventions
 
-Utilities must implement the #::Utility interface and managed services
-must implement the #::ManagedService interface.
+Utilities must implement the #::UtilityApp interface and managed services
+must implement the #::ManagedServiceApp interface.
 """
 
 __all__ = [
+    'UtilityApp',
+    'ManagedServiceApp',
     'Artifactory',
     'CloudBeesJenkins',
     'Confluence',
@@ -47,16 +49,17 @@ __all__ = [
 ]
 
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import json
 import os
 
-from zabel.commons.interfaces import Image
-from zabel.commons.servers import ApiApp, entrypoint
 from zabel.commons.utils import api_call
 
 from zabel.elements import clients
+
+from .managedserviceapp import ManagedServiceApp
+from .utilityapp import UtilityApp
 
 
 ########################################################################
@@ -79,177 +82,14 @@ def _has_credentials(*keys) -> bool:
 
 
 ########################################################################
-# Interfaces
-
-
-class Utility(ApiApp, Image):
-    """Abstract Utility API app."""
-
-
-class ManagedService(ApiApp, Image):
-    """Abstract Managed Service API app.
-
-    This class extends #ApiApp and is abstract.  It declares a
-    minimal set of features a managed service must provide, in addition
-    to the #ApiApp ones:
-
-    - canonical user names management
-    - members getters
-    - project push and pull
-
-    # Added Methods
-
-    | Method name                | Default implementation? | Exposed? |
-    | -------------------------- | ------------------------| -------- |
-    | #get_canonical_member_id() | No                      | No       |
-    | #get_internal_member_id()  | No                      | No       |
-    | #list_members()            | No                      | Yes      |
-    | #get_member()              | No                      | Yes      |
-    | #push_project()            | No                      | Yes      |
-    | #push_users()              | No                      | Yes      |
-    | #pull_project()            | No                      | Yes      |
-    | #pull_users()              | No                      | Yes      |
-
-    Unimplemented features will raise a _NotImplementedError_
-    exception.
-    """
-
-    def get_canonical_member_id(self, user: Any) -> str:
-        """Return the canonical member ID.
-
-        # Required parameters
-
-        - user: a service-specific user representation
-
-        `user` is the service internal user representation. It may be
-        a service-specific object or class.
-
-        # Returned value
-
-        A string.
-        """
-        raise NotImplementedError
-
-    def get_internal_member_id(self, member_id: str) -> Union[str, int]:
-        """Return the internal name.
-
-        # Required parameters
-
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
-
-        # Returned value
-
-        A string or an integer, depending on the service internals.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/members')
-    def list_members(self) -> Dict[str, Any]:
-        """Return the members on the service.
-
-        # Returned value
-
-        A dictionary.  The keys are the canonical IDs and the values are
-        the representations of a user for the service.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/members/{member_id}')
-    def get_member(self, member_id: str) -> Any:
-        """Return details on user.
-
-        # Required parameters
-
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
-
-        # Returned value
-
-        The representation of the user for the service, which is
-        service-specific.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/managedprojects/{project}', methods=['PUT'])
-    def push_project(self, project: str) -> None:
-        """Push (aka publish) managed project on service.
-
-        Members defined for the project are not pushed on service.  Use
-        #push_users() for that purpose.
-
-        # Required parameters
-
-        - project: a managed project definition name
-
-        # Raised exceptions
-
-        Raises an exception if the managed project is not successfully
-        pushed.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/managedprojects/{project}/members', methods=['PUT'])
-    def push_users(self, project: str) -> None:
-        """Push (aka publish) managed project users on service.
-
-        It assumes the project has been previously successfully pushed.
-        It may fail otherwise.
-
-        # Required parameters
-
-        - project: a managed project definition name
-
-        It assumes the project has been previously successfully pushed
-        on the service.
-
-        # Raised exceptions
-
-        Raises an exception if the managed project users are not
-        successfully pushed.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/managedprojects/{project}', methods=['GET'])
-    def pull_project(self, project: str) -> Any:
-        """Pull (aka extract) managed project users on service.
-
-        # Required parameters
-
-        - project: a managed project definition name
-
-        # Returned value
-
-        A service-specific result.
-        """
-        raise NotImplementedError
-
-    @entrypoint('/v1/managedprojects/{project}/members', methods=['GET'])
-    def pull_users(self, project: str) -> Any:
-        """Pull (aka extract) managed project definition on service.
-
-        # Required parameters
-
-        - project: a managed project definition name
-
-        # Returned value
-
-        A service-specific result.
-        """
-        raise NotImplementedError
-
-
-########################################################################
 # Wrappers around low-level APIs
 
 
-class Artifactory(clients.Artifactory, ManagedService):
+class Artifactory(clients.Artifactory, ManagedServiceApp):
     """Abstract base _Artifactory_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -257,9 +97,9 @@ class Artifactory(clients.Artifactory, ManagedService):
 
     The following environment variables must exist:
 
-    - ARTIFACTORY_URL: a string
-    - ARTIFACTORY_USER: a string
-    - ARTIFACTORY_TOKEN: a string
+    - `ARTIFACTORY_URL`: a string
+    - `ARTIFACTORY_USER`: a string
+    - `ARTIFACTORY_TOKEN`: a string
 
     The `ARTIFACTORY_URL` entry refers to the API entry point:
 
@@ -274,9 +114,9 @@ class Artifactory(clients.Artifactory, ManagedService):
         url = _get_credential('ARTIFACTORY_URL')
         user = _get_credential('ARTIFACTORY_USER')
         token = _get_credential('ARTIFACTORY_TOKEN')
-        super().__init__(url, user, token)
+        super().__init__(url, basic_auth=(user, token))
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -294,28 +134,26 @@ class Artifactory(clients.Artifactory, ManagedService):
         }
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(self.get_internal_member_id(member_id))
+        return self.get_user(self.get_internal_member_id(canonical_id))
 
 
-class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
+class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedServiceApp):
     """Abstract base _CloudBeesJenkins_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -323,9 +161,9 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
 
     The following environment variables must exist:
 
-    - JENKINS_URL: a string
-    - JENKINS_USER: a string
-    - JENKINS_TOKEN: a string
+    - `JENKINS_URL`: a string
+    - `JENKINS_USER`: a string
+    - `JENKINS_TOKEN`: a string
 
     The environment may also contain a `JENKINS_COOKIES` entry.
 
@@ -344,7 +182,7 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
             cookies = json.loads(_get_credential('JENKINS_COOKIES'))
         super().__init__(url, user, token, cookies)
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -361,28 +199,26 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedService):
         }
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.list_members()[member_id]
+        return self.list_members()[canonical_id]
 
 
-class Confluence(clients.Confluence, ManagedService):
+class Confluence(clients.Confluence, ManagedServiceApp):
     """Abstract base _Confluence_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -390,20 +226,20 @@ class Confluence(clients.Confluence, ManagedService):
 
     The following environment variable must exist:
 
-    - CONFLUENCE_URL: a string
+    - `CONFLUENCE_URL`: a string
 
     The environment also must have either the two following entries
     (basic auth):
 
-    - CONFLUENCE_USER: a string
-    - CONFLUENCE_TOKEN: a string
+    - `CONFLUENCE_USER`: a string
+    - `CONFLUENCE_TOKEN`: a string
 
     Or the four following entries (oauth):
 
-    - CONFLUENCE_KEYCERT: a string
-    - CONFLUENCE_CONSUMERKEY: a string
-    - CONFLUENCE_ACCESSTOKEN: a string
-    - CONFLUENCE_ACCESSSECRET: a string
+    - `CONFLUENCE_KEYCERT`: a string
+    - `CONFLUENCE_CONSUMERKEY`: a string
+    - `CONFLUENCE_ACCESSTOKEN`: a string
+    - `CONFLUENCE_ACCESSSECRET`: a string
 
     The `CONFLUENCE_URL` entry refers to the API entry point:
 
@@ -438,7 +274,7 @@ class Confluence(clients.Confluence, ManagedService):
             }
         super().__init__(url, basic_auth=basic_auth, oauth=oauth)
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -453,28 +289,26 @@ class Confluence(clients.Confluence, ManagedService):
         return {u: self.get_user(u) for u in self.list_users()}
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(member_id)
+        return self.get_user(canonical_id)
 
 
-class GitHub(clients.GitHub, ManagedService):
+class GitHub(clients.GitHub, ManagedServiceApp):
     """Abstract base _GitHub_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -482,9 +316,9 @@ class GitHub(clients.GitHub, ManagedService):
 
     The following environment variables must exist:
 
-    - GITHUB_URL: a string
-    - GITHUB_USER: a string
-    - GITHUB_TOKEN: a string
+    - `GITHUB_URL`: a string
+    - `GITHUB_USER`: a string
+    - `GITHUB_TOKEN`: a string
 
     The environment may also have a `GITHUB_MNGT` entry (a string).
 
@@ -505,9 +339,9 @@ class GitHub(clients.GitHub, ManagedService):
         mngt = None
         if _has_credentials('GITHUB_MNGT'):
             mngt = _get_credential('GITHUB_MNGT')
-        super().__init__(url, user, token, mngt)
+        super().__init__(url, basic_auth=(user, token), management_url=mngt)
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -522,27 +356,25 @@ class GitHub(clients.GitHub, ManagedService):
         return {self.get_canonical_member_id(u): u for u in self.list_users()}
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID.
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(self.get_internal_member_id(member_id))
+        return self.get_user(self.get_internal_member_id(canonical_id))
 
 
-class Kubernetes(clients.Kubernetes, Utility):
+class Kubernetes(clients.Kubernetes, UtilityApp):
     """Abstract base _Kubernetes_ class.
 
-    Provides a default implementation for the following #::Utility
+    Provides a default implementation for the following #::UtilityApp
     method:
 
     - `__init__()`
@@ -553,13 +385,13 @@ class Kubernetes(clients.Kubernetes, Utility):
 
     Alternatively, it may contain some of the following entries:
 
-    - KUBERNETES_CONFIGFILE: a string (a fully qualified file name)
-    - KUBERNETES_CONTEXT: a string
+    - `KUBERNETES_CONFIGFILE`: a string (a fully qualified file name)
+    - `KUBERNETES_CONTEXT`: a string
 
-    - KUBERNETES_CONFIG_URL: a string (an URL)
-    - KUBERNETES_CONFIG_API_KEY: a string
-    - KUBERNETES_CONFIG_VERIFY: a string
-    - KUBERNETES_CONFIG_SSL_CA_CERT: a string (a base64-encoded
+    - `KUBERNETES_CONFIG_URL`: a string (an URL)
+    - `KUBERNETES_CONFIG_API_KEY`: a string
+    - `KUBERNETES_CONFIG_VERIFY`: a string
+    - `KUBERNETES_CONFIG_SSL_CA_CERT`: a string (a base64-encoded
       certificate)
 
     # Reusing an existing config file
@@ -622,11 +454,11 @@ class Kubernetes(clients.Kubernetes, Utility):
         super().__init__(config_file, context, config)
 
 
-class Jira(clients.Jira, ManagedService):
+class Jira(clients.Jira, ManagedServiceApp):
     """Abstract base _Jira_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -634,20 +466,20 @@ class Jira(clients.Jira, ManagedService):
 
     The following environment variable must exist:
 
-    - JIRA_URL: a string
+    - `JIRA_URL`: a string
 
     The environment also must have either the two following entries
     (basic auth):
 
-    - JIRA_USER: a string
-    - JIRA_TOKEN: a string
+    - `JIRA_USER`: a string
+    - `JIRA_TOKEN`: a string
 
     Or the four following entries (oauth):
 
-    - JIRA_KEYCERT: a string
-    - JIRA_CONSUMERKEY: a string
-    - JIRA_ACCESSTOKEN: a string
-    - JIRA_ACCESSSECRET: a string
+    - `JIRA_KEYCERT`: a string
+    - `JIRA_CONSUMERKEY`: a string
+    - `JIRA_ACCESSTOKEN`: a string
+    - `JIRA_ACCESSSECRET`: a string
 
     The `JIRA_URL` entry refers to the API entry point:
 
@@ -680,7 +512,7 @@ class Jira(clients.Jira, ManagedService):
             }
         super().__init__(url, basic_auth=basic_auth, oauth=oauth)
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -695,28 +527,26 @@ class Jira(clients.Jira, ManagedService):
         return {u: self.get_user(u) for u in self.list_users()}
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID.
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(self.get_internal_member_id(member_id))
+        return self.get_user(self.get_internal_member_id(canonical_id))
 
 
-class SonarQube(clients.SonarQube, ManagedService):
+class SonarQube(clients.SonarQube, ManagedServiceApp):
     """Abstract base _SonarQube_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -724,8 +554,8 @@ class SonarQube(clients.SonarQube, ManagedService):
 
     The following environment variables must exist:
 
-    - SONARQUBE_URL: a string
-    - SONARQUBE_TOKEN: a string
+    - `SONARQUBE_URL`: a string
+    - `SONARQUBE_TOKEN`: a string
 
     The `SONARQUBE_URL` entry refers to the API entry point:
 
@@ -738,7 +568,7 @@ class SonarQube(clients.SonarQube, ManagedService):
         token = _get_credential('SONARQUBE_TOKEN')
         super().__init__(url, token)
 
-    def get_internal_member_id(self, member_id: str) -> str:
+    def get_internal_member_id(self, canonical_id: str) -> str:
         raise NotImplementedError
 
     @api_call
@@ -755,28 +585,26 @@ class SonarQube(clients.SonarQube, ManagedService):
         }
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
-
-        `member_id` is the canonical member ID.
+        - canonical_id: a string, the canonical member ID.
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(self.get_internal_member_id(member_id))
+        return self.get_user(self.get_internal_member_id(canonical_id))
 
 
-class SquashTM(clients.SquashTM, ManagedService):
+class SquashTM(clients.SquashTM, ManagedServiceApp):
     """Abstract base _SquashTM_ class.
 
     Provides a default implementation for the following three
-    #::ManagedService methods:
+    #::ManagedServiceApp methods:
 
     - `__init__()`
     - `list_members`
@@ -784,9 +612,9 @@ class SquashTM(clients.SquashTM, ManagedService):
 
     The following environment variables must exist:
 
-    - SQUASHTM_URL: a string
-    - SQUASHTM_USER: a string
-    - SQUASHTM_TOKEN: a string
+    - `SQUASHTM_URL`: a string
+    - `SQUASHTM_USER`: a string
+    - `SQUASHTM_TOKEN`: a string
 
     The `SQUASHTM_URL` entry refers to the API entry point:
 
@@ -798,9 +626,9 @@ class SquashTM(clients.SquashTM, ManagedService):
         url = _get_credential('SQUASHTM_URL')
         user = _get_credential('SQUASHTM_USER')
         token = _get_credential('SQUASHTM_TOKEN')
-        super().__init__(url, user, token)
+        super().__init__(url, basic_auth=(user, token))
 
-    def get_internal_member_id(self, member_id: str) -> int:
+    def get_internal_member_id(self, canonical_id: str) -> int:
         raise NotImplementedError
 
     @api_call
@@ -818,35 +646,35 @@ class SquashTM(clients.SquashTM, ManagedService):
         }
 
     @api_call
-    def get_member(self, member_id: str) -> Dict[str, Any]:
+    def get_member(self, canonical_id: str) -> Dict[str, Any]:
         """Return details on user.
 
         # Required parameters
 
-        - member_id: a string
+        - canonical_id: a string
 
-        `member_id` is the canonical member ID.
+        `canonical_id` is the canonical member ID.
 
         # Returned value
 
         The representation of the user for the service, which is
         service-specific.
         """
-        return self.get_user(self.get_internal_member_id(member_id))
+        return self.get_user(self.get_internal_member_id(canonical_id))
 
 
-class Okta(clients.Okta, Utility):
+class Okta(clients.Okta, UtilityApp):
     """Abstract base _Okta_ class.
 
-    Provides a default implementation for the following #::Utility
+    Provides a default implementation for the following #::UtilityApp
     method:
 
     - `__init__()`
 
     The following environment variables must exist:
 
-    - OKTA_URL: a string
-    - OKTA_TOKEN: a string
+    - `OKTA_URL`: a string
+    - `OKTA_TOKEN`: a string
 
     The `OKTA_URL` entry refers to the API entry point:
 
