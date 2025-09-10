@@ -36,7 +36,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['zabel-commons>=1.7'],
+    install_requires=['zabel-commons>=1.8'],
     extras_require={
         'gitlab': ['python-gitlab>=6.1'],
         'jira': ['Jira>=3.0'],
