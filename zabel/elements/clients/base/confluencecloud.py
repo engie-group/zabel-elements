@@ -261,7 +261,6 @@ class ConfluenceCloud:
         """
 
         ensure_noneorinstance('description_format', str)
-        ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('include_icon', bool)
         ensure_noneorinstance('include_labels', bool)
         ensure_noneorinstance('include_operations', bool)
@@ -490,8 +489,8 @@ class ConfluenceCloud:
         ensure_nonemptystring('key')
 
         definition = {'key': key, 'value': value}
-        result = self._post(f'spaces/{space_id}/properties', definition)
-        return result
+        response = self._post(f'spaces/{space_id}/properties', definition)
+        return response
 
     @api_call
     def list_available_space_permissions(
@@ -815,8 +814,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'version', version)
 
-        result = self._get(f'pages/{page_id}', params=params)
-        return result
+        return self._get(f'pages/{page_id}', params=params)
 
     @api_call
     def list_page_children(
@@ -909,8 +907,7 @@ class ConfluenceCloud:
         add_if_specified(definition, 'subtype', subtype)
         add_if_specified(definition, 'title', title)
 
-        result = self._post('pages', definition)
-        return result
+        return self._post('pages', definition)
 
     @api_call
     def delete_page(
@@ -995,8 +992,7 @@ class ConfluenceCloud:
         add_if_specified(definition, 'parentId', parent_id)
         add_if_specified(definition, 'spaceId', space_key)
 
-        result = self._put(f'pages/{page_id}', definition)
-        return result
+        return self._put(f'pages/{page_id}', definition)
 
     @api_call
     def update_page_title(
@@ -1028,8 +1024,7 @@ class ConfluenceCloud:
             'title': title,
         }
 
-        result = self._put(f'pages/{page_id}/title', definition)
-        return result
+        return self._put(f'pages/{page_id}/title', definition)
 
     @api_call
     def list_page_attachments(
@@ -1276,8 +1271,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'expand', expand)
 
         url = join_url(self.url, 'rest/api/user')
-        result = self.session().get(url, params=params)
-        return result
+        return self.session().get(url, params=params)
 
     @api_call
     def get_current_user(
@@ -1302,8 +1296,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'expand', expand)
 
         url = join_url(self.url, 'rest/api/user/current')
-        result = self.session().get(url, params=params)
-        return result
+        return self.session().get(url, params=params)
 
     @api_call
     def get_user_groups(
@@ -1337,8 +1330,7 @@ class ConfluenceCloud:
         params = {'accountId': account_id, 'limit': limit}
 
         url = join_url(self.url, 'rest/api/user/memberof')
-        result = self.session().get(url, params=params)
-        return result
+        return self.session().get(url, params=params)
 
     ####################################################################
     # Confluence cloud groups
@@ -1391,8 +1383,7 @@ class ConfluenceCloud:
         ensure_nonemptystring('name')
 
         url = join_url(self.url, f'rest/api/group/{name}')
-        result = self.session().get(url)
-        return result
+        return self.session().get(url)
 
     @api_call
     def create_group(self, name: str) -> Dict[str, Any]:
@@ -1465,8 +1456,8 @@ class ConfluenceCloud:
         add_if_specified(params, 'expand', expand)
 
         url = join_url(self.url, f'rest/api/group/{group_name}/member')
-        result = self.session().get(url, params=params).json()
-        return result['results']
+        response = self.session().get(url, params=params).json()
+        return response['results']
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
