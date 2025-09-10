@@ -198,7 +198,6 @@ class ConfluenceCloud:
         Handles pagination (i.e., it returns all spaces, not only the
         first _n_ spaces).
         """
-
         ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('favorited_by', str)
         ensure_noneorinstance('ids', list)
@@ -268,7 +267,6 @@ class ConfluenceCloud:
         - type: a string
         - _links: a dictionary
         """
-
         ensure_noneorinstance('description_format', str)
         ensure_instance('include_icon', bool)
         ensure_instance('include_labels', bool)
@@ -360,7 +358,7 @@ class ConfluenceCloud:
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default 200)
+        - limit: an integer (default `200`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -446,7 +444,7 @@ class ConfluenceCloud:
         # Optional parameters
 
         - key: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -491,8 +489,7 @@ class ConfluenceCloud:
         ensure_nonemptystring('key')
 
         definition = {'key': key, 'value': value}
-        response = self._post(f'spaces/{space_id}/properties', definition)
-        return response
+        return self._post(f'spaces/{space_id}/properties', definition)
 
     @api_call
     def list_available_space_permissions(
@@ -525,7 +522,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -649,7 +646,7 @@ class ConfluenceCloud:
     # delete_page
     # update_page
     # update_page_title
-    # list_page_attachements
+    # list_page_attachments
     # add_page_attachment
     # update_page_attachment_data
 
@@ -674,7 +671,7 @@ class ConfluenceCloud:
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -820,7 +817,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - sort: a string
 
         # Returned value
@@ -1029,7 +1026,7 @@ class ConfluenceCloud:
         # Optional parameters
 
         - filename: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - media_type: a string
         - sort: a string
         - status: a string (default `'current'`)
@@ -1265,8 +1262,8 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A dictionary representing the current user
-        Please refer to #get_user() for more.
+        A dictionary representing the current user.  Please refer to
+        #get_user() for more.
         """
         ensure_noneorinstance('expand', list)
 
@@ -1288,7 +1285,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -1325,7 +1322,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -1416,7 +1413,7 @@ class ConfluenceCloud:
         # Optional parameters
 
         - expand: a list of strings
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
