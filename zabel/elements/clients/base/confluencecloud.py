@@ -65,6 +65,9 @@ OPERATION_TARGET_VALUES = [
 class ConfluenceCloud:
     """Confluence Cloud Low-Level Wrapper.
 
+    An interface to Confluence Cloud, including users and groups
+    management.
+
     There can be as many Confluence Cloud instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -72,14 +75,12 @@ class ConfluenceCloud:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://developer.atlassian.com/cloud/confluence/rest/v2/>
-    <https://developer.atlassian.com/cloud/confluence/rest/v1/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v2/>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v1/>
 
-    An interface to Confluence Cloud, including users and groups management.
-
-    # Implemented features
+    ## Implemented features
 
     - pages
     - search
@@ -90,12 +91,14 @@ class ConfluenceCloud:
     Whenever applicable, the provided features handle pagination (i.e.,
     they return all relevant elements, not only the first n).
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import ConfluenceCloud
 
-    url = 'https://{instance}.atlassian.net/wiki/'
+    url = 'https://your-instance.atlassian.net/wiki/'
+    user = '...'
+    token = '...'
     confluencecloud = ConfluenceCloud(url, basic_auth=(user, token))
     confluencecloud.list_users()
     ```
@@ -103,6 +106,7 @@ class ConfluenceCloud:
 
     def __init__(self, url: str, basic_auth: Tuple[str, str]) -> None:
         """Create a Confluence Cloud instance object.
+
         # Required parameters
 
         - url: a non-empty string
@@ -110,8 +114,10 @@ class ConfluenceCloud:
 
         # Usage
 
-        `url` must be the URL of the Confluence Cloud instance, e.g.,
-        `https://{instance}.atlassian.net/wiki`.
+        `url` must be the URL of the Confluence Cloud instance.  For
+        example:
+
+            'https://{instance}.atlassian.net/wiki'
 
         `basic_auth` is a tuple containing the user name and the API
         token.  The API token can be generated in the Atlassian
@@ -147,7 +153,7 @@ class ConfluenceCloud:
         description_format: Optional[str] = None,
         favorited_by: Optional[str] = None,
         ids: Optional[List[int]] = None,
-        include_icons: Optional[bool] = False,
+        include_icons: bool = False,
         keys: Optional[List[str]] = None,
         labels: Optional[List[str]] = None,
         limit: int = 100,
@@ -174,7 +180,8 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A list of _spaces_. Each space is a dictionary with the following entries:
+        A list of _spaces_. Each space is a dictionary with the
+        following entries:
 
         - authorId: a string
         - createdAt: a string
@@ -188,13 +195,13 @@ class ConfluenceCloud:
         - type: a string
         - _links: a dictionary
 
-        Handles pagination (i.e., it returns all spaces, not only the first _n_ spaces).
+        Handles pagination (i.e., it returns all spaces, not only the
+        first _n_ spaces).
         """
-
         ensure_noneorinstance('description_format', str)
         ensure_noneorinstance('favorited_by', str)
         ensure_noneorinstance('ids', list)
-        ensure_noneorinstance('include_icons', bool)
+        ensure_instance('include_icons', bool)
         ensure_noneorinstance('keys', list)
         ensure_noneorinstance('labels', list)
         ensure_noneorinstance('limit', int)
@@ -222,12 +229,12 @@ class ConfluenceCloud:
         self,
         space_id: str,
         description_format: Optional[str] = None,
-        include_icon: Optional[bool] = False,
-        include_labels: Optional[bool] = False,
-        include_operations: Optional[bool] = False,
-        include_permissions: Optional[bool] = False,
-        include_properties: Optional[bool] = False,
-        include_role_assignments: Optional[bool] = False,
+        include_icon: bool = False,
+        include_labels: bool = False,
+        include_operations: bool = False,
+        include_permissions: bool = False,
+        include_properties: bool = False,
+        include_role_assignments: bool = False,
     ) -> Dict[str, Any]:
         """Return space details.
 
@@ -237,17 +244,18 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - description_format: a string
-        - include_icon: a boolean
-        - include_labels: a boolean
-        - include_operations: a boolean
-        - include_permissions: a boolean
-        - include_properties: a boolean
-        - include_role_assignments: a boolean
+        - description_format: a string or None (None by default)
+        - include_icon: a boolean (False by default)
+        - include_labels: a boolean (False by default)
+        - include_operations: a boolean (False by default)
+        - include_permissions: a boolean (False by default)
+        - include_properties: a boolean (False by default)
+        - include_role_assignments: a boolean (False by default)
 
         # Returned value
 
         A dictionary with the following entries:
+
         - authorId: a string
         - createdAt: a string
         - description: a dictionary
@@ -259,14 +267,13 @@ class ConfluenceCloud:
         - type: a string
         - _links: a dictionary
         """
-
         ensure_noneorinstance('description_format', str)
-        ensure_noneorinstance('include_icon', bool)
-        ensure_noneorinstance('include_labels', bool)
-        ensure_noneorinstance('include_operations', bool)
-        ensure_noneorinstance('include_permissions', bool)
-        ensure_noneorinstance('include_properties', bool)
-        ensure_noneorinstance('include_role_assignments', bool)
+        ensure_instance('include_icon', bool)
+        ensure_instance('include_labels', bool)
+        ensure_instance('include_operations', bool)
+        ensure_instance('include_permissions', bool)
+        ensure_instance('include_properties', bool)
+        ensure_instance('include_role_assignments', bool)
 
         params = {}
         add_if_specified(params, 'description-format', description_format)
@@ -310,13 +317,13 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A list of dictionaries, each representing a page.
-        Please refer to #get_page() for more.
+        A list of dictionaries, each representing a page.  Please refer
+        to #get_page() for more.
         """
-
         ensure_instance('space_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
+        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
@@ -351,7 +358,7 @@ class ConfluenceCloud:
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default 200)
+        - limit: an integer (default `200`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -360,10 +367,10 @@ class ConfluenceCloud:
 
         A list of dictionaries, each representing a blog post.
         """
-
         ensure_instance('space_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
+        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
@@ -393,7 +400,7 @@ class ConfluenceCloud:
         # Required parameters
 
         - name: a non-empty string
-        - key: a string
+        - key: a non-empty string
 
         # Optional parameters
 
@@ -403,10 +410,9 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A dictionary representing the created space.
-        Please refer to #get_space() for more.
+        A dictionary representing the created space.  Please refer to
+        #get_space() for more.
         """
-
         ensure_nonemptystring('name')
         ensure_nonemptystring('key')
         ensure_noneorinstance('alias', str)
@@ -427,10 +433,7 @@ class ConfluenceCloud:
 
     @api_call
     def get_space_properties(
-        self,
-        space_id: int,
-        key: Optional[str] = None,
-        limit: int = 100,
+        self, space_id: int, key: Optional[str] = None, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Return properties of a space.
 
@@ -441,16 +444,16 @@ class ConfluenceCloud:
         # Optional parameters
 
         - key: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
-        A list of dictionaries, each representing a property of the space.
-        Please refer to #create_space_property() for more.
+        A list of dictionaries, each representing a property of the
+        space.  Please refer to #create_space_property() for more.
         """
-
         ensure_instance('space_id', int)
         ensure_noneorinstance('key', str)
+        ensure_instance('limit', int)
 
         params = {'limit': limit}
         add_if_specified(params, 'key', key)
@@ -461,10 +464,7 @@ class ConfluenceCloud:
 
     @api_call
     def create_space_property(
-        self,
-        space_id: int,
-        key: str,
-        value: Any,
+        self, space_id: int, key: str, value: Any
     ) -> Dict[str, Any]:
         """Create a property for a space.
 
@@ -477,6 +477,7 @@ class ConfluenceCloud:
         # Returned value
 
         A dictionary with the following entries:
+
         - id: a string
         - key: a string
         - value: any value (e.g., string, integer, dict, etc.)
@@ -484,18 +485,15 @@ class ConfluenceCloud:
         - createdAt: a string
         - _links: a dictionary
         """
-
         ensure_instance('space_id', int)
         ensure_nonemptystring('key')
 
         definition = {'key': key, 'value': value}
-        response = self._post(f'spaces/{space_id}/properties', definition)
-        return response
+        return self._post(f'spaces/{space_id}/properties', definition)
 
     @api_call
     def list_available_space_permissions(
-        self,
-        limit: int = 100,
+        self, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Return a list of available space permissions.
 
@@ -507,15 +505,14 @@ class ConfluenceCloud:
 
         A list of dictionaries, each representing a space permission.
         """
+        ensure_instance('limit', int)
 
         params = {'limit': limit}
         return self._collect_data('space-permissions', params=params)
 
     @api_call
     def list_space_permissions(
-        self,
-        space_id: int,
-        limit: int = 100,
+        self, space_id: int, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Return permissions for a space.
 
@@ -525,7 +522,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -534,10 +531,9 @@ class ConfluenceCloud:
         - id: a string
         - principal: a dictionary
         - operation: a dictionary
-
         """
-
         ensure_instance('space_id', int)
+        ensure_instance('limit', int)
 
         params = {'limit': limit}
         return self._collect_data(
@@ -557,9 +553,9 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_key: a string
-        - type: a string
-        - identifier: a string
+        - space_key: a non-empty string
+        - type: a string, either `'user'` or `'group'`
+        - identifier: a non-empty string
         - operation_key: a string
         - operation_target: a string
 
@@ -567,10 +563,9 @@ class ConfluenceCloud:
 
         A boolean indicating whether the operation was successful.
         """
-
         ensure_nonemptystring('space_key')
-        ensure_nonemptystring('identifier')
         ensure_in('type', ['user', 'group'])
+        ensure_nonemptystring('identifier')
         ensure_in('operation_key', OPERATION_KEY_VALUES)
         ensure_in('operation_target', OPERATION_TARGET_VALUES)
 
@@ -592,14 +587,13 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_key: a string
-        - permission_id: a string
+        - space_key: a non-empty string
+        - permission_id: a non-empty string
 
         # Returned value
 
         A boolean indicating whether the operation was successful.
         """
-
         ensure_nonemptystring('space_key')
         ensure_nonemptystring('permission_id')
 
@@ -612,10 +606,7 @@ class ConfluenceCloud:
 
     @api_call
     def add_space_label(
-        self,
-        space_key: str,
-        label: str,
-        prefix: str,
+        self, space_key: str, label: str, prefix: str
     ) -> Dict[str, Any]:
         """Add a label to a space.
 
@@ -637,7 +628,6 @@ class ConfluenceCloud:
         - size: an integer
         - _links: a dictionary
         """
-
         ensure_nonemptystring('space_key')
         ensure_nonemptystring('label')
         ensure_nonemptystring('prefix')
@@ -656,7 +646,7 @@ class ConfluenceCloud:
     # delete_page
     # update_page
     # update_page_title
-    # list_page_attachements
+    # list_page_attachments
     # add_page_attachment
     # update_page_attachment_data
 
@@ -681,7 +671,7 @@ class ConfluenceCloud:
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -691,10 +681,10 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a page.
         Please refer to #get_page() for more.
         """
-
         ensure_instance('pace_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
+        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
@@ -713,17 +703,17 @@ class ConfluenceCloud:
         self,
         page_id: int,
         body_format: Optional[str] = None,
-        get_draft: Optional[bool] = False,
-        include_collaborators: Optional[bool] = False,
-        include_direct_children: Optional[bool] = False,
-        include_favorited_by_current_user_status: Optional[bool] = False,
-        include_labels: Optional[bool] = False,
-        include_likes: Optional[bool] = False,
-        include_operations: Optional[bool] = False,
-        include_properties: Optional[bool] = False,
-        include_version: Optional[bool] = False,
-        include_versions: Optional[bool] = False,
-        include_webresources: Optional[bool] = False,
+        get_draft: bool = False,
+        include_collaborators: bool = False,
+        include_direct_children: bool = False,
+        include_favorited_by_current_user_status: bool = False,
+        include_labels: bool = False,
+        include_likes: bool = False,
+        include_operations: bool = False,
+        include_properties: bool = False,
+        include_version: bool = False,
+        include_versions: bool = False,
+        include_webresources: bool = False,
         status: Optional[List[str]] = None,
         version: Optional[int] = None,
     ) -> Dict[str, Any]:
@@ -735,19 +725,19 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - body_format: a string
-        - get_draft: a boolean
-        - include_collaborators: a boolean
-        - include_direct_children: a boolean
-        - include_favorited_by_current_user_status: a boolean
-        - include_labels: a boolean
-        - include_likes: a boolean
-        - include_operations: a boolean
-        - include_properties: a boolean
-        - include_version: a boolean
-        - include_versions: a boolean
-        - include_webresources: a boolean
-        - status: a list of strings
+        - body_format: a string or None (None by default)
+        - get_draft: a boolean (False by default)
+        - include_collaborators: a boolean (False by default)
+        - include_direct_children: a boolean (False by default)
+        - include_favorited_by_current_user_status: a boolean (False by default)
+        - include_labels: a boolean (False by default)
+        - include_likes: a boolean (False by default)
+        - include_operations: a boolean (False by default)
+        - include_properties: a boolean (False by default)
+        - include_version: a boolean (False by default)
+        - include_versions: a boolean (False by default)
+        - include_webresources: a boolean (False by default)
+        - status: a list of strings or None (None by default)
         - version: an integer
 
         # Returned value
@@ -773,20 +763,19 @@ class ConfluenceCloud:
         - isFavoritedByCurrentUser: a boolean
         - _links: a dictionary
         """
-
         ensure_instance('page_id', int)
         ensure_noneorinstance('body_format', str)
-        ensure_noneorinstance('get_draft', bool)
-        ensure_noneorinstance('include_collaborators', bool)
-        ensure_noneorinstance('include_direct_children', bool)
-        ensure_noneorinstance('include_favorited_by_current_user_status', bool)
-        ensure_noneorinstance('include_labels', bool)
-        ensure_noneorinstance('include_likes', bool)
-        ensure_noneorinstance('include_operations', bool)
-        ensure_noneorinstance('include_properties', bool)
-        ensure_noneorinstance('include_version', bool)
-        ensure_noneorinstance('include_versions', bool)
-        ensure_noneorinstance('include_webresources', bool)
+        ensure_instance('get_draft', bool)
+        ensure_instance('include_collaborators', bool)
+        ensure_instance('include_direct_children', bool)
+        ensure_instance('include_favorited_by_current_user_status', bool)
+        ensure_instance('include_labels', bool)
+        ensure_instance('include_likes', bool)
+        ensure_instance('include_operations', bool)
+        ensure_instance('include_properties', bool)
+        ensure_instance('include_version', bool)
+        ensure_instance('include_versions', bool)
+        ensure_instance('include_webresources', bool)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('version', int)
 
@@ -818,10 +807,7 @@ class ConfluenceCloud:
 
     @api_call
     def list_page_children(
-        self,
-        page_id: int,
-        limit: int = 100,
-        sort: Optional[str] = None,
+        self, page_id: int, limit: int = 100, sort: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Return a list of children pages for a given page.
 
@@ -831,7 +817,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - sort: a string
 
         # Returned value
@@ -839,9 +825,8 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a child page.
         Please refer to #get_page() for more.
         """
-
         ensure_instance('page_id', int)
-        ensure_noneorinstance('limit', int)
+        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
 
         params = {'limit': limit}
@@ -856,10 +841,10 @@ class ConfluenceCloud:
         self,
         space_id: int,
         body: Optional[Dict[str, Any]] = None,
-        embedded: Optional[bool] = False,
+        embedded: bool = False,
         parent_id: Optional[int] = None,
-        private: Optional[bool] = False,
-        root_level: Optional[bool] = False,
+        private: bool = False,
+        root_level: bool = False,
         status: Optional[str] = None,
         subtype: Optional[str] = None,
         title: Optional[str] = None,
@@ -877,7 +862,7 @@ class ConfluenceCloud:
         - parent_id: an integer
         - private: a boolean (default False)
         - root_level: a boolean (default False)
-        - status: a string ('current' or 'draft')
+        - status: a string (`'current'` or `'draft'`)
         - subtype: a string
         - title: a string
 
@@ -886,14 +871,15 @@ class ConfluenceCloud:
         A dictionary representing the created page.
         Please refer to #get_page() for more.
         """
-
         ensure_instance('space_id', int)
         ensure_noneorinstance('body', dict)
-        ensure_noneorinstance('embedded', bool)
+        ensure_instance('embedded', bool)
         ensure_noneorinstance('parent_id', int)
-        ensure_noneorinstance('private', bool)
-        ensure_noneorinstance('root_level', bool)
-        ensure_in('status', ['current', 'draft'])
+        ensure_instance('private', bool)
+        ensure_instance('root_level', bool)
+        ensure_noneorinstance('status', str)
+        if isinstance(status, str):
+            ensure_in('status', ['current', 'draft'])
         ensure_noneorinstance('subtype', str)
         ensure_noneorinstance('title', str)
 
@@ -910,10 +896,7 @@ class ConfluenceCloud:
         return self._post('pages', definition)
 
     @api_call
-    def delete_page(
-        self,
-        page_id: int,
-    ) -> bool:
+    def delete_page(self, page_id: int) -> bool:
         """Delete a page.
 
         # Required parameters
@@ -924,7 +907,6 @@ class ConfluenceCloud:
 
         A boolean indicating whether the deletion was successful.
         """
-
         ensure_instance('page_id', int)
 
         response = self._delete(f'pages/{page_id}')
@@ -949,29 +931,32 @@ class ConfluenceCloud:
         - page_id: an integer
         - body: a dictionary
         - version: a dictionary
-        - status: a string (default 'current')
-        - title: a non-empty string
 
         # Optional parameters
 
+        - title: a non-empty string
+        - status: a string (default `'current'`)
         - owner_id: a string
         - parent_id: an integer
         - space_key: a string
 
-        `version` is a dictionary with the following entries:
-            - number: an integer
-            - message: a string
+        # Usage
 
         `body` is a dictionary with the following entries:
-            - representation: a string
-            - value: a string
+
+        - representation: a string
+        - value: a string
+
+        `version` is a dictionary with the following entries:
+
+        - number: an integer
+        - message: a string
 
         # Returned value
 
         A dictionary representing the updated page.
         Please refer to #get_page() for more.
         """
-
         ensure_instance('page_id', int)
         ensure_instance('body', dict)
         ensure_in('status', ['current', 'draft'])
@@ -996,10 +981,7 @@ class ConfluenceCloud:
 
     @api_call
     def update_page_title(
-        self,
-        page_id: int,
-        status: str = 'current',
-        title: str = '',
+        self, page_id: int, status: str = 'current', title: str = ''
     ) -> Dict[str, Any]:
         """Update the title of a page.
 
@@ -1007,17 +989,16 @@ class ConfluenceCloud:
 
         - page_id: an integer
         - title: a non-empty string
-        - status: a string (default 'current')
+        - status: a string (default `'current'`)
 
         # Returned value
 
         A dictionary representing the updated page.
         Please refer to #get_page() for more.
         """
-
         ensure_instance('page_id', int)
-        ensure_nonemptystring('title')
         ensure_in('status', ['current', 'draft'])
+        ensure_nonemptystring('title')
 
         definition = {
             'status': status,
@@ -1045,10 +1026,10 @@ class ConfluenceCloud:
         # Optional parameters
 
         - filename: a string
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
         - media_type: a string
         - sort: a string
-        - status: a string (default 'current')
+        - status: a string (default `'current'`)
 
         # Returned value
 
@@ -1071,9 +1052,7 @@ class ConfluenceCloud:
         - downloadLink: a string
         - version: a dictionary
         - _links: a dictionary
-
         """
-
         ensure_instance('page_id', int)
         ensure_noneorinstance('filename', str)
         ensure_noneorinstance('media_type', str)
@@ -1102,18 +1081,18 @@ class ConfluenceCloud:
         # Required parameters
 
         - page_id: an integer
-        - filename: a string (file path)
+        - filename: a non-empty string (file path)
 
         # Optional parameters
-        - comment: a string
-        - minor_edit: a string (default 'true')
+
+        - comment: a non-empty string
+        - minor_edit: a string (default to `'true'`)
 
         # Returned value
 
         A dictionary representing the added attachment.
         Please refer to #list_page_attachments() for more.
         """
-
         ensure_instance('page_id', int)
         ensure_nonemptystring('filename')
         ensure_noneornonemptystring('comment')
@@ -1144,21 +1123,20 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - page_id: a string or integer
-        - attachment_id: a string or integer
+        - page_id: a string or an integer
+        - attachment_id: a string or an integer
         - filename: a non-empty string
 
         # Optional parameters
 
         - comment: a string
-        - minor_edit: a string (default 'true')
+        - minor_edit: a string (default `'true'`)
 
         # Returned value
 
         A dictionary representing the updated attachment.
         Please refer to #list_page_attachments() for more.
         """
-
         ensure_instance('page_id', (str, int))
         ensure_instance('attachment_id', (str, int))
         ensure_nonemptystring('filename')
@@ -1167,6 +1145,7 @@ class ConfluenceCloud:
 
         with open(filename, 'rb') as f:
             files = {'file': (filename, f.read())}
+
         data = {'minorEdit': minor_edit}
         if comment:
             data['comment'] = comment
@@ -1204,9 +1183,9 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - account_id: a string
-        - limit: an integer (default 100)
-        - start: an integer (default 0)
+        - cql: a string (default `'type=user'`)
+        - limit: an integer (default `100`)
+        - start: an integer (default `0`)
         - expand: a list of strings
 
         # Returned value
@@ -1214,7 +1193,7 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a user.
         Please refer to #get_user() for more.
         """
-
+        ensure_instance('cql', str)
         ensure_instance('limit', int)
         ensure_instance('start', int)
         ensure_noneorinstance('expand', list)
@@ -1227,9 +1206,7 @@ class ConfluenceCloud:
 
     @api_call
     def get_user(
-        self,
-        account_id: str,
-        expand: Optional[List[str]] = None,
+        self, account_id: str, expand: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Return details of a user.
 
@@ -1244,6 +1221,7 @@ class ConfluenceCloud:
         # Returned value
 
         A dictionary representing the user, with entries like:
+
         - type: a string
         - username: a string
         - accountId: a string
@@ -1261,9 +1239,8 @@ class ConfluenceCloud:
         - personalSpace: a dictionary
         - _expandable: a dictionary
         - _links: a dictionary
-        - Additional properties: a dictionnary
+        - Additional properties: a dictionary
         """
-
         ensure_nonemptystring('account_id')
         ensure_noneorinstance('expand', list)
 
@@ -1275,8 +1252,7 @@ class ConfluenceCloud:
 
     @api_call
     def get_current_user(
-        self,
-        expand: Optional[List[str]] = None,
+        self, expand: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Return details of the current user.
 
@@ -1286,10 +1262,9 @@ class ConfluenceCloud:
 
         # Returned value
 
-        A dictionary representing the current user
-        Please refer to #get_user() for more.
+        A dictionary representing the current user.  Please refer to
+        #get_user() for more.
         """
-
         ensure_noneorinstance('expand', list)
 
         params = {}
@@ -1300,9 +1275,7 @@ class ConfluenceCloud:
 
     @api_call
     def get_user_groups(
-        self,
-        account_id: str,
-        limit: int = 100,
+        self, account_id: str, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """Return groups of a user.
 
@@ -1312,18 +1285,18 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
-        A list of dictionaries, each representing a group.
-        each group has entries like:
+        A list of dictionaries, each representing a group.  Each group
+        has entries like:
+
         - name: a string
         - type: a string
         - id: a string
         - _links: a dictionary
         """
-
         ensure_nonemptystring('account_id')
         ensure_instance('limit', int)
 
@@ -1349,14 +1322,13 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
         A list of dictionaries, each representing a group.
         Please refer to #get_group() for more.
         """
-
         ensure_instance('limit', int)
 
         params = {'limit': limit}
@@ -1374,12 +1346,12 @@ class ConfluenceCloud:
         # Returned value
 
         A dictionary representing the group, with the following entries:
+
         - name: a string
         - type: a string
         - id: a string
         - _links: a dictionary
         """
-
         ensure_nonemptystring('name')
 
         url = join_url(self.url, f'rest/api/group/{name}')
@@ -1398,7 +1370,6 @@ class ConfluenceCloud:
         A dictionary representing the created group.
         Please refer to #get_group() for more.
         """
-
         ensure_nonemptystring('name')
 
         data = {'name': name}
@@ -1409,13 +1380,15 @@ class ConfluenceCloud:
     @api_call
     def delete_group(self, group_id: str) -> bool:
         """Delete a group.
+
         # Required parameters
+
         - group_id: a non-empty string (UUID format)
+
         # Returned value
+
         A boolean indicating whether the deletion was successful.
-
         """
-
         ensure_nonemptystring('group_id')
 
         url = join_url(self.url, 'rest/api/group/by-id')
@@ -1440,14 +1413,13 @@ class ConfluenceCloud:
         # Optional parameters
 
         - expand: a list of strings
-        - limit: an integer (default 100)
+        - limit: an integer (default `100`)
 
         # Returned value
 
         A list of dictionaries, each representing a user.
         Please refer to #get_user() for more.
         """
-
         ensure_nonemptystring('group_name')
         ensure_noneorinstance('expand', list)
         ensure_instance('limit', int)
@@ -1472,6 +1444,9 @@ class ConfluenceCloud:
 
         A boolean indicating whether the user was added successfully.
         """
+        ensure_nonemptystring('group_id')
+        ensure_nonemptystring('account_id')
+
         url = join_url(self.url, 'rest/api/group/userByGroupId')
         params = {'groupId': group_id}
         body = {'accountId': account_id}
@@ -1494,7 +1469,6 @@ class ConfluenceCloud:
 
         A boolean indicating whether the user was removed successfully.
         """
-
         ensure_nonemptystring('group_id')
         ensure_nonemptystring('account_id')
 

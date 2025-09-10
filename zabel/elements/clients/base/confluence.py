@@ -49,6 +49,8 @@ CONTENT_STATUSES = ['current', 'trashed', 'historical', 'draft']
 class Confluence:
     """Confluence Server and Data Center Low-Level Wrapper.
 
+    An interface to Confluence, including users and groups management.
+
     There can be as many Confluence instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -56,40 +58,46 @@ class Confluence:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://docs.atlassian.com/ConfluenceServer/rest/latest>
-    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
-    <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    <https://developer.atlassian.com/server/confluence/remote-confluence
-        -methods>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
+    - <https://developer.atlassian.com/confdev/confluence-server-rest-api>
+    - <https://developer.atlassian.com/server/confluence/remote-confluence-methods>
 
     WADLs are also available on a given instance:
 
-    <https://{instance}/rest/api/application.wadl>
-    <https://{instance}/rest/mobile/1.0/application.wadl>
+    - <https://{instance}/rest/api/application.wadl>
+    - <https://{instance}/rest/mobile/1.0/application.wadl>
 
-    An interface to Confluence, including users and groups management.
-
-    # Implemented features
+    ## Implemented features
 
     - groups&users
     - pages
     - search
     - spaces
-    - misc. features (index,long tasks, ...)
+    - misc. features (index, long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
     Whenever applicable, the provided features handle pagination (i.e.,
-    they return all relevant elements, not only the first n).
+    they return all relevant elements, not only the first _n_).
 
-    # Sample use
+    ## Content types ans statuses
+
+    | Name               | Description
+    | ------------------ | -----------
+    | `CONTENT_TYPES`    | `'page'`, `'blogpost'`, `'comment'`, `'attachment'`
+    | `CONTENT_STATUSES` | `'current'`, `'trashed'`, `'historical'`, `'draft'`
+
+    ## Examples
 
     ```python
     from zabel.elements.clients import Confluence
 
     url = 'https://confluence.example.com'
+    user = '...'
+    token = '...'
     confluence = Confluence(url, basic_auth=(user, token))
     confluence.list_users()
     ```
@@ -125,8 +133,9 @@ class Confluence:
 
         # Usage
 
-        `url` must be the URL of the Confluence instance, e.g.,
-        `https://confluence.example.com`.
+        `url` must be the URL of the Confluence instance.  For example:
+
+            'https://confluence.example.com'
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -218,11 +227,11 @@ class Confluence:
         Items are dictionaries with the following entries (assuming the
         default `expand` values):
 
+        - id: a string or an integer
+        - restrictions: a dictionary
+        - status: a string
         - title: a string
         - type: a string
-        - id: a string or an integer
-        - status: a string
-        - restrictions: a dictionary
 
         # Raised exceptions
 
@@ -279,7 +288,7 @@ class Confluence:
         following entries:
 
         - name: a string
-        - type: a string ('group')
+        - type: a string (`'group'`)
         - _links: a transient dictionary
 
         `_links` is a dictionary with the following entries:
@@ -573,14 +582,14 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for 'expand'):
 
-            type: a string
-            username: a string
-            userKey: a string
-            profilePicture: a dictionary
-            displayName: a string
+        - displayName: a string
+        - profilePicture: a dictionary
+        - type: a string
+        - userKey: a string
+        - username: a string
 
         It may also contains 'transient' entries (i.e., entries starting
-        with '_').
+        with `'_'`).
         """
         ensure_onlyone('user_name', 'key')
         ensure_noneornonemptystring('user_name')
@@ -606,19 +615,19 @@ class Confluence:
 
         # Returned value
 
-        A _user profile.  A user profile is a dictionary with the
+        A _user profile_.  A user profile is a dictionary with the
         following entries:
 
-        - userName: a string
-        - fullName: a string
-        - avatarUrl: a string
-        - url: a string
-        - email: a string
-        - department: a string
-        - userPreferences: a dictionary
-        - unknownUser: a boolean
         - about: a string
         - anonymous: a boolean
+        - avatarUrl: a string
+        - department: a string
+        - email: a string
+        - fullName: a string
+        - unknownUser: a boolean
+        - url: a string
+        - userName: a string
+        - userPreferences: a dictionary
 
         Some fields may be missing.
         """
@@ -648,7 +657,7 @@ class Confluence:
         # Required parameters
 
         - name: a non-empty string
-        - password: a non-empty string or 'NONE'
+        - password: a non-empty string or None
         - email_address: a non-empty string
         - display_name: a string
 
@@ -661,7 +670,7 @@ class Confluence:
         ensure_nonemptystring('email_address')
         ensure_instance('display_name', str)
 
-        user = {'email': email_address, "fullname": display_name, "name": name}
+        user = {'email': email_address, 'fullname': display_name, 'name': name}
 
         return (
             self.session()
@@ -888,8 +897,8 @@ class Confluence:
         A list of _groups_.  Groups are dictionaries with the following
         entries (assuming the default for `expand`):
 
-        - type: a string (`'group'`)
         - name: a string
+        - type: a string (`'group'`)
 
         Handles pagination (i.e., it returns all groups, not only the
         first _n_ groups the user is a member of).
@@ -920,14 +929,14 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - type: a string
-        - username: a string
-        - userKey: a string
-        - profilePicture: a dictionary
         - displayName: a string
+        - profilePicture: a dictionary
+        - type: a string
+        - userKey: a string
+        - username: a string
 
         It may also contains 'transient' entries (i.e., entries starting
-        with '_').
+        with `'_'`).
         """
         ensure_noneorinstance('expand', str)
 
@@ -965,12 +974,12 @@ class Confluence:
         A list of _spaces_.  Each space is a dictionary with the
         following entries:
 
-        - key: a string
-        - type: a string
-        - name: a string
         - id: an integer
-        - _links: a dictionary
+        - key: a string
+        - name: a string
+        - type: a string
         - _expandable: a dictionary
+        - _links: a dictionary
 
         Handles pagination (i.e., it returns all spaces, not only the
         first _n_ spaces).
@@ -1032,16 +1041,16 @@ class Confluence:
 
         A dictionary with the following entries:
 
-        - page: a dictionary
         - blogpost: a dictionary
+        - page: a dictionary
         - _links: a dictionary
 
         `page` and `blogpost` are dictionaries with the following
         entries:
 
+        - limit: an integer
         - results: a list of dictionaries
         - size: an integer
-        - limit: an integer
         - start: an integer
         - _links: a dictionary
 
@@ -1158,19 +1167,19 @@ class Confluence:
 
         # Returned value
 
-        A list of _permissionsets_.  Each permissionset is a dictionary
-        with the following entries:
+        A list of _permissionsets_.  Each permissionset is a
+        dictionary with the following entries:
 
-        - type: a string
         - spacePermissions: a list of dictionaries
+        - type: a string
 
-        `type` is a space permission (as returned by
-        #list_space_permissions()).
+        `type` is a space permission (as returned
+        by #list_space_permissions()).
 
         Dictionaries in `spacePermissions` have the following entries:
 
-        - type: a string
         - groupName: a string
+        - type: a string
         - userName: a string
         """
         ensure_nonemptystring('space_key')
@@ -1208,11 +1217,11 @@ class Confluence:
 
         A dictionary with the following entries:
 
+        - description: a dictionary
         - id: an integer
         - key: a string
-        - name: a string
-        - description: a dictionary
         - metadata: a dictionary
+        - name: a string
         - _links: a dictionary
 
         Some entries may be missing, and there may be additional ones.
@@ -1302,9 +1311,9 @@ class Confluence:
 
         # Required parameters
 
-            space_key: a non-empty string
-            entity: a non-empty string
-            permission: a non-empty string
+        - space_key: a non-empty string
+        - entity: a non-empty string
+        - permission: a non-empty string
 
         # Returned value
 
@@ -1412,16 +1421,16 @@ class Confluence:
 
         # Returned value
 
-        A possibly empty list of items.  Items are dictionaries.
+        A possibly empty list of _items_.  Items are dictionaries.
 
         Assuming the default `expand` values, an item contains the
         following entries:
 
-        - title: a string
-        - type: a string
+        - extensions: a dictionary
         - id: an integer or a string
         - status: a string
-        - extensions: a dictionary
+        - title: a string
+        - type: a string
         """
         ensure_instance('space_key', str)
         ensure_in('status', ['current', 'any', 'trashed'])
@@ -1473,11 +1482,11 @@ class Confluence:
         Assuming the default `expand` values, an item contains the
         following entries:
 
-        - title: a string
-        - type: a string
+        - extensions: a dictionary
         - id: an integer or a string
         - status: a string
-        - extensions: a dictionary
+        - title: a string
+        - type: a string
         """
         ensure_instance('page_id', (str, int))
         ensure_in('typ', CONTENT_TYPES)
@@ -1518,27 +1527,27 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - type: a string
-        - title: a string
-        - id: a string
-        - version: a dictionary
         - body: a dictionary
+        - id: a string
+        - title: a string
+        - type: a string
+        - version: a dictionary
 
         `version` is a dictionary with the following entries:
 
         - by: a dictionary
-        - number: an integer
-        - minorEdit: a boolean
-        - when: a string (a timestamp)
-        - message: a string
         - hidden: a boolean
+        - message: a string
+        - minorEdit: a boolean
+        - number: an integer
+        - when: a string (a timestamp)
 
         `by` is a dictionary with the following entries:
 
-        - type: a string
-        - username: a string
-        - userkey: a string
         - displayName: a string
+        - type: a string
+        - userkey: a string
+        - username: a string
 
         `body` is a dictionary with the following entries:
 
@@ -1673,21 +1682,19 @@ class Confluence:
 
         # Returned value
 
-        A possibly empty list of versions. Versions are dictionaries.
+        A possibly empty list of _versions_. Versions are dictionaries.
 
-        An version contains the following entries:
+        A version contains the following entries:
 
         - by: a dictionary
-        - when: a datetime as a string
-        - message: a string
-        - number: an integer
-        - minorEdit: a boolean
+        - expandable: a dictionary
         - hidden: a boolean
         - links: a dictionary
-        - expandable: a dictionary
-
+        - message: a string
+        - minorEdit: a boolean
+        - number: an integer
+        - when: a datetime as a string
         """
-
         ensure_instance('page_id', (str, int))
 
         api_url = join_url(
@@ -1745,10 +1752,10 @@ class Confluence:
         The typical usage is:
 
         ```python
-        >>> page = confluence.get_page(n)
-        >>> page['body']['storage']['value'] = '....'
-        >>> page['version'] = {'number': page['version']['number']+1}
-        >>> confluence.update_page(n, page)
+        page = confluence.get_page(n)
+        page['body']['storage']['value'] = '....'
+        page['version'] = {'number': page['version']['number']+1}
+        confluence.update_page(n, page)
         ```
 
         See #get_page() for a description of the `page` dictionary.
@@ -1784,6 +1791,15 @@ class Confluence:
         - page_id: an integer or a string
         - labels: a non-empty list of dictionaries
 
+        # Returned value
+
+        A list of _labels_, one per label attached to the page.  Each
+        label is a dictionary with the following entries:
+
+        - id: an integer or a string
+        - name: a string
+        - prefix: a string
+
         # Usage
 
         Dictionaries in `labels` have the following entries:
@@ -1793,15 +1809,6 @@ class Confluence:
 
         Labels in the list are added to the page.  Existing labels are
         not removed if they are not in the list.
-
-        # Returned value
-
-        A list of _labels_, one per label attached to the page.  Each
-        label is a dictionary with the following entries:
-
-        - id: an integer or a string
-        - name: a string
-        - prefix: a string
         """
         ensure_instance('page_id', (str, int))
         ensure_instance('labels', list)
@@ -1957,20 +1964,22 @@ class Confluence:
 
         # Required parameters
 
-        - `page_id` : integer or string
+        - page_id: an integer or string
 
         # Returned value
 
         A list of _restrictions_. Restrictions are structured as follow:
 
-        - `type`: string, either "Edit" or "View"
-        - `contentPermissions`: a dictionary structured as follow
-            * `type`: string, either "Edit" or "View"
-            * `userName`: string, or None if groupName is set,
-            * `groupName`: string, or None if userName is set
-        ```
+        - contentPermissions: a list of _permissions_
+        - type: a string, either `'Edit'` or `'View'`
 
-        # See
+        Each permission is a dictionary with the following entries:
+
+        - groupName: a string, or None if userName is set
+        - type: a string, either `'Edit'` or `'View'`
+        - userName: a string, or None if groupName is set
+
+        # See also
 
         <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """
@@ -1995,18 +2004,17 @@ class Confluence:
     ) -> bool:
         """Set restrictions on a page.
 
-        `permission_type` is either 'View' or 'Edit'.
-
         # Required parameters
 
         - `page_id`: integer or string
-        - `permission_type`: a string, either "View" or "Edit"
-        - `restrictions`: a list of dictionaries structured as follow :
-           * `type`: string, either "Edit", "View" or None.
+        - `permission_type`: a string, either `'View'` or `'Edit'`
+        - `restrictions`: a list of dictionaries structured as follow:
+
+            * `type`: a string, either `'Edit'`, `'View'`, or None.
                      If set, must be consistent with `permission_type`.
                      If None, will inherit `permission_type`.
-           * `userName`: string, or None if `groupName` is set
-           * `groupName`: string, or None if `userName` is set
+            * `userName`: a string, or None if `groupName` is set
+            * `groupName`: a string, or None if `userName` is set
 
         # Returned value
 
@@ -2032,7 +2040,7 @@ class Confluence:
             'page_id',
             'Edit',
             [{'type': 'Edit', 'userName': 'bob', 'groupName': None},
-            {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
+             {'type': 'Edit', 'userName': None, 'groupName': 'ATeam'}]
         )
         ```
 
@@ -2043,8 +2051,10 @@ class Confluence:
         when designing restrictions schemes. The default behavior when
         no permissions are set are the following:
 
-        - when no restrictions is set for type 'View' -> anyone can view the page.
-        - when no restrictions is set for type 'Edit' -> anyone can edit the page.
+        - when no restrictions is set for type 'View' -> anyone can view
+          the page.
+        - when no restrictions is set for type 'Edit' -> anyone can edit
+          the page.
 
         So if you want to absolutely restrict access to a particular
         user or group, be user to specify both 'View' and 'Edit'
@@ -2053,7 +2063,7 @@ class Confluence:
         As a result you will often have to call this method twice in a
         row.
 
-        # See
+        # See also
 
         <https://developer.atlassian.com/server/confluence/remote-confluence-methods/#permissions>
         """
@@ -2133,12 +2143,12 @@ class Confluence:
         A dictionary with the following entries (assuming the default
         for `expand`):
 
-        - id: a string
-        - name: a dictionary
         - elapsedTime: an integer
+        - id: a string
+        - messages: a list of dictionaries
+        - name: a dictionary
         - percentageComplete: an integer
         - successful: a boolean
-        - messages: a list of dictionaries
         - _links: a dictionary
         """
 
@@ -2163,11 +2173,11 @@ class Confluence:
 
         A dictionary with the following entries:
 
-        - finished: a boolean
-        - percentageComplete: an integer
         - elapsedTime: a string (a timestamp)
-        - remainingTime: a string (a timestamp)
+        - finished: a boolean
         - jobID: an integer
+        - percentageComplete: an integer
+        - remainingTime: a string (a timestamp)
         """
         self.session().headers['Content-Type'] = 'application/json'
         return (

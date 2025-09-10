@@ -56,25 +56,42 @@ PROJECT_PERMISSIONS = [
 
 
 class SquashTM:
-    """Squash-TM Base-Level Wrapper.
+    """SquashTM Low-Level Wrapper.
 
-    # Reference URL
+    There can be as many SquashTM instances as needed.
 
-    <https://www.squashtest.org/fr/actualites/faq-squash-tm/fonctionnalites/api-squash-tm-documentation>
-    <https://squash-tm.tools.digital.engie.com/squash/api/rest/latest/docs/api-documentation.html>
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
 
-    # Implemented features
+    ## Reference URLs
 
+    - <https://www.squashtest.org/fr/actualites/faq-squash-tm/fonctionnalites/api-squash-tm-documentation>
+    - <https://squash-tm.tools.digital.engie.com/squash/api/rest/latest/docs/api-documentation.html>
+
+    ## Implemented features
+
+    - campaigns (read-only)
+    - executions (read-only)
+    - iterations (read-only)
     - projects
+    - requirements (read-only)
     - teams
+    - testcasefolders (read-only)
+    - testcases (read-only)
+    - teststeps (read-only)
+    - testsuites (read-only)
     - users
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import SquashTM
 
     url = 'https://squash-tm.example.com/squash/api/rest/latest/'
+    user = '...'
+    token = '...'
     tm = SquashTM(url, basic_auth=(user, token))
     tm.list_projects()
     ```
@@ -105,12 +122,15 @@ class SquashTM:
         - basic_auth: a tuple of two strings (user, token) or None
         - bearer_auth: a string or None
 
-        The `url` parameter is the top-level API point. E.g.,
-        `https://squash-tm.example.com/squash/api/rest/latest`
-
         # Optional parameters
 
         - verify: a boolean (True by default)
+
+        # Usage
+
+        The `url` parameter is the top-level API point.  For example:
+
+            'https://squash-tm.example.com/squash/api/rest/latest'
 
         `verify` can be set to False if disabling certificate checks for
         SquashTM communication is required.  Tons of warnings will occur
@@ -154,6 +174,7 @@ class SquashTM:
     # list_projects
     # get_project
     # create_project
+    # delete_project
     # get_project_permissions
     # add_project_permission
     # list_project_requirements
@@ -169,8 +190,8 @@ class SquashTM:
         A list of _projects_.  Each project is a dictionary with the
         following two entries:
 
-        - name: a string
         - id: an integer
+        - name: a string
 
         It may contain additional entries.
         """
@@ -182,24 +203,36 @@ class SquashTM:
 
         # Required parameters
 
-            project_id: an integer
+        - project_id: an integer
 
         # Returned value
 
         A dictionary with the following entries:
 
-        - _type: a string ('project')
-        - id: an integer
-        - name: a string
-        - label: a string
-        - description: a string
         - active: a boolean
         - attachments: a list
+        - description: a string
+        - id: an integer
+        - label: a string
+        - name: a string
         - _links: a dictionary
+        - _type: a string (`'project'`)
         """
         ensure_instance('project_id', int)
 
         return self._get(f'projects/{project_id}')  # type: ignore
+
+    @api_call
+    def delete_project(self, project_id: int) -> None:
+        """Delete project.
+
+        # Required parameters
+
+        - project_id: an integer
+        """
+        ensure_instance('project_id', int)
+
+        self._delete(f'projects/{project_id}')
 
     @api_call
     def list_project_requirements(
@@ -209,13 +242,14 @@ class SquashTM:
 
         # Required parameters
 
-            project_id: an integer
+        - project_id: an integer
 
         # Returned value
 
         A list of _requirements_.  Each requirement is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/requirements', 'requirements'
         )
@@ -226,13 +260,14 @@ class SquashTM:
 
         # Required parameters
 
-            project_id: an integer
+        - project_id: an integer
 
         # Returned value
 
         A list of _campaigns_.  Each campaign is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/campaigns', 'campaigns'
         )
@@ -243,13 +278,14 @@ class SquashTM:
 
         # Required parameters
 
-            project_id: an integer
+        - project_id: an integer
 
         # Returned value
 
         A list of _test cases_.  Each test case is a dictionary.
         """
         ensure_instance('project_id', int)
+
         return self._collect_data(
             f'projects/{project_id}/test-cases', 'test-cases'
         )
@@ -367,16 +403,16 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - description: a string
-        - members: a list
         - created_by: a string
         - created_on: a string
+        - description: a string
+        - id: an integer
         - last_modified_by: a string
         - last_modified_on: a string
+        - members: a list
+        - name: a string
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('team_id', int)
 
@@ -495,10 +531,10 @@ class SquashTM:
         A list of _users_.  Each user is a dictionary with at least the
         following entries:
 
-        - id: an integer
-        - login: a string
         - active: a boolean
         - group: a string (`'user'` or `'admin'`)
+        - id: an integer
+        - login: a string
         """
         return self._collect_data('users', 'users')
 
@@ -514,21 +550,21 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string (`'user'`)
-        - id: an integer
-        - first_name: a string
-        - last_name: a string
-        - login: a string
-        - email: a string
         - active: a boolean
-        - group: a string
-        - teams: a list
-        - last_connected_on: a string
         - created_by: a string
         - created_on: a string
+        - email: a string
+        - first_name: a string
+        - group: a string
+        - id: an integer
+        - last_connected_on: a string
         - last_modified_by: a string
         - last_modified_on: a string
+        - last_name: a string
+        - login: a string
+        - teams: a list
         - _links: a dictionary
+        - _type: a string (`'user'`)
         """
         ensure_instance('user_id', int)
 
@@ -678,28 +714,28 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - reference: a string
-        - description: a string
-        - status: a string
-        - project: a dictionary
-        - path: a string
-        - parent: a dictionary
-        - created_by: a string
-        - created_on: a string
-        - last_modified_by: a string
-        - last_modified_on: a string
-        - actual_start_date: a string
+        - actual_end_auto: boolean
         - actual_end_date: a string
         - actual_start_auto: boolean
-        - actual_end_auto: boolean
-        - custom_fields: a list
-        - iterations: a list of dictionaries
+        - actual_start_date: a string
         - attachments: a list
-        - _links: a dictionary
+        - created_by: a string
+        - created_on: a string
+        - custom_fields: a list
+        - description: a string
+        - id: an integer
         - iterations: a dictionary
+        - iterations: a list of dictionaries
+        - last_modified_by: a string
+        - last_modified_on: a string
+        - name: a string
+        - parent: a dictionary
+        - path: a string
+        - project: a dictionary
+        - reference: a string
+        - status: a string
+        - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('campaign_id', int)
 
@@ -761,7 +797,6 @@ class SquashTM:
         - id: an integer
         - name: a string
         """
-
         return self._collect_data('requirements', 'requirements')
 
     @api_call
@@ -776,16 +811,16 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - project: a dictionary
-        - path: a string
-        - parent: a dictionary
-        - mode: a string
         - current_version: a dictionary
+        - id: an integer
+        - mode: a string
+        - name: a string
+        - parent: a dictionary
+        - path: a string
+        - project: a dictionary
         - versions: a list of dictionaries
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('requirement_id', int)
 
@@ -823,34 +858,34 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - reference: a string
-        - kind:a string
-        - project: a dictionary
-        - path: a string
-        - parent: a dictionary
+        - attachments: a string
         - created_by: a string
         - created_on: a string
+        - custom_fields: a list of dictionaries
+        - datasets: a list
+        - description: a string
+        - id: an integer
+        - importance: a string
+        - iterations: a dictionary
+        - kind:a string
+        - language: a string
         - last_modified_by: a string
         - last_modified_on: a string
-        - importance: a string
-        - status: a string
+        - name: a string
         - nature: a dictionary
-        - type: a dictionary
-        - prerequisite: a string
-        - description: a string
-        - custom_fields: a list of dictionaries
-        - steps: a list of dictionaries
         - parameters: a list
-        - datasets: a list
-        - language: a string
+        - parent: a dictionary
+        - path: a string
+        - prerequisite: a string
+        - project: a dictionary
+        - reference: a string
         - script: a string
+        - status: a string
+        - steps: a list of dictionaries
+        - type: a dictionary
         - verified_requirements: a string
-        - attachments: a string
         - _links: a dictionary
-        - iterations: a dictionary
+        - _type: a string
         """
         ensure_instance('testcase_id', int)
 
@@ -893,21 +928,21 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - description: a string
-        - parent: a dictionary
+        - attachments: a dictionary
         - created_by: a string
         - created_on: a string
+        - custom_fields: a dictionary
+        - description: a string
+        - id: an integer
         - last_modified_by: a string
         - last_modified_on: a string
-        - project: a dictionary
+        - name: a string
+        - parent: a dictionary
         - path: a string
-        - custom_fields: a dictionary
+        - project: a dictionary
         - test_plan: a list of dictionaries
-        - attachments: a dictionary
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('testsuite_id', int)
 
@@ -930,14 +965,14 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - test_case: a dictionary
-        - expected_result: a string
-        - index: a string
-        - custom_fields: a list
         - attachments: a dictionary
+        - custom_fields: a list
+        - expected_result: a string
+        - id: an integer
+        - index: a string
+        - test_case: a dictionary
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('teststep_id', int)
 
@@ -976,19 +1011,19 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - project: a dictionary
-        - path: a string
-        - parent: a dictionary
+        - attachments: a string
         - created_by: a string
         - created_on: a string
+        - description: a string
+        - id: an integer
         - last_modified_by: a string
         - last_modified_on: a string
-        - description: a string
-        - attachments: a string
+        - name: a string
+        - parent: a dictionary
+        - path: a string
+        - project: a dictionary
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('testcasefolder_id', int)
 
@@ -1008,11 +1043,11 @@ class SquashTM:
 
         A list of dictionaries with the following entries:
 
-        - _type: a string
         - id: an integer
         - name: a string
         - reference: a string
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('testcasefolder_id', int)
 
@@ -1037,30 +1072,30 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
+        - attachments: a dictionary
+        - comment: a string
+        - custom_fields: a list
+        - dataset_label: a string
+        - description: a string
+        - execution_mode: a string
         - execution_order: an integer
         - execution_status: a string
+        - execution_steps: a list of dictionaries
+        - id: an integer
+        - importance: a string
+        - language: a string
         - last_excuted_by: a string
         - last_executed_on: a string
-        - execution_mode: a string
-        - reference: a string
-        - dataset_label: a string
-        - execution_steps: a list of dictionaries
-        - comment: a string
-        - prerequisite: a string
-        - description: a string
-        - importance: a string
         - nature: a dictionary
-        - type: a dictionary
+        - prerequisite: a string
+        - reference: a string
+        - script_name: a string
+        - test_case_custom_fields: a list
         - test_case_status: a string
         - test_plan_item: a dictionary
-        - custom_fields: a list
-        - test_case_custom_fields: a list
-        - language: a string
-        - script_name: a string
-        - attachments: a dictionary
+        - type: a dictionary
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('execution_id', int)
 
@@ -1102,21 +1137,21 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - execution_status: a string
         - action: a string
-        - expected_result: a string
+        - attachments: a dictionary
         - comment: a string
+        - custom_fields: a list
+        - execution: a dictionary
+        - execution_status: a string
+        - execution_step_order: an integer
+        - expected_result: a string
+        - id: an integer
         - last_executed_by: a string
         - last_executed_on: a string
-        - execution_step_order: an integer
         - referenced_test_step: a dictionary
-        - execution: a dictionary
-        - custom_fields: a list
         - test_step_custom_fields: a string
-        - attachments: a dictionary
         - _links: a dictionary
+        - _type: a string
         """
         ensure_instance('executionstep_id', int)
 
@@ -1179,25 +1214,24 @@ class SquashTM:
 
         A dictionary with the following entries:
 
-        - _type: a string
-        - id: an integer
-        - name: a string
-        - reference: a string
-        - description: a string
-        - parent: a dictionary
-        - created_by: a string
-        - created_on: a string
-        - last_modified_by: a string
-        - last_modified_on: a string
-        - actual_start_date: a string
+        - actual_end_auto: a string
         - actual_end_date: a string
         - actual_start_auto: a string
-        - actual_end_auto: a string
-        - custom_fields: a list of dictionaries
-        - test_suites: a list of dictionaries
+        - actual_start_date: a string
         - attachments: a string
+        - created_by: a string
+        - created_on: a string
+        - custom_fields: a list of dictionaries
+        - description: a string
+        - id: an integer
+        - last_modified_by: a string
+        - last_modified_on: a string
+        - name: a string
+        - parent: a dictionary
+        - reference: a string
+        - test_suites: a list of dictionaries
         - _links: a dictionary
-
+        - _type: a string
         """
         ensure_instance('iteration_id', int)
 

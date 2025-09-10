@@ -24,21 +24,22 @@ class Atlassian(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.atlassian.com/cloud/admin>
 
-    # Implemented features
+    ## Implemented features
 
     - users
 
-    # Sample use
+    ## Examples
 
     ```python
-    >>> from zabel.elements.clients import Atlassian
-    >>>
-    >>> url = ''https://api.atlassian.com/admin/v1/''
-    >>> atlassian = Atlassian(url, token)
-    >>> attlasian.list_organisation_users("org_id")
+    from zabel.elements.clients import Atlassian
+
+    url = 'https://api.atlassian.com/admin/v1/'
+    token = '...'
+    atlassian = Atlassian(url, bearer_auth=token)
+    attlasian.list_organization_users('your-organization-id')
     ```
     """

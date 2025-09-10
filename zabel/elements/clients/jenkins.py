@@ -106,6 +106,10 @@ PIPELINETRIGGERSJOBPROPERTY = (
 class CloudBeesJenkins(Base):
     """CloudBeesJenkins Low-Level Wrapper.
 
+    Mostly a Jenkins low-level API wrapper, but taking into account
+    the presence of an Operations Center (i.e., when there are more than
+    one Jenkins master).
+
     There can be as many CloudBeesJenkins instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -113,11 +117,7 @@ class CloudBeesJenkins(Base):
     modules, #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Description
-
-    Mostly a Jenkins low-level API wrapper, but taking into account
-    the presence of an Operations Center (i.e., when there are more than
-    one Jenkins master).
+    ## Overview
 
     This class uses an Operations Center as its entry point.
 
@@ -132,11 +132,12 @@ class CloudBeesJenkins(Base):
 
     Item creations and handling functions make use of two functions
     provided by the #::commons.utils module,
-    #::commons.utils#dict_to_xml() and #::commons.utils#xml_to_dict().
+    #::zabel.commons.utils#dict_to_xml() and
+    #::zabel.commons.utils#xml_to_dict().
 
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
 
-    # Implemented features
+    ## Implemented features
 
     - buildinfos
     - credentials
@@ -154,17 +155,7 @@ class CloudBeesJenkins(Base):
     - users
     - misc. operations (status, ping, version, ...)
 
-    # Sample use
-
-    ```python
-    from zabel.elements.clients import CloudBeesJenkins
-
-    url = 'https://pse.example.com'
-    jenkins = CloudBeesJenkins(url, user, token)
-    jenkins.list_oc_managedmasters()
-    ```
-
-    # Attributes
+    ## Attributes
 
     This class exposes templates that can be used while creating
     domains and credentials.  The credentials attributes all have
@@ -207,6 +198,18 @@ class CloudBeesJenkins(Base):
                                         addition to `id` and
                                         `description`, `user` and
                                         `password`.                    |
+
+    ## Examples
+
+    ```python
+    from zabel.elements.clients import CloudBeesJenkins
+
+    url = 'https://pse.example.com'
+    user = '...'
+    token = '...'
+    jenkins = CloudBeesJenkins(url, user, token)
+    jenkins.list_oc_managedmasters()
+    ```
     """
 
     @api_call
@@ -328,13 +331,13 @@ class CloudBeesJenkins(Base):
 
         # Optional parameters
 
-        - time_out: an integer (120 by default)
+        - time_out: an integer (`120` by default)
         - path: a string (empty by default)
 
         `time_out` is in seconds.
 
         It will check managed master readiness at least once, even if
-        `time_out` is set to 0.
+        `time_out` is set to `0`.
 
         If the managed master is not ready after `time_out` seconds,
         an _ApiError_ ('Timeout exhausted, managed master not ready')
@@ -380,11 +383,11 @@ class CloudBeesJenkins(Base):
         following entries:
 
         - description: a string
-        - name: a string
-        - url: a string
         - members: a list of strings
-        - roles: a list of strings
+        - name: a string
         - roleAssignments: a list of dictionaries
+        - roles: a list of strings
+        - url: a string
 
         The returned groups are expanded.
         """
@@ -405,17 +408,17 @@ class CloudBeesJenkins(Base):
 
         # Returned value
 
-        A list of u_sers_.  Each user is a dictionary with the following
+        A list of _users_.  Each user is a dictionary with the following
         entries:
 
-        - user: a dictionary
-        - project: None or ...
         - lastChange: None or ...
+        - project: None or ...
+        - user: a dictionary
 
         The dictionary in the `user` key has the following entries:
 
-        - fullName: a string
         - absoluteUrl: a string
+        - fullName: a string
         """
         groups = self.list_oc_groups()
         users = []
@@ -434,7 +437,6 @@ class CloudBeesJenkins(Base):
 
         - user_id: a non-empty string
         """
-
         ensure_nonemptystring('user_id')
 
         response = self._get(join_url(self.url, f'cjoc/user/{user_id}/delete'))

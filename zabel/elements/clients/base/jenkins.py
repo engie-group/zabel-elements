@@ -43,11 +43,22 @@ from zabel.commons.utils import (
 
 
 class CloudBeesJenkins:
-    """Mostly a Jenkins low-level API wrapper, but taking into account
+    """CloudBeesJenkins Low-Level Wrapper.
+
+    There can be as many CloudBeesJenkins instances as needed.
+
+    This class depends on the public **requests** library.  It also
+    depends on three **zabel-commons**
+    modules, #::zabel.commons.exceptions, #::zabel.commons.sessions,
+    and #::zabel.commons.utils.
+
+    ## Overview
+
+    Mostly a Jenkins low-level API wrapper, but taking into account
     the presence of an Operations Center (i.e., when there are more than
     one Jenkins master).
 
-    This library uses an Operations Center as its entry point.
+    This class uses an Operations Center as its entry point.
 
     There are three levels of APIs:
 
@@ -59,16 +70,82 @@ class CloudBeesJenkins:
     handling groups and roles.
 
     Item creations and handling functions make use of two functions
-    provided by the _zabel.commons.utils_ module: `xml_to_dict` and
-    `dict_to_xml`.
+    provided by the #::commons.utils module,
+    #::commons.utils#dict_to_xml() and #::commons.utils#xml_to_dict().
 
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
 
+    ## Implemented features
+
+    - buildinfos
+    - credentials
+    - domains
+    - folders
+    - groups
+    - items
+    - jobs
+    - managedmasters
+    - metrics
+    - plugins
+    - projects
+    - roles
+    - scripts
+    - users
+    - misc. operations (status, ping, version, ...)
+
+    ## Attributes
+
+    This class exposes templates that can be used while creating
+    domains and credentials.  The credentials attributes all have
+    an `id` and `description` parameters.
+
+    | Attribute                       | Description                    |
+    | ------------------------------- | ------------------------------ |
+    | `DOMAIN_CONFIG_TEMPLATE`        | A template for credentials
+                                        domains, with one parameter,
+                                        `domain`, that can be used when
+                                        calling `create_project_domain`
+                                        method.                        |
+    | `CREDENTIAL_CONFIG_TEMPLATES`   | A dictionary of templates for
+                                        Jenkins credentials that can
+                                        be used when calling the
+                                        `create_domain_credential`
+                                        method.  They have two common
+                                        parameters, `id` and
+                                        `description`.<br/>
+                                        The following templates are
+                                        available:<br/>
+                                        - `'AC'`: AWS access key /
+                                        secret key credentials.
+                                        It has two parameters in
+                                        addition to `id` and
+                                        `description`, `accesskey` and
+                                        `secretkey`.<br/>
+                                        - `'FC'`: file credentials.
+                                        It has one parameter in
+                                        addition to `id` and
+                                        `description`, `filename`.<br/>
+                                        - `'ST'`: secret text
+                                        credentials.
+                                        It has one parameter in
+                                        addition to `id` and
+                                        `description`, `text`.<br/>
+                                        - `'UP'`: user / password
+                                        credentials.
+                                        It has two parameters in
+                                        addition to `id` and
+                                        `description`, `user` and
+                                        `password`.                    |
+
+    ## Examples
+
     ```python
-    from zabel.elements.clients import Jenkins
+    from zabel.elements.clients import CloudBeesJenkins
 
     url = 'https://pse.example.com'
-    jenkins = Jenkins(url, user, token)
+    user = '...'
+    token = '...'
+    jenkins = CloudBeesJenkins(url, user, token)
     jenkins.list_oc_managedmasters()
     ```
     """
@@ -90,14 +167,16 @@ class CloudBeesJenkins:
         - user: a string, the account used to access the API
         - token: a string, the token used to access the API
 
-        Sample `url` value:
-
-        `'https://pse.example.com'`
-
         # Optional parameters
 
         - cookies: a dictionary or None (None by default)
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` is the top-level API endpoint.  For example:
+
+            'https://pse.example.com'
 
         `verify` can be set to False if disabling certificate checks for
         Jenkins communication is required.  Tons of warnings will occur
@@ -148,13 +227,13 @@ class CloudBeesJenkins:
         following entries:
 
         - description: a string
-        - name: a string
-        - url: a string
-        - members: a list of strings
-        - roles: a list of strings
-        - roleAssignments: a list of dictionaries
-        - users: a list of strings
         - groups: a list of strings
+        - members: a list of strings
+        - name: a string
+        - roleAssignments: a list of dictionaries
+        - roles: a list of strings
+        - url: a string
+        - users: a list of strings
         """
         result = self._get_json(
             join_url(self.url, 'cjoc/groups'), params={'depth': '1'}
@@ -171,10 +250,10 @@ class CloudBeesJenkins:
         entries:
 
         - description: a string
-        - id: a string
         - filterable: a boolean
-        - shortUrl: a string
         - grantedPermissions: a list of strings
+        - id: a string
+        - shortUrl: a string
         """
         result = self._get_json(
             join_url(self.url, 'cjoc/roles'), params={'depth': '1'}
@@ -189,17 +268,17 @@ class CloudBeesJenkins:
 
         # Returned value
 
-        A list of u_sers_.  Each user is a dictionary with the following
+        A list of _users_.  Each user is a dictionary with the following
         entries:
 
-        - user: a dictionary
-        - project: None or ...
         - lastChange: None or ...
+        - project: None or ...
+        - user: a dictionary
 
         The dictionary in the `user` key has the following entries:
 
-        - fullName: a string
         - absoluteUrl: a string
+        - fullName: a string
         """
         result = self._get_json(join_url(self.url, 'cjoc/asynchPeople'))
         return result['users']  # type: ignore
@@ -221,9 +300,9 @@ class CloudBeesJenkins:
         dictionaries with the following entries, assuming the default
         value for `depth`:
 
-        - _class: a string
         - name: a string
         - url: a string
+        - _class: a string
         """
         ensure_instance('depth', int)
 
@@ -242,13 +321,13 @@ class CloudBeesJenkins:
         A list of _folders_.  Each folder is a dictionary with the
         following entries:
 
-        - _class: a string
-        - url: a string
         - name: a string
+        - url: a string
+        - _class: a string
 
         Folders will have a `_class` value of:
 
-        `'com.cloudbees.hudson.plugins.folder.Folder'`
+            'com.cloudbees.hudson.plugins.folder.Folder'
         """
         response = self._get_json(join_url(self.url, 'cjoc'))
         return [
@@ -268,12 +347,12 @@ class CloudBeesJenkins:
 
         A dictionary with the following entries:
 
-        - version: a string
-        - gauges: a dictionary
         - counters: a dictionary
+        - gauges: a dictionary
         - histograms: a dictionary
         - meters: a dictionary
         - timers: a dictionary
+        - version: a string
 
         `gauges` is a dictionary with one entry per metric.  Each metric
         is a dictionary with one entry, `value`.
@@ -355,7 +434,7 @@ class CloudBeesJenkins:
 
         # Optional parameters
 
-        - path: a string, where to look for managed masters (`cjoc` by
+        - path: a string, where to look for managed masters (`'cjoc'` by
           default)
 
         # Returned value
@@ -363,13 +442,13 @@ class CloudBeesJenkins:
         A list of _managed masters_.  Each managed master is a
         dictionary with at least 3 keys:
 
-        - _class: a string
-        - url: a string
         - name: a string
+        - url: a string
+        - _class: a string
 
-        Managed masters will have a _class value of:
+        Managed masters will have a `_class` value of:
 
-        `'com.cloudbees.opscenter.server.model.ManagedMaster'`
+            'com.cloudbees.opscenter.server.model.ManagedMaster'
         """
         ensure_nonemptystring('path')
 
@@ -392,7 +471,6 @@ class CloudBeesJenkins:
 
         A dictionary with the following entries:
 
-        - _class: a string
         - actions: a list of dictionaries
         - approved: a boolean
         - description: a string
@@ -407,6 +485,7 @@ class CloudBeesJenkins:
         - state: a string
         - url: a string (an URL)
         - validActions: a list of strings
+        - _class: a string
         """
         ensure_nonemptystring('managedmaster_url')
 
@@ -456,10 +535,10 @@ class CloudBeesJenkins:
         A list of _projects_.  Each project is a dictionary with the
         following entries:
 
-        - _class: a string
+        - color: a string
         - name: a string
         - url: a string
-        - color: a string
+        - _class: a string
 
         The first three entries are always present.
         """
@@ -486,10 +565,10 @@ class CloudBeesJenkins:
         entries:
 
         - description: a string
-        - id: a string
         - filterable: a boolean
-        - shortUrl: a string
         - grantedPermissions: a list of strings
+        - id: a string
+        - shortUrl: a string
 
         The returned roles are expanded.
         """
@@ -518,9 +597,9 @@ class CloudBeesJenkins:
         A list of _users_.  Each master user is a dictionary with the
         following entries:
 
+        - lastChange: an integer or None
         - project: a dictionary or None
         - user: a dictionary
-        - lastChange: an integer or None
 
         If `project` is None (or if `lastChange` is None), no activity
         from this user has been recorded.
@@ -557,21 +636,21 @@ class CloudBeesJenkins:
         A list of _plugins_.  Each plugin is a dictionary with the
         following entries:
 
-        - enabled: a boolean
-        - supportsDynamicLoad: a string
-        - requiredCoreVersion: a string
-        - deleted: a boolean
-        - bundled: a boolean
-        - backupVersion:
-        - longName: a string
         - active: a boolean
-        - hasUpdate: a boolean
+        - backupVersion:
+        - bundled: a boolean
+        - deleted: a boolean
         - dependencies: a list of dictionaries
-        - version: a string
-        - pinned: a boolean
-        - url: a string
         - downgradable: a boolean
+        - enabled: a boolean
+        - hasUpdate: a boolean
+        - longName: a string
+        - pinned: a boolean
+        - requiredCoreVersion: a string
         - shortName a string
+        - supportsDynamicLoad: a string
+        - url: a string
+        - version: a string
 
         The `dependencies` dictionaries have the following entries:
 
@@ -699,12 +778,12 @@ class CloudBeesJenkins:
 
         A dictionary with the following entries:
 
-        - version: a string
-        - gauges: a dictionary
         - counters: a dictionary
+        - gauges: a dictionary
         - histograms: a dictionary
         - meters: a dictionary
         - timers: a dictionary
+        - version: a string
 
         `gauges` is a dictionary with one entry per metric.  Each metric
         is a dictionary with one entry, `value`.
@@ -847,7 +926,6 @@ class CloudBeesJenkins:
 
         A dictionary with the following entries:
 
-        - _class: a string
         - actions: a list of dictionaries
         - blocked: a boolean
         - buildable: a boolean
@@ -860,6 +938,7 @@ class CloudBeesJenkins:
         - task: a dictionary
         - url: a string
         - why: a dictionary or None
+        - _class: a string
 
         If the queueitem is still waiting for an executor, the `why`
         entry will not be None.
@@ -869,9 +948,9 @@ class CloudBeesJenkins:
 
         The `executable` entry, if not None, has the following entries:
 
-        - _class: a string
         - number: an integer
         - url: a string
+        - _class: a string
         """
         ensure_nonemptystring('managedmaster_url')
         ensure_instance('queueitem', int)
@@ -899,7 +978,6 @@ class CloudBeesJenkins:
 
         A dictionary with the following entries:
 
-        - _class: a string
         - actions: a list of dictionaries
         - artifacts: a list
         - building: a boolean
@@ -920,6 +998,7 @@ class CloudBeesJenkins:
         - result: a string or None
         - timestamp: an integer (a timestamp)
         - url: a string
+        - _class: a string
         """
         ensure_nonemptystring('managedmaster_url')
         ensure_nonemptystring('path')
@@ -965,9 +1044,9 @@ class CloudBeesJenkins:
         A list of _jobs_.  Each job is a dictionary with at least 3
         keys:
 
-        - _class: a string
-        - url: a string
         - name: a string
+        - url: a string
+        - _class: a string
 
         If a job class is
         `'com.cloudbees.hudson.plugins.folder.Folder'`, it means it is
@@ -1039,10 +1118,10 @@ class CloudBeesJenkins:
         entries:
 
         - description: a string
-        - id: a string
         - filterable: a boolean
-        - shortUrl: a string
         - grantedPermissions: a list of strings
+        - id: a string
+        - shortUrl: a string
 
         The returned roles are expanded.
         """
@@ -1079,7 +1158,7 @@ class CloudBeesJenkins:
         group: str,
         role: str,
         offset: int = 0,
-        inherited: Optional[bool] = False,
+        inherited: bool = False,
     ) -> None:
         """Grant a role to group in project.
 
@@ -1093,14 +1172,14 @@ class CloudBeesJenkins:
 
         # Optional parameters
 
-        - offset: an integer (0 by default)
+        - offset: an integer (`0` by default)
         - inherited: a boolean (False by default)
         """
         ensure_nonemptystring('project_url')
         ensure_nonemptystring('group')
         ensure_nonemptystring('role')
         ensure_instance('offset', int)
-        ensure_noneorinstance('inherited', bool)
+        ensure_instance('inherited', bool)
 
         result = self._post(
             join_url(
@@ -1141,13 +1220,13 @@ class CloudBeesJenkins:
         following entries:
 
         - description: a string
-        - name: a string
-        - url: a string
-        - members: a list of strings
-        - roles: a list of strings
-        - roleAssignments: a list of dictionaries
-        - users: a list of strings
         - groups: a list of strings
+        - members: a list of strings
+        - name: a string
+        - roleAssignments: a list of dictionaries
+        - roles: a list of strings
+        - url: a string
+        - users: a list of strings
 
         The returned groups are expanded.
         """
@@ -1172,16 +1251,16 @@ class CloudBeesJenkins:
 
         A dictionary with the following possible entries:
 
-        - system: a dictionary
         - folder: a dictionary
+        - system: a dictionary
 
         Some entries may be missing.
 
         The `system` and `folder` dictionaries have the same format.
         They contain the following entries:
 
-        - _class: a string
         - domains: a dictionary
+        - _class: a string
 
         Each entry in the `domains` dictionary is a domain. The key is
         the domain name, and the value is a dictionary with a `_class`
@@ -1245,12 +1324,12 @@ class CloudBeesJenkins:
         A list of _credentials_.  A credential is a dictionary with the
         following entries:
 
-        - id: a string, the credential id
-        - displayName: a string
-        - typeName: a string
         - description: a string
+        - displayName: a string
         - fingerprint: ?
         - fullname: a string
+        - id: a string, the credential id
+        - typeName: a string
 
         Credentials as returned by this function contain no sensible
         items (passwords, secret files, private keys, ...)
@@ -1382,14 +1461,13 @@ class CloudBeesJenkins:
     def delete_group_user(self, group_url: str, user: str) -> None:
         """Delete user from group.
 
-        # Requirement parameters
+        # Required parameters
 
         - group_url: a non-empty string
         - user: a non-empty string
 
         May not be the cleanest way to do it (using a form action).
         """
-
         ensure_nonemptystring('group_url')
         ensure_nonemptystring('user')
 
@@ -1402,12 +1480,11 @@ class CloudBeesJenkins:
     def migrate_group_member_as_user(self, group_url: str, user: str) -> None:
         """Migrate member of group as user
 
-        # Requirement parameters
+        # Required parameters
 
         - group_url: a non-empty string
         - user: a non-empty string
         """
-
         ensure_nonemptystring('group_url')
         ensure_nonemptystring('user')
 

@@ -97,12 +97,12 @@ class Artifactory:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API>
     - <https://www.jfrog.com/confluence/display/XRAY2X/Xray+REST+API>
 
-    # Implemented features
+    ## Implemented features
 
     - artefacts
     - builds
@@ -113,12 +113,14 @@ class Artifactory:
     - users
     - misc. features (storageinfo, version, ping, ...)
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import Artifactory
 
     url = 'https://artifactory.example.com/artifactory/api/'
+    user = '...'
+    token = '...'
     af = Artifactory(url, basic_auth=(user, token))
     af.list_users()
     ```
@@ -148,8 +150,9 @@ class Artifactory:
 
         # Usage
 
-        `url` is the top-level API endpoint.  For example,
-        `'https://artifactory.example.com/artifactory/api/'`
+        `url` is the top-level API endpoint.  For example:
+
+            'https://artifactory.example.com/artifactory/api/'
 
         `xray_url`, if specified, is the top-level jfrog-xray API
         endpoint.  If not specified, will be as `url` with the
@@ -206,11 +209,11 @@ class Artifactory:
         A list of _builds_.  Each build is a dictionary with the
         following entries:
 
-        - time: an integer (a timestamp)
-        - lastBuildTime: a string (a timestamp)
-        - userCanDistribute: a boolean
-        - buildNumber: a string
         - buildName: a string
+        - buildNumber: a string
+        - lastBuildTime: a string (a timestamp)
+        - time: an integer (a timestamp)
+        - userCanDistribute: a boolean
         """
         return self._get('builds')  # type: ignore
 
@@ -256,8 +259,8 @@ class Artifactory:
 
         # Optional parameters
 
-        - limit: an integer (1000 by default), valid value between 1 and
-          99999
+        - limit: an integer (`1000` by default), valid value between `1`
+          and `99999`
 
         # Returned value
 
@@ -317,16 +320,16 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - username: a string
-        - email: a string
         - admin: a boolean
-        - profile_updatable: a boolean
         - disable_ui_access: a boolean
+        - email: a string
+        - groups: a list of strings
         - internal_password_disabled: a boolean
         - last_logged_in: a string representing a date
+        - profile_updatable: a boolean
         - realm: a string
-        - groups: a list of strings
         - status: a string
+        - username: a string
         """
         ensure_nonemptystring('username')
 
@@ -428,15 +431,15 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - username: a string
+        - admin: a boolean
+        - disable_ui_access: a boolean
         - email: a string
         - groups: a list of strings
+        - internal_password_disabled: a boolean
+        - profile_updatable: a boolean
         - realm: a string
         - status: a string
-        - admin: a boolean
-        - profile_updatable: a boolean
-        - internal_password_disabled: a boolean
-        - disable_ui_access: a boolean
+        - username: a string
         """
         ensure_nonemptystring('name')
         ensure_nonemptystring('email')
@@ -584,15 +587,15 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - username: a string
+        - admin: a boolean
+        - disable_ui_access: a boolean
         - email: a string
         - groups: a list of strings
+        - internal_password_disabled: a boolean
+        - profile_updatable: a boolean
         - realm: a string
         - status: a string
-        - admin: a boolean
-        - profile_updatable: a boolean
-        - internal_password_disabled: a boolean
-        - disable_ui_access: a boolean
+        - username: a string
         """
         ensure_nonemptystring('name')
 
@@ -810,7 +813,7 @@ class Artifactory:
 
     @api_call
     def get_group(
-        self, group_name: str, include_users: Optional[bool] = False
+        self, group_name: str, include_users: bool = False
     ) -> Dict[str, Any]:
         """Return group details.
 
@@ -826,19 +829,18 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - name: a string
-        - description: a string
-        - autoJoin: a boolean
         - adminPrivileges: a string
+        - autoJoin: a boolean
+        - description: a string
+        - name: a string
         - realm: a string
-        - userNames: a list of strings if include_users is True
+        - userNames: a list of strings if `include_users` is True
         """
 
         ensure_nonemptystring('group_name')
-        ensure_noneorinstance('include_users', bool)
+        ensure_instance('include_users', bool)
 
-        params = {}
-        add_if_specified(params, 'includeUsers', include_users)
+        params = {'includeUsers': include_users}
 
         return self._get(f'security/groups/{group_name}', params=params)  # type: ignore
 
@@ -857,14 +859,14 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - name: a string
-        - description: a string
-        - autoJoin: a boolean
         - adminPrivileges: a string
-        - realm: a string
-        - realm_attributes: a string
+        - autoJoin: a boolean
+        - description: a string
         - external_id: a string
         - members: a list of strings
+        - name: a string
+        - realm: a string
+        - realm_attributes: a string
         """
         ensure_nonemptystring('group_name')
 
@@ -1109,7 +1111,7 @@ class Artifactory:
 
     @api_call
     def delete_group(self, group_name: str) -> bool:
-        """Delete group_name from Artifactory.
+        """Delete group.
 
         Deleting a group automatically remove the specified group for
         users.
@@ -1128,7 +1130,7 @@ class Artifactory:
 
     @api_call
     def delete_group2(self, group_name: str) -> bool:
-        """Delete group_name from Artifactory.
+        """Delete group.
 
         !!! important
             BearerAuth is mandatory to use this function.
@@ -1221,17 +1223,21 @@ class Artifactory:
 
         # Returned value
 
-        A dictionary with the following entries:
+        A dictionary with entries like:
 
-        - archiveBrowsingEnabled: a boolean
-        - blackedOut: a boolean
-        - blockXrayUnscannedArtifacts: a boolean
-        - calculateYumMetadata: a boolean
-        - checksumPolicyType: a string
+        - artifactoryRequestsCanRetrieveRemoteArtifacts: a boolean
+        - blockPushingSchema1: a boolean
+        - cachingLocalForeignLayersEnabled: a boolean
+        - cargoAnonymousAccess: a boolean
+        - cargoInternalIndex: a boolean
+        - ddebSupported: a boolean
         - debianTrivialLayout: a boolean
+        - defaultDeploymentRepo: a string
         - description: a string
         - dockerApiVersion: a string
+        - dockerProjectId: a string
         - enableBowerSupport: a boolean
+        - enableChefSupport: a boolean
         - enableCocoaPodsSupport: a boolean
         - enableComposerSupport: a boolean
         - enableConanSupport: a boolean
@@ -1240,29 +1246,38 @@ class Artifactory:
         - enableDockerSupport: a boolean
         - enableGemsSupport: a boolean
         - enableGitLfsSupport: a boolean
-        - enableNpmSupportenableNuGetSupport: a boolean
+        - enableNormalizedVersion: a boolean
+        - enableNpmSupport: a boolean
+        - enableNuGetSupport: a boolean
         - enablePuppetSupport: a boolean
         - enablePypiSupport: a boolean
         - enableVagrantSupport: a boolean
-        - enabledChefSupport: a boolean
+        - environments: a list
         - excludesPattern: a string
+        - externalDependenciesEnabled: a boolean
+        - forceConanAuthentication: a boolean
+        - forceMavenAuthentication: a boolean
+        - forceMetadataNameVersion: a boolean
+        - forceNonDuplicateChart: a boolean
         - forceNugetAuthentication: a boolean
-        - handleReleases: a boolean
-        - handleSnapshots: a boolean
+        - forceP2Authentication: a boolean
+        - hideUnauthorizedResources: a boolean
         - includesPattern: a string
         - key: a string
-        - maxUniqueSnapshots: an integer
-        - maxUniqueTags: an integer
+        - keyPair: a string
         - notes: a string
         - packageType: a string
-        - propertySets: a list
+        - pomRepositoryReferencesCleanupPolicy: a string
+        - priorityResolution: a boolean
         - rclass: a string
-        - repoLayoutRef: a string
-        - snapshotVersionBehavior: a string
-        - suppressPomConsistencyChecks: a boolean
-        - xrayIndex: a boolean
-        - xrayMinimumBlockedSeverity: a string
-        - yumRootDepth: an integer
+        - repositories: a list of strings
+        - resolveDockerTagsByTimestamp: a boolean
+        - signedUrlTtl: an integer
+        - useNamespaces: a boolean
+        - virtualRetrievalCachePeriodSecs: an integer
+
+        The actual entries list depends on the repository type and
+        configuration.
         """
         ensure_nonemptystring('repository_name')
 
@@ -1286,13 +1301,19 @@ class Artifactory:
     ) -> None:
         """Create a repository.
 
+        Provides a minimal direct interface.  In order to fully qualify
+        a repository, use the `json` parameter.
+
         # Required parameters
 
         - name: a non-empty string
         - json: a dictionary (if `rclass` and `package_type` are not
-          specified)
-        - rclass: a string (if `json` is not specified)
-        - package_type: a string (if `json` is not specified)
+          specified, None otherwise)
+        - rclass: a non-empty string (if `json` is not specified,
+          `'local'`, `'remote'`, or `'virtual'` otherwise)
+        - package_type: a non-empty string (if `json` is not specified)
+
+        Either `json` or `rclass` and `package_type` must be specified.
 
         # Optional parameters
 
@@ -1309,22 +1330,49 @@ class Artifactory:
         - default_deployment_repo: a string (optional, for virtual
             repositories only)
 
+        # Raised exceptions
+
+        An _ApiError_ exception is raised if the repository creation
+        was not successful.
+
+        # Usage
+
         A position may be specified using the `pos` parameter. If the
         map size is shorter than `pos` the repository is the last one
         (default).
 
-        Provides a minimal direct interface.  In order to fully qualify
-        a repository, use the `json` parameter.
+        <h5>Minimal direct interface</h5>
 
-        Legend: `'+'` = required entry, `'-'` = optional entry.
+        When using the direct interface, `name`, `rclass`, and
+        `package_type` are required parameters, and `json` must not be
+        specified.
 
-        JSON for a local repository:
+        `url` is required for remote repositories.
+
+        `repositories` and `default_deployment_repo` are only
+        applicable to virtual repositories.
+
+        <h5>Full interface</h5>
+
+        When using the full interface, only `name` and `json` are
+        required parameters, and `pos` is the only allowed optional
+        parameter.
+
+        The `json` content depends of the desired repository class.
+
+        The following sections describe the JSON content for the
+        different repository classes (local, remote, virtual, and
+        federated).
+
+        > Legend: `'+'` = required entry, `'-'` = optional entry.
+
+        <h6>JSON for a local repository</h6>
 
         ```text
         {
           - "key": "local-repo1",
           - "projectKey": "projx",
-          - "environments":["DEV"] (mandatory when assigning repo to project),
+          - "environments": ["DEV"] (mandatory when assigning repo to project),
           + "rclass": "local",
           - "packageType": "alpine" | "cargo" | "composer" | "bower"
                            | "chef" | "cocoapods" | "conan" | "conda"
@@ -1342,13 +1390,13 @@ class Artifactory:
           - "repoLayoutRef": "maven-2-default" (default),
           - "debianTrivialLayout": false,
           - "checksumPolicyType": "client-checksums" (default)
-                                  | "server-generated-checksums",
+                           | "server-generated-checksums",
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
           - "maxUniqueTags": 0 (default),
           - "snapshotVersionBehavior": "unique" (default) | "non-unique"
-                                       | "deployer",
+                           | "deployer",
           - "suppressPomConsistencyChecks": false (default),
           - "blackedOut": false (default),
           - "xrayIndex": false       (default),
@@ -1357,7 +1405,7 @@ class Artifactory:
           - "calculateYumMetadata": false,
           - "yumRootDepth": 0,
           - "dockerApiVersion": "V2" (default),
-          - "terraformType": "MODULE"|"PROVIDER",
+          - "terraformType": "MODULE" | "PROVIDER",
           - "enableFileListsIndexing": "false" (default),
           - "optionalIndexCompressionFormats": ["bz2", "lzma", "xz"],
           - "downloadRedirect": "false" (default),
@@ -1368,17 +1416,20 @@ class Artifactory:
           - "forceNugetAuthentication": false (default),
           - "forceP2Authentication": false (default),
           - "forceConanAuthentication": false (default),
-          - "priorityResolution": "false" (default)
+          - "encryptStates": true (default),
+          - "priorityResolution": "false" (default, Applies to all
+            repository types excluding CocoaPods, Git LFS, NuGet V2,
+            Opkg, Rust, Vagrant and VCS repositories)
         }
         ```
 
-        JSON for a remote repository:
+        <h6>JSON for a remote repository</h6>
 
         ```text
         {
           - "key": "remote-repo1",
           - "projectKey": "projx",
-          - "environments":["DEV"] (mandatory when assigning repo to project),
+          - "environments": ["DEV"] (mandatory when assigning repo to project),
           + "rclass" : "remote",
           - "packageType": "alpine" | "cargo" | "composer" | "bower"
                            | "chef" | "cocoapods" | "conan" | "conda"
@@ -1438,8 +1489,8 @@ class Artifactory:
           - "pyPIRegistryUrl": "https://pypi.org" (default),
           - "vcsType": "GIT" (default),
           - "vcsGitProvider": "GITHUB" (default) | "GITHUBENTERPRISE"
-                              | "BITBUCKET" | "OLDSTASH" | "STASH"
-                              | "ARTIFACTORY" | "CUSTOM",
+                           | "BITBUCKET" | "OLDSTASH" | "STASH"
+                           | "ARTIFACTORY" | "CUSTOM",
           - "vcsGitDownloadUrl": "" (default),
           - "bypassHeadRequests" : false (default),
           - "clientTlsCertificate": "" (default),
@@ -1457,28 +1508,28 @@ class Artifactory:
           - "contentSynchronisation": {
               "enabled": false (default),
               "statistics": {
-                  "enabled": false (default)
+                "enabled": false (default)
               },
               "properties": {
-                  "enabled": false (default)
+                "enabled": false (default)
               },
               "source": {
-                  "originAbsenceDetection": false (default)
+                "originAbsenceDetection": false (default)
               }
-                },
+            },
            - "blockPushingSchema1": false,
            - "priorityResolution": false (default),
            - "disableUrlNormalization": false (default)
         }
         ```
 
-        JSON for a virtual repository:
+        <h6>JSON for a virtual repository</h6>
 
         ```text
         {
           - "key": "virtual-repo1",
           - "projectKey": "projx",
-          - "environments":["DEV"] (mandatory when assigning repo to project),
+          - "environments": ["DEV"] (mandatory when assigning repo to project),
           + "rclass" : "virtual",
           + "packageType": "alpine" | "composer" | "bower" | "chef"
                            | "conan" | "conda" | "cran" | "debian"
@@ -1515,13 +1566,13 @@ class Artifactory:
         }
         ```
 
-        JSON for a federated repository:
+        <h6>JSON for a federated repository</h6>
 
         ```text
         {
           - "key": "federated-repo1",
           - "projectKey": "projx",
-          - "environments":["DEV"] (mandatory when assigning repo to project),
+          - "environments": ["DEV"] (mandatory when assigning repo to project),
           + "rclass" : "federated",
           - "packageType": "alpine" | "maven" | "gradle" | "ivy" | "sbt"
                            | "helm" | "helmoci" |"huggingfaceml"
@@ -1532,8 +1583,11 @@ class Artifactory:
                            | "ansible" | "conan" | "conda" | "chef"
                            | "puppet" | "generic" (default)
           - "members": [
-              {"url": "http://targetartifactory/artifactory/repositoryName", "enabled":"true"}
-            ]
+              {
+                "url": "http://targetartifactory/artifactory/repositoryName",
+                "enabled":"true"
+              }
+            ],
           - "description": "The federated repository public description",
           - "proxy": "proxy-key",
           - "disableProxy": false (default),
@@ -1542,12 +1596,14 @@ class Artifactory:
           - "excludesPattern": "" (default),
           - "repoLayoutRef" : "maven-2-default" (default),
           - "debianTrivialLayout" : false,
-          - "checksumPolicyType": "client-checksums" (default) | "server-generated-checksums"
+          - "checksumPolicyType": "client-checksums" (default)
+                           | "server-generated-checksums"
           - "handleReleases": true (default),
           - "handleSnapshots": true (default),
           - "maxUniqueSnapshots": 0 (default),
           - "maxUniqueTags": 0 (default),
-          - "snapshotVersionBehavior": "unique" (default) | "non-unique" | "deployer",
+          - "snapshotVersionBehavior": "unique" (default) | "non-unique"
+                           | "deployer",
           - "suppressPomConsistencyChecks": false (default),
           - "blackedOut": false (default),
           - "xrayIndex" : false (default),
@@ -1566,11 +1622,6 @@ class Artifactory:
           - "priorityResolution": false (default)
         }
         ```
-
-        # Raised exceptions
-
-        An _ApiError_ exception is raised if the repository creation
-        was not successful.
         """
         ensure_nonemptystring('name')
         ensure_noneorinstance('pos', int)
@@ -1640,7 +1691,7 @@ class Artifactory:
     def update_repository(
         self, repository_name: str, json: Dict[str, Any]
     ) -> None:
-        """Update repository repository_name with fields in JSON.
+        """Update an existing repository.
 
         No direct interface for now.
 
@@ -1649,7 +1700,7 @@ class Artifactory:
         - repository_name: a non-empty string
         - json: a dictionary
 
-        # Raised exceptionx
+        # Raised exceptions
 
         An _ApiError_ exception is raised  if the update was not
         successful.
@@ -1661,7 +1712,7 @@ class Artifactory:
 
     @api_call
     def delete_repository(self, repository_name: str) -> bool:
-        """Delete repository repository_name.
+        """Delete repository.
 
         # Required parameters
 
@@ -1711,11 +1762,11 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - name: a string
-        - repositories: a list of strings
-        - includesPattern: a string
         - excludesPattern: a string
+        - includesPattern: a string
+        - name: a string
         - principals: a dictionary
+        - repositories: a list of strings
         """
         ensure_nonemptystring('permission_name')
 
@@ -1743,12 +1794,17 @@ class Artifactory:
         - excludes_pattern: a string  (`''` by default)
         - principals: a dictionary or None (None by default)
 
+        # Usage
+
         `repositories` is a list of repository names.
 
         `includes_pattern` and `excludes_pattern` may contain more than
         one pattern, separated by comas.
 
         `principals` is a dictionary or None:
+
+        > Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy,
+        > `'n'`=annotate, `'r'`=read.
 
         ```json
         {
@@ -1762,9 +1818,6 @@ class Artifactory:
           }
         }
         ```
-
-        Legend: `'m'`=admin, `'d'`=delete, `'w'`=deploy, `'n'`=annotate,
-        `'r'`=read.
         """
         ensure_nonemptystring('permission_name')
 
@@ -1828,7 +1881,7 @@ class Artifactory:
         # Optional parameters
 
         - grant_type: a string (`'client_credentials'` by default)
-        - expires_in: an integer (3600 by default)
+        - expires_in: an integer (`3600` by default)
         - refreshable: a boolean (False by default)
         - audience: a string or None (None by default)
 
@@ -1841,9 +1894,9 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - scope: a string
         - access_token: a string
         - expires_in: an integer
+        - scope: a string
         - token_type: a string
         """
         ensure_instance('username', str)
@@ -1888,7 +1941,7 @@ class Artifactory:
         # Optional parameters
 
         - grant_type: a string (`'client_credentials'` by default)
-        - expires_in: an integer (3600 by default)
+        - expires_in: an integer (`3600` by default)
         - refreshable: a boolean (False by default)
         - audience: a string or None (None by default)
         - project_key: a string or None (None by default)
@@ -1896,16 +1949,16 @@ class Artifactory:
         - include_reference_token: a boolean (False by default)
 
         `expires_in` is in seconds (1 hour by default). Administrators
-        can set it to 0 so that the token never expires.
+        can set it to `0` so that the token never expires.
 
         # Returned value
 
         A dictionary with the following entries:
 
-        - token_id: a string
-        - scope: a string
         - access_token: a string
         - expires_in: an integer
+        - scope: a string
+        - token_id: a string
         - token_type: a string
         """
         ensure_instance('username', str)
@@ -1962,13 +2015,13 @@ class Artifactory:
         A list of _tokens_.  Each token is a dictionary with the
         following entries:
 
+        - description: a string
+        - expiry: an integer (a timestamp)
         - issued_at: an integer (a timestamp)
         - issuer: a string
         - refreshable: a boolean
         - subject: a string
         - token_id: a string
-        - expiry: an interger (a timestamp)
-        - description: a string
         """
         return self._get('access/api/v1/tokens').json()['tokens']  # type: ignore
 
@@ -1996,20 +2049,20 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - uri: a string
-        - downloadUri: a string
-        - repo: a string (same as `repository_name`)
-        - path: a string (same as `path`)
-        - remoteUrl: a string
+        - checksums: a dictionary
         - created: a string (ISO8601, yyyy-MM-dd'T'HH:mm:ss.SSSZ)
         - createdBy: a string
+        - downloadUri: a string
         - lastModified: a string (ISO8601)
-        - modifiedBy: a string
         - lastUpdated: a string (ISO8601)
-        - size: a string (in bytes)
         - mimeType: a string
-        - checksums: a dictionary
+        - modifiedBy: a string
         - originalChecksums: a dictionary
+        - path: a string (same as `path`)
+        - remoteUrl: a string
+        - repo: a string (same as `repository_name`)
+        - size: a string (in bytes)
+        - uri: a string
 
         The `checksums` and the `originalChecksums` dictionaries have
         the following entries:
@@ -2042,21 +2095,21 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - uri: a string
-        - repo: a string (same as `repository_name`)
-        - path: a string (same as `path`)
+        - children: a list of dictionaries
         - created: a string (ISO8601, yyyy-MM-dd'T'HH:mm:ss.SSSZ)
         - createdBy: a string
         - lastModified: a string (ISO8601)
-        - modifiedBy: a string
         - lastUpdated: a string (ISO8601)
-        - children: a list of dictionaries
+        - modifiedBy: a string
+        - path: a string (same as `path`)
+        - repo: a string (same as `repository_name`)
+        - uri: a string
 
         Each dictionary in the `children` list has the following
         entries:
 
-        - uri: a string
         - folder: a boolean
+        - uri: a string
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('path')
@@ -2090,14 +2143,14 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - uri: a string
         - properties: a dictionary.
+        - uri: a string
 
         The `properties` dictionary has one entry per property.  The key
         is the property name (a string) and the value is the property
-        value (property-dependent)
+        value (property-dependent).
 
-        # Raised exception
+        # Raised exceptions
 
         If no property exists, an _ApiError_ exception is raised.
         """
@@ -2129,10 +2182,10 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - uri: a string
-        - lastDownloaded: an integer (a timestamp)
         - downloadCount: an integer
+        - lastDownloaded: an integer (a timestamp)
         - lastDownloadedBy: a string
+        - uri: a string
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('path')
@@ -2153,10 +2206,10 @@ class Artifactory:
 
         A dictionary with the following entries:
 
-        - version: a string (the currently installed version)
-        - revision: a string
         - addons: a list of strings
         - license: a string
+        - revision: a string
+        - version: a string (the currently installed version)
         """
         return self._get('system/version')  # type: ignore
 
@@ -2170,26 +2223,26 @@ class Artifactory:
 
         - binariesSummary: a dictionary
         - fileStoreSummary: a dictionary
-        - storageSummary: a dictionary
         - repositoriesSummaryList: a list of dictionaries
+        - storageSummary: a dictionary
 
         `binariesSummary` has the following entries:
 
+        - artifactsCount: a string (`'15,492'`)
+        - artifactsSize: a string (`'144.68 GB'`)
+        - binariesCount: a string (`'13,452'`)
+        - binariesSize: a string (`'116.97 GB'`)
         - itemsCount: a string (`'28,348'`)
         - optimization: a string (`'80.85%'`)
-        - artifactsCount: a string (`'15,492'`)
-        - binariesSize: a string (`'116.97 GB'`)
-        - binariesCount: a string (`'13,452'`)
-        - artifactsSize: a string (`'144.68 GB'`)
 
         `fileStoreSummary` has the following entries:
 
+        - freeSpace: a string (`'145.32 GB (29.53%)'`)
         - storageDirectory: a string
             (`'/data/artifactory/data/filestore'`)
-        - usedSpace: a string (`'346.71 GB (70.47%)'`)
-        - totalSpace: a string (`'492.03 GB'`)
         - storageType: a string (`'file-system'`)
-        - freeSpace: a string (`'145.32 GB (29.53%)'`)
+        - totalSpace: a string (`'492.03 GB'`)
+        - usedSpace: a string (`'346.71 GB (70.47%)'`)
 
         `storageSummary` has the following entries:
 
@@ -2202,22 +2255,22 @@ class Artifactory:
         following entries:
 
         - filesCount: an integer
+        - foldersCount: an integer
         - itemsCount: an integer
         - packageType: a string
-        - usedSpace: a string (`'0 bytes'`)
-        - foldersCount: an integer
         - percentage: a string (`'0%'`)
+        - repoKey: a string (`'project-maven-scratch'`)
         - repoType: a string (`'VIRTUAL'`, `'LOCAL'`, `'CACHE'`, or
             `'NA'`)
-        - repoKey: a string (`'project-maven-scratch'`)
+        - usedSpace: a string (`'0 bytes'`)
 
         Two 'virtual' items are added to the `repositoriesSummaryList`
         list: the 'auto-trashcan' item and the 'TOTAL' item.
 
         Please note that the 'TOTAL' item has no `packageType` entry
-        (but the 'auto-trashcan' has one, valued to 'NA').
+        (but the 'auto-trashcan' has one, valued to `'NA'`).
 
-        Those two items have a `repoType` entry valued to 'NA'.
+        Those two items have a `repoType` entry valued to `'NA'`.
         """
         return self._get('storageinfo')  # type: ignore
 
@@ -2261,12 +2314,12 @@ class Artifactory:
         - indexed_repos: a list of dictionaries
         - non_indexed_repos: a list of dictionaries
 
-        Entries in the `indexed_repos` and `non_indexed_repositories`
-        have the following entries:
+        Items in `indexed_repos` and `non_indexed_repositories` have the
+        following entries:
 
         - name: a string
-        - type: a string ('local' or 'remote')
         - pkg_type: a string
+        - type: a string (`'local'` or `'remote'`)
         """
         ensure_nonemptystring('bin_mgr_id')
 

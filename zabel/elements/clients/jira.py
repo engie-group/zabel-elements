@@ -40,28 +40,29 @@ class Jira(Base):
         This class reuses the JIRA library whenever possible, but always
         returns 'raw' values (dictionaries, ..., not classes).
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.atlassian.com/server/jira/platform/rest/>
     - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
     - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
+    - <https://developer.atlassian.com/server/jira-servicedesk/rest/v1000/intro/>
 
-    # Agile references
+    ### Agile references
 
     - <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
-    # Using the jira.JIRA python library
+    ### The jira.JIRA python library
 
     - <http://jira.readthedocs.io/en/latest/>
 
-    # Other interesting links
+    ### Other interesting links
 
     The various WADLs, such as:
 
     - <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
     - <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
 
-    # Implemented features
+    ## Implemented features
 
     - anonymization
     - boards
@@ -93,7 +94,7 @@ class Jira(Base):
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
 
-    # Expansion
+    ## Expansion
 
     The Jira REST API uses resource expansion.  This means the API will
     only return parts of the resource when explicitly requested.
@@ -136,12 +137,27 @@ class Jira(Base):
     expand the widgets collection and also the _fringel_ property of
     each widget.
 
-    # Sample use
+    ## Search methods
+
+    The search methods, #search() and #search_users(), return a limited
+    number of results.
+
+    This limit can be configured by passing a `max_results` parameter,
+    but this limit is constrained by the Jira server to a maximum
+    value, which is defined by its `jira.search.views.default.max`
+    property.
+
+    The default value used by this library is `MAX_RESULTS` (`1000`),
+    but this is subject to the above restriction.
+
+    ## Examples
 
     ```python
     from zabel.elements.clients import Jira
 
     url = 'https://jira.example.com'
+    user = '...'
+    token = '...'
     jc = Jira(url, basic_auth=(user, token))
     jc.list_users()
     ```

@@ -53,41 +53,52 @@ class GitHub:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.github.com/v3/>
     - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
-    # Implemented features
+    ## Implemented features
 
-    - users
-    - organizations
-    - repositories
+    - apps
     - branches
+    - copilot
+    - hooks
+    - organizations
     - pullrequests
     - references
-    - hooks
-    - copilot
+    - repositories
+    - users
+    - workflows
     - misc. operations (version, staff reports & stats)
 
     Some methods require an Enterprise Cloud account.
 
-    # Sample use
+    ## Examples
+
+    Standard use:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
+    user = '...'
+    token = '...'
     gh = GitHub(url, basic_auth=(user, token))
     gh.list_users()
+    ```
 
-    # enabling management features
-    from zabel.elements import clients
+    Enabling management features (for a private GitHub Enterprise
+    server):
 
+    ```python
+    from zabel.elements.clients import GitHub
+
+    url = 'https://github.example.com/api/v3/'
+    token = '...'
     mngt = 'https://github.example.com/'
-    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh = GitHub(url, bearer_auth=token, management_url=mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """
@@ -110,7 +121,8 @@ class GitHub:
 
         Some methods require an Enterprise Cloud account.
 
-        The legacy `user` and `token` parameters are still supported.
+        The legacy `user` and `token` parameters are deprecated.  Use
+        `basic_auth` or `bearer_auth` instead.
 
         # Required parameters
 
@@ -127,6 +139,17 @@ class GitHub:
         - management_url: a non-empty string or None (None by
           default)
         - verify: a boolean (True by default)
+
+        # Usage
+
+        `url` is the base URL of the GitHub API.  For example:
+
+            'https://github.example.com/api/v3/'
+
+        `management_url` is the base URL of the GitHub instance.  For
+        example:
+
+            'https://github.example.com'
 
         `verify` can be set to False if disabling certificate checks for
         GitHub communication is required.  Tons of warnings will occur
@@ -214,36 +237,60 @@ class GitHub:
         A dictionary with the following entries:
 
         - avatar_url: a string
-        - bio:
-        - blog:
-        - company:
+        - bio: a string or None
+        - blog: a string or None
+        - ?collaborators: an integer
+        - company: a string
         - created_at: a string (a timestamp)
-        - email:
+        - ?disk_usage: an integer
+        - email: a string or None
         - events_url: a string
         - followers: an integer
         - followers_url: a string
         - following: an integer
         - following_url: a string
-        - gist_url: a string
-        - gravatar_id: a string
-        - hireable:
+        - gists_url: a string
+        - gravatar_id: a string or None
+        - hireable: a boolean
         - html_url: a string
         - id: an integer
-        - location:
+        - location: a string or None
         - login: a string
-        - name:
+        - name: a string
+        - node_id: a string
+        - ?notification_email: a string or None
         - organizations_url: a string
+        - ?owned_private_repos: an integer
+        - ?plan: a dictionary with the following entries:
+            - name: a string
+            - space: an integer
+            - collaborators: an integer
+            - private_repos: an integer
+        - ?private_gists: an integer
         - public_gists: an integer
         - public_repos: an integer
         - received_events_url: a string
         - repos_url: a string
         - site_admin: a boolean
         - starred_url: a string
-        - subscription_url: a string
-        - suspend_at:
+        - subscriptions_url: a string
+        - ?total_private_repos: an integer
+        - ?twitter_username: a string or None
         - type: a string
-        - updated_at:
+        - updated_at: a string (a timestamp)
         - url: a string
+        - ?user_view_type: a string
+
+        For GitHub Enterprise users, it may have additional or
+        non-optional entries such as:
+
+        - ?business_plus: a boolean
+        - collaborators: an integer
+        - disk_usage: an integer
+        - ?ldap_dn: a string
+        - owned_private_repos: an integer
+        - total_private_repos: an integer
+        - two_factor_authentication: a boolean
         """
         ensure_nonemptystring('user_name')
 
@@ -251,7 +298,7 @@ class GitHub:
 
     @api_call
     def get_user_organizations(self, login: str) -> Dict[str, Any]:
-        """Get the list of organizations for a specific user.
+        """Get the organizations the user belongs to.
 
         # Required parameters
 
@@ -292,12 +339,12 @@ class GitHub:
 
         The `user` dictionary with the following entries:
 
-        - login: a string
-        - id: an integer
-        - email: a string
-        - scmAccount: a list of strings
         - active: a boolean
+        - email: a string
+        - id: an integer
         - local: a boolean
+        - login: a string
+        - scmAccount: a list of strings
         """
         ensure_nonemptystring('login')
         ensure_noneornonemptystring('email')
@@ -327,12 +374,12 @@ class GitHub:
 
         A _user_.  A user is a dictionary with the following keys:
 
-        - login: a string
-        - id: an integer
-        - email: a string
-        - scmAccount: a list of strings
         - active: a boolean
+        - email: a string
+        - id: an integer
         - local: a boolean
+        - login: a string
+        - scmAccount: a list of strings
         """
         ensure_nonemptystring('current_username')
         ensure_nonemptystring('new_username')
@@ -498,18 +545,20 @@ class GitHub:
         A list of _teams_.  Each team is a dictionary with the following
         keys:
 
-        - name: a string
-        - id: an integer
-        - node_id: a string
-        - slug: a string
-        - description: a string
-        - privacy: a string
-        - url: a string
+        - description: a string or None
         - html_url: a string
+        - id: an integer
         - members_url: a string
-        - repositories_url: a string
+        - name: a string
+        - node_id: a string
+        - ?notification_settings: a string
+        - parent: a dictionary or None
         - permission: a string
-        - parent: ?
+        - ?permissions: a dictionary
+        - ?privacy: a string
+        - repositories_url: a string
+        - slug: a string
+        - url: a string
         """
         ensure_nonemptystring('organization_name')
 
@@ -537,8 +586,8 @@ class GitHub:
 
         # Optional parameters
 
-        - role: a string, one of `direct_member`, `billing_manager`, or
-          `admin` (`direct_member` by default)
+        - role: a string, one of `'direct_member'`, `'billing_manager'`,
+          or `'admin'` (`'direct_member'` by default)
         - team_ids: a list of integers or None (None by default)
 
         # Returned value
@@ -546,15 +595,15 @@ class GitHub:
         An _invitation_.  An invitation is a dictionary with the
         following keys:
 
-        - id: an integer
-        - login: a string
-        - email: a string
-        - role: a string
         - created_at: a string
-        - inviter: a dictionary
-        - team_count: an integer
+        - email: a string
+        - id: an integer
         - invitation_team_url: a string (url)
         - invitation_teams_url: a string (url)
+        - inviter: a dictionary
+        - login: a string
+        - role: a string
+        - team_count: an integer
         """
         ensure_nonemptystring('organization_name')
         ensure_noneorinstance('invitee_id', int)
@@ -609,15 +658,15 @@ class GitHub:
         A list of _failed invitations_.  Each failed invitation is a
         dictionary with the following keys:
 
-        - id: an integer
-        - login: a string
-        - node_id: a string
-        - email: a string
-        - role: a string
         - created_at: a string
+        - email: a string
         - failed_at: a string
         - failed_reason: a string
+        - id: an integer
         - inviter: a dictionary
+        - login: a string
+        - node_id: a string
+        - role: a string
         """
         ensure_nonemptystring('organization_name')
 
@@ -640,15 +689,15 @@ class GitHub:
         A list of _pending invitations_.  Each pending invitation is a
         dictionary with the following keys:
 
-        - id: an integer
-        - login: a string
-        - node_id: a string
-        - email: a string
-        - role: a string
         - created_at: a string
+        - email: a string
         - failed_at: a string
         - failed_reason: a string
+        - id: an integer
         - inviter: a dictionary
+        - login: a string
+        - node_id: a string
+        - role: a string
         """
         ensure_nonemptystring('organization_name')
 
@@ -675,16 +724,16 @@ class GitHub:
         - app_slug: a string
         - created_at: a string
         - events: a list of strings
-        - has_multiple_single_files: a boolean
+        - ?has_multiple_single_files: a boolean
         - html_url: a string
         - id: an integer
         - permissions: a dictionary
         - repositories_url: a string
         - repository_selection: a string
         - single_file_name: a string
-        - single_file_paths
+        - ?single_file_paths: a list of strings
         - suspended_at: a string or None
-        - suspended_by: a ? or None
+        - suspended_by: a dictionary or None
         - target_id: an integer
         - target_type: a string
         - updated_at: a string
@@ -706,42 +755,46 @@ class GitHub:
         An _organization_.  An organization is a dictionary with the
         following keys:
 
-        - login
-        - id
-        - url
-        - repos_url
-        - events_url
-        - hooks_url
-        - issues_url
-        - members_url
-        - public_members_url
-        - avatar_url
-        - description
-        - ?name
-        - ?company
-        - ?blog
-        - ?location
-        - ?email
-        - followers
-        - following
-        - html_url
-        - created_at
-        - type
-        - ?total_private_repos
-        - ?owned_private_repos
-        - ?private_gists
-        - ?disk_usage
-        - ?collaborators
-        - ?billing_email
-        - ?plan
-        - ?default_repository_settings
-        - ?members_can_create_repositories
+        - archived_at: a string
+        - avatar_url: a string
+        - created_at: a string
+        - description: a string or None
+        - events_url: a string
+        - followers: an integer
+        - following: an integer
+        - has_organization_projects: a boolean
+        - has_repository_projects: a boolean
+        - hooks_url: a string
+        - html_url: a string
+        - id: an integer
+        - issues_url: a string
+        - login: a string
+        - members_url: a string
+        - node_id: a string
+        - public_gists: an integer
+        - public_members_url: a string
+        - public_repos: an integer
+        - repos_url: a string
+        - type: a string
+        - updated_at: a string
+        - url: a string
 
-        - has_organization_projects
-        - public_gists
-        - updated_at
-        - has_repository_projects
-        - public_repos
+        If may have additional entries such as:
+
+        - ?billing_email: a string
+        - ?blog: a string
+        - ?collaborators: an integer
+        - ?company: a string
+        - ?default_repository_settings: a string
+        - ?disk_usage: an integer
+        - ?email: a string
+        - ?location: a string
+        - ?members_can_create_repositories: a boolean
+        - ?name: a string
+        - ?owned_private_repos: an integer
+        - ?plan: a dictionary
+        - ?private_gists: an integer
+        - ?total_private_repos: an integer
         """
         ensure_nonemptystring('organization_name')
 
@@ -763,8 +816,8 @@ class GitHub:
 
         # Returned value
 
-        A list of _repositories_.  Each repository is a dictionary. See
-        #list_repositories() for its format.
+        A list of _minimal repositories_.  Each minimal repository is a
+        dictionary. See #list_repositories() for its structure.
         """
         ensure_nonemptystring('organization_name')
 
@@ -816,8 +869,8 @@ class GitHub:
 
         # Optional parameters
 
-        - role: a non-empty string, one of 'all', 'member', or 'admin'
-          ('all' by default)
+        - role: a non-empty string, one of `'all'`, `'member'`, or
+          `'admin'` (`'all'` by default)
 
         # Returned value
 
@@ -866,11 +919,11 @@ class GitHub:
 
         A dictionary with the following entries:
 
-        - url: a string
-        - state: a string
-        - role: a string
-        - organization_url: a string
         - organization: a dictionary
+        - organization_url: a string
+        - role: a string
+        - state: a string
+        - url: a string
         - user: a dictionary
 
         `role` is either `'admin'` or `'member'`.  `state` is either
@@ -907,11 +960,11 @@ class GitHub:
 
         A dictionary with the following entries:
 
-        - url: a string
-        - state: a string
-        - role: a string
-        - organization_url: a string
         - organization: a dictionary
+        - organization_url: a string
+        - role: a string
+        - state: a string
+        - url: a string
         - user: a dictionary
 
         If `user` already had membership, `state` is `'active'`.  If
@@ -1042,11 +1095,11 @@ class GitHub:
 
         Each secret is a dictionary with the following entries:
 
-        - name: a string
         - created_at: a string
+        - name: a string
+        - selected_repositories_url: a string
         - updated_at: a string
         - visibility: a string
-        - selected_repositories_url: a string
         """
         ensure_nonemptystring('organization_name')
 
@@ -1085,8 +1138,8 @@ class GitHub:
 
         A dictionary with the following entries:
 
-        - key_id: a string
         - key: a string
+        - key_id: a string
         """
         ensure_nonemptystring('organization_name')
 
@@ -1109,11 +1162,11 @@ class GitHub:
 
         A dictionary with the following entries:
 
-        - name: a string
         - created_at: a string
+        - name: a string
+        - selected_repositories_url: a string
         - updated_at: a string
         - visibility: a string
-        - selected_repositories_url: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('secret_name')
@@ -1151,13 +1204,13 @@ class GitHub:
     # GitHub action worflows
     #
     # create_workflow_dispatch_event
-    # list_repository_workflows
+    # list_workflows
     # get_workflow
     # list_workflow_runs
     # get_workflow_run
 
     @api_call
-    def list_repository_workflows(
+    def list_workflows(
         self,
         organization_name: str,
         repository_name: str,
@@ -1180,6 +1233,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/actions/workflows'
         ).json()
         return response['workflows']
+
+    list_repository_workflows = list_workflows
 
     @api_call
     def create_workflow_dispatch_event(
@@ -1242,16 +1297,16 @@ class GitHub:
 
         A dictionary with the following entries:
 
+        - badge_url: a string
+        - created_at: a string
+        - html_url: a string
         - id: an integer
-        - node_id: a string
         - name: a string
+        - node_id: a string
         - path: a string
         - state: a string
-        - created_at: a string
         - updated_at: a string
         - url: a string
-        - html_url: a string
-        - badge_url: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1291,9 +1346,10 @@ class GitHub:
         - branch: a string or None (None by default)
         - event: a string or None (None by default)
         - status: a string or None (None by default). Can be one of:
-          `completed`, `action_required`, `cancelled`, `failure`,
-          `neutral`, `skipped`, `stale`, `success`, `timed_out`,
-          `in_progress`, `queued`, `requested`, `waiting`, `pending`
+          `'completed'`, `'action_required'`, `'cancelled'`,
+          `'failure'`, `'neutral'`, `'skipped'`, `'stale'`, `'success'`,
+          `'timed_out'`, `'in_progress'`, `'queued'`, `'requested'`,
+          `'waiting'`, or `'pending'`
         - created: a string or None (None by default)
         - exclude_pull_requests: a boolean or None (None by default)
         - check_suite_id: an integer or None (None by default)
@@ -1351,42 +1407,44 @@ class GitHub:
 
         # Returned value
 
-        A dictionary with the following entries:
+        A _run details_.  A run details is a dictionary with the
+        following entries:
 
-        - id: an integer
-        - name: a string
-        - node_id: a string
-        - head_branch: a string
-        - head_sha: a string
-        - display_title: a string
-        - run_number: an integer
-        - event: a string
-        - status: a string
-        - conclusion: a string
-        - workflow_id: an integer
-        - check_suite_id: an integer
-        - check_suite_node_id: a string
-        - url: a string
-        - html_url: a string
-        - pull_requests: a list of dictionaries
-        - created_at: a string
-        - updated_at: a string
-        - actor: a dictionary
-        - run_attempt: an integer
-        - referenced_workflows: a list of dictionaries
-        - run_started_at: a string
-        - triggering_actor: a dictionary
-        - jobs_url: a string
-        - logs_url: a string
-        - check_suite_url: a string
+        - ?actor: a dictionary
         - artifacts_url: a string
         - cancel_url: a string
-        - rerun_url: a string
-        - previous_attempt_url: a string
-        - workflow_url: a string
+        - check_suite_id: an integer
+        - ?check_suite_node_id: a string
+        - ?check_suite_url: a string
+        - conclusion: a string
+        - created_at: a string
+        - display_title: a string
+        - event: a string
+        - head_branch: a string
         - head_commit: a dictionary
-        - repository: a dictionary
         - head_repository: a dictionary
+        - head_sha: a string
+        - html_url: a string
+        - id: an integer
+        - jobs_url: a string
+        - logs_url: a string
+        - ?name: a string
+        - node_id: a string
+        - path: a string
+        - ?previous_attempt_url: a string
+        - pull_requests: a list of dictionaries
+        - ?referenced_workflows: a list of dictionaries
+        - repository: a dictionary
+        - rerun_url: a string
+        - ?run_attempt: an integer
+        - run_number: an integer
+        - ?run_started_at: a string
+        - status: a string
+        - ?triggering_actor: a dictionary
+        - updated_at: a string
+        - url: a string
+        - workflow_id: an integer
+        - workflow_url: a string
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1413,19 +1471,19 @@ class GitHub:
 
         An _app_.  An app is a dictionary with the following entries:
 
-        - id: an integer
-        - node_id: a string
-        - owner: a dictionary
-        - name: a string
+        - created_at: a string
         - description: a string
+        - events: a list of strings
         - external_url: a string
         - html_url: a string
-        - created_at: a string
-        - updated_at: a string
-        - permissions: a dictionary
-        - events: a list of strings
+        - id: an integer
         - installations_count: an integer
+        - name: a string
+        - node_id: a string
+        - owner: a dictionary
+        - permissions: a dictionary
         - slug: a string
+        - updated_at: a string
         """
         ensure_nonemptystring('app_slug')
 
@@ -1440,23 +1498,9 @@ class GitHub:
 
         # Returned value
 
-        A list of _installations_.  Each installation is a dictionary
+        A list of _installations_.  Each installation is a dictionary.
+        Refer to #get_app_installation() for its structure.
         with the following entries:
-
-        - id: an integer
-        - account: a dictionary
-        - repository_selection: a string
-        - access_tokens_url: a string
-        - repositories_url: a string
-        - html_url: a string
-        - app_id: an integer
-        - target_id: an integer
-        - target_type: a string
-        - permissions: a dictionary
-        - events: a list of strings
-        - created_at: a string
-        - updated_at: a string
-        - single_file_name: a string
         """
         return self._collect_data('app/installations')
 
@@ -1476,20 +1520,20 @@ class GitHub:
         An _installation_.  An installation is a dictionary with the
         following entries:
 
-        - id: an integer
-        - account: a dictionary
-        - repository_selection: a string
         - access_tokens_url: a string
-        - repositories_url: a string
-        - html_url: a string
+        - account: a dictionary
         - app_id: an integer
+        - created_at: a string
+        - events: a list of strings
+        - html_url: a string
+        - id: an integer
+        - permissions: a dictionary
+        - repositories_url: a string
+        - repository_selection: a string
+        - single_file_name: a string
         - target_id: an integer
         - target_type: a string
-        - permissions: a dictionary
-        - events: a list of strings
-        - created_at: a string
         - updated_at: a string
-        - single_file_name: a string
         """
         ensure_instance('installation_id', int)
 
@@ -1543,11 +1587,11 @@ class GitHub:
         An _access token_.  An access token is a dictionary with the
         following entries:
 
-        - token: a string
         - expires_at: a string
         - permissions: a dictionary
-        - repository_selection: a string
         - repository_ids: a list of integers
+        - repository_selection: a string
+        - token: a string
         """
         ensure_instance('installation_id', int)
 
@@ -1630,80 +1674,100 @@ class GitHub:
 
         # Returned value
 
-        A list of _repositories_.  Each repository is a dictionary with
-        the following entries:
+        A list of _minimal repositories_.  Each minimal repository is a
+        subset of the corresponding _full repository_ dictionary
+        (see #get_repository() for its description).
 
-        + archive_url: a string
-        + assignees_url: a string
-        + blobs_url: a string
-        + branches_url: a string
-        - clone_url: a string
-        + collaborators_url: a string
-        + comments_url: a string
-        + commits_url: a string
-        + compare_url: a string
-        + contents_url: a string
-        + contributors_url: a string
-        - created_at: a string (a timestamp)
-        - default_branch: a string
-        + deployments_url: a string
-        + description: a string
-        + downloads_url: a string
-        + events_url: a string
-        + fork: a boolean
-        - forks: an integer
-        - forks_count: an integer
-        + forks_url: a string
-        + full_name: a string
-        + git_commits_url: a string
-        + git_refs_url: a string
-        + git_tags_url: a string
-        - git_url: a string
-        - has_downloads: a boolean
-        - has_issues: a boolean
-        - has_pages: a boolean
-        - has_projects: a boolean
-        - has_wiki: a boolean
-        - homepage
-        + hooks_url: a string
-        + html_url: a string
-        + id: an integer
-        + issue_comment_url
-        + issue_events_url
-        + issues_url: a string
-        + keys_url: a string
-        + labels_url: a string
-        - language: a string
-        + languages_url: a string
-        + merges_url: a string
-        + milestones_url: a string
-        - mirror_url: a string
-        + name: a string
-        + node_id: a string
-        + notifications_url: a string
-        - open_issues: an integer
-        - open_issues_count: an integer
-        + owner: a dictionary
-        - permissions: a dictionary
-        + private: a boolean
-        + pulls_url: a string
-        - pushed_at: a string (a timestamp)
-        + releases_url
-        - size: an integer
-        - ssh_url: a string
-        - stargazers_count: an integer
-        + stargazers_url: a string
-        + statuses_url: a string
-        + subscribers_url: a string
-        + subscription_url: a string
-        - svn_url: a string
-        + tags_url: a string
-        + teams_url: a string
-        + trees_url: a string
-        - updated_at: a string (a timestamp)
-        + url: a string
-        - watchers: an integer
-        - watchers_count: an integer
+        A minimal repository dictionary has the following structure:
+
+        - ?allow_forking: a boolean
+        - ?allow_squash_merge: a boolean
+        - archive_url: a string
+        - ?archived: a boolean
+        - assignees_url: a string
+        - blobs_url: a string
+        - branches_url: a string
+        - ?clone_url: a string
+        - ?code_of_conduct: a dictionary
+        - collaborators_url: a string
+        - comments_url: a string
+        - commits_url: a string
+        - compare_url: a string
+        - contents_url: a string
+        - contributors_url: a string
+        - ?created_at: a string (a timestamp)
+        - ?default_branch: a string
+        - ?delete_branch_on_merge: a boolean
+        - deployments_url: a string
+        - description: a string or None
+        - ?disabled: a boolean
+        - downloads_url: a string
+        - events_url: a string
+        - fork: a boolean
+        - ?forks: an integer
+        - ?forks_count: an integer
+        - forks_url: a string
+        - full_name: a string
+        - git_commits_url: a string
+        - git_refs_url: a string
+        - git_tags_url: a string
+        - ?git_url: a string
+        - ?has_discussions: a boolean
+        - ?has_downloads: a boolean
+        - ?has_issues: a boolean
+        - ?has_pages: a boolean
+        - ?has_projects: a boolean
+        - ?has_wiki: a boolean
+        - ?homepage: a string or None
+        - hooks_url: a string
+        - html_url: a string
+        - id: an integer
+        - ?is_template: a boolean
+        - issue_comment_url: a string
+        - issue_events_url: a string
+        - issues_url: a string
+        - keys_url: a string
+        - labels_url: a string
+        - ?language: a string or None
+        - languages_url: a string
+        - ?license: a dictionary or None
+        - merges_url: a string
+        - milestones_url: a string
+        - ?mirror_url: a string or None
+        - name: a string
+        - ?network_count: an integer
+        - node_id: a string
+        - notifications_url: a string
+        - ?open_issues: an integer
+        - ?open_issues_count: an integer
+        - owner: a dictionary (simple user)
+        - ?permissions: a dictionary
+        - private: a boolean
+        - pulls_url: a string
+        - ?pushed_at: a string (a timestamp) or None
+        - releases_url: a string
+        - ?role_name: a string
+        - ?security_and_analysis: a dictionary or None
+        - ?size: an integer
+        - ?ssh_url: a string
+        - ?stargazers_count: an integer
+        - stargazers_url: a string
+        - statuses_url: a string
+        - ?subscribers_count: an integer
+        - subscribers_url: a string
+        - subscription_url: a string
+        - ?svn_url: a string
+        - tags_url: a string
+        - teams_url: a string
+        - ?temp_clone_token: a string
+        - ?topics: a list of strings
+        - trees_url: a string
+        - ?updated_at: a string (a timestamp) or None
+        - url: a string
+        - ?visibility: a string
+        - ?watchers: an integer
+        - ?watchers_count: an integer
+        - ?web_commits_signoff_required: a boolean
         """
         return self._collect_data('repositories', params={'visibility': 'all'})
 
@@ -1713,8 +1777,8 @@ class GitHub:
 
         # Returned value
 
-        A list of _repositories_.  Each repository is a dictionary.  See
-        #list_repositories() for its description.
+        A list of _minimal repositories_.  Each minimal repository is a
+        dictionary.  See #list_repositories() for its structure.
         """
         return self._collect_data('repositories')
 
@@ -1731,7 +1795,113 @@ class GitHub:
 
         # Returned value
 
-        A _repository_. See #list_repositories() for its description.
+        A _full repository_.  A full repository is a dictionary with the
+        following entries:
+
+        - ?allow_auto_merge: a boolean
+        - ?allow_forking: a boolean
+        - ?allow_merge_commit: a boolean
+        - ?allow_rebase_merge: a boolean
+        - ?allow_squash_merge: a boolean
+        - ?allow_update_branch: a boolean
+        - ?anonymous_access_enabled: a boolean
+        - archive_url: a string
+        - archived: a boolean
+        - assignees_url: a string
+        - blobs_url: a string
+        - branches_url: a string
+        - ?code_of_conduct: a dictionary
+        - clone_url: a string
+        - collaborators_url: a string
+        - comments_url: a string
+        - commits_url: a string
+        - compare_url: a string
+        - contents_url: a string
+        - contributors_url: a string
+        - created_at: a string (a timestamp)
+        - default_branch: a string
+        - ?delete_branch_on_merge: a boolean
+        - deployments_url: a string
+        - description: a string
+        - disabled: a boolean
+        - downloads_url: a string
+        - events_url: a string
+        - fork: a boolean
+        - forks: an integer
+        - forks_count: an integer
+        - forks_url: a string
+        - full_name: a string
+        - git_commits_url: a string
+        - git_refs_url: a string
+        - git_tags_url: a string
+        - git_url: a string
+        - ?has_downloads: a boolean
+        - has_issues: a boolean
+        - has_pages: a boolean
+        - has_projects: a boolean
+        - has_wiki: a boolean
+        - ?has_downloads: a boolean
+        - has_discussions: a boolean
+        - homepage: a string or None
+        - hooks_url: a string
+        - html_url: a string
+        - id: an integer
+        - ?is_template: a boolean
+        - issue_comment_url: a string
+        - issue_events_url: a string
+        - issues_url: a string
+        - keys_url: a string
+        - labels_url: a string
+        - language: a string
+        - languages_url: a string
+        - license: a dictionary or None
+        - ?master_branch: a string
+        - ?merge_commit_message: a string
+        - ?merge_commit_title: a string
+        - merges_url: a string
+        - milestones_url: a string
+        - mirror_url: a string
+        - name: a string
+        - network_count: an integer
+        - node_id: a string
+        - notifications_url: a string
+        - open_issues: an integer
+        - open_issues_count: an integer
+        - ?organization: a dictionary
+        - owner: a dictionary
+        - ?parent: a dictionary
+        - ?permissions: a dictionary
+        - private: a boolean
+        - pulls_url: a string
+        - pushed_at: a string (a timestamp) or None
+        - releases_url: a string
+        - ?role_name: a string
+        - ?security_and_analysis: a dictionary
+        - size: an integer
+        - ?source: a dictionary
+        - ?squash_merge_commit_message: a string
+        - ?squash_merge_commit_title: a string
+        - ssh_url: a string
+        - stargazers_count: an integer
+        - stargazers_url: a string
+        - statuses_url: a string
+        - subscribers_count: an integer
+        - subscribers_url: a string
+        - subscription_url: a string
+        - svn_url: a string
+        - tags_url: a string
+        - teams_url: a string
+        - ?temp_clone_token: a string
+        - ?template_repository: a dictionary or None
+        - ?topics: a list of strings
+        - trees_url: a string
+        - updated_at: a string (a timestamp) or None
+        - url: a string
+        - ?use_squash_pr_title_as_default: a boolean
+        - ?visibility: a string
+        - watchers: an integer
+        - watchers_count: an integer
+        - ?web_commits_signoff_required: a boolean
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1758,7 +1928,7 @@ class GitHub:
         allow_merge_commit: bool = True,
         allow_rebase_merge: bool = True,
     ) -> Dict[str, Any]:
-        """Create a new repository in organization_name.
+        """Create a new repository.
 
         # Required parameters
 
@@ -1784,7 +1954,8 @@ class GitHub:
 
         # Returned value
 
-        A _repository_.  See #list_repositories() for its content.
+        A _full repository_.  A full repository is a dictionary.  See
+        #get_repository() for its structure.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
@@ -1829,7 +2000,7 @@ class GitHub:
         include_all_branches: bool = False,
         private: bool = False,
     ) -> Dict[str, Any]:
-        """Create a new repository in organization_name from a template.
+        """Create a new repository from a template.
 
         # Required parameters
 
@@ -1846,7 +2017,8 @@ class GitHub:
 
         # Returned value
 
-        A _repository_.  See #list_repositories() for its content.
+        A _full repository_.  A full repository is a dictionary.  See
+        #get_repository() for its structure.
         """
         ensure_nonemptystring('template_owner')
         ensure_nonemptystring('template_repo')
@@ -1887,7 +2059,7 @@ class GitHub:
 
         # Returned value
 
-        A _repository_.  See #list_repositories() for its content.
+        A _full repository_.  See #get_repository() for its structure.
         """
         ensure_nonemptystring('repository_name')
         ensure_nonemptystring('organization_name')
@@ -1912,7 +2084,8 @@ class GitHub:
 
         # Returned value
 
-        A list of strings (the list may be empty).
+        A list of _topics_.  Each topic is a string (the list may be
+        empty).
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1940,7 +2113,7 @@ class GitHub:
 
         # Returned value
 
-        A possibly empty list of strings.
+        A possibly empty list of _topics_ (strings).
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -1960,7 +2133,7 @@ class GitHub:
         """Return the list of number of additions&deletions per week.
 
         The returned value is cached.  A first call for a given
-        repository may return a 202 response code.  Retrying a moment
+        repository may return a `202` response code.  Retrying a moment
         later will return the computed value.
 
         # Required parameters
@@ -2113,21 +2286,8 @@ class GitHub:
 
         # Returned value
 
-        A list of _teams_.  Each team is a dictionary with the following
-        keys:
-
-        - name: a string
-        - id: an integer
-        - node_id: a string
-        - slug: a string
-        - description: a string
-        - privacy: a string
-        - url: a string
-        - html_url: a string
-        - members_url: a string
-        - repositories_url: a string
-        - permission: a string
-        - parent: ?
+        A list of _teams_.  Each team is a dictionary.  Refer to
+        #list_organization_teams() for its structure.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -2554,12 +2714,12 @@ class GitHub:
         A _branch_.  A branch is a dictionary with the following
         entries:
 
-        - name: a string
         - commit: a dictionary
+        - name: a string
+        - pattern: a string
         - protected: a boolean
         - protection: a dictionary
         - protetion_url: a string
-        - pattern: a string
         - required_approving_review_count: an integer
         - _links: a dictionary
         """
@@ -2595,50 +2755,50 @@ class GitHub:
 
         # Optional parameters
 
-        - state: a string, one of `open`, `closed`, or `all` (`all` by
-          default)
+        - state: a string, one of `'open'`, `'closed'`, or `'all'`
+          (`'all'` by default)
 
         # Returned value
 
         A list of _pull requests_.  Each pull request is a dictionary
         with the following entries:
 
-        - url: a string
-        - id: an integer
-        - node_id: a string
-        - html_url: a string
-        - diff_url: a string
-        - patch_url: a string
-        - issue_url: a string
-        - commits_url: a string
-        - review_comments_url: a string
-        - review_comment_url: a string
-        - comments_url: a string
-        - statuses_url: a string
-        - number: an integer
-        - state: a string
-        - locked: a boolean
-        - title: a string
-        - user: a dictionary
-        - body: a string
-        - labels: a list of dictionaries
-        - milestone: a dictionary,
         - active_lock_reason: a string
-        - created_at: a string
-        - updated_at: a string
-        - closed_at: a string
-        - merged_at: a string
-        - merge_commit_sha: a string
         - assignee: a dictionary
         - assignees: a list of dictionaries
-        - requested_reviewers: a list of dictionaries
-        - requested_teams: a list of dictionaries
-        - head: a dictionary
-        - base: a dictionary
-        - _links: a dictionary
         - author_association: a string
         - auto_merge: a dictionary or None
+        - base: a dictionary
+        - body: a string
+        - closed_at: a string
+        - comments_url: a string
+        - commits_url: a string
+        - created_at: a string
+        - diff_url: a string
         - draft: a boolean
+        - head: a dictionary
+        - html_url: a string
+        - id: an integer
+        - issue_url: a string
+        - labels: a list of dictionaries
+        - locked: a boolean
+        - merge_commit_sha: a string
+        - merged_at: a string
+        - milestone: a dictionary,
+        - node_id: a string
+        - number: an integer
+        - patch_url: a string
+        - requested_reviewers: a list of dictionaries
+        - requested_teams: a list of dictionaries
+        - review_comment_url: a string
+        - review_comments_url: a string
+        - state: a string
+        - statuses_url: a string
+        - title: a string
+        - updated_at: a string
+        - url: a string
+        - user: a dictionary
+        - _links: a dictionary
 
         `number` is the value you use to interact with the pull request.
         """
@@ -2765,8 +2925,8 @@ class GitHub:
         - commit_title: a non-empty string or None (None by default)
         - commit_message: a non-empty string or None (None by default)
         - sha: a non-empty string or None (None by default)
-        - merge_method: a string, one of `merge`, `squash`, `rebase`,
-          or None (None by default)
+        - merge_method: a string, one of `'merge'`, `'squash'`,
+          `'rebase'`, or None (None by default)
 
         # Returned value
 
@@ -2851,12 +3011,49 @@ class GitHub:
     ####################################################################
     # GitHub repository git database
     #
+    # list_repository_references
     # create_repository_reference
     # delete_repository_reference
     # create_repository_tag
     # get_repository_reference
-    # get_repository_references
     # get_repository_tree
+
+    @api_call
+    def list_repository_references(
+        self, organization_name: str, repository_name: str, ref: str
+    ) -> List[Dict[str, Any]]:
+        """List a repository references.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+        - ref: a non-empty string (`'heads'` or `'tags'`)
+
+        # Returned value
+
+        A list of _references_.  A reference is a dictionary with the
+        following entries:
+
+        - ref: a string
+        - node_id: a string
+        - url: a string
+        - object: a dictionary
+
+        The `object` dictionary has the following entries:
+
+        - type: a string
+        - sha: a string
+        - url: a string
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_in('ref', ('heads', 'tags'))
+
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
+        )
+        return result  # type: ignore
 
     @api_call
     def create_repository_reference(
@@ -2874,7 +3071,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashes)
+          with `'refs'` and having at least two slashes)
         - sha: a non-empty string
 
         # Optional parameters
@@ -2926,7 +3123,7 @@ class GitHub:
         - organization_name: a non-empty string
         - repository_name: a non-empty string
         - ref: a non-empty string (a fully-qualified reference, starting
-          with `refs` and having at least two slashes)
+          with `'refs'` and having at least two slashes)
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
@@ -3010,8 +3207,8 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - ref: a non-empty string (of form `heads/{branch}` or
-          `tags/{tag}`)
+        - ref: a non-empty string (of form `'heads/{branch}'` or
+          `'tags/{tag}'`)
 
         # Returned value
 
@@ -3038,43 +3235,6 @@ class GitHub:
 
         result = self._get(
             f'repos/{organization_name}/{repository_name}/git/ref/{ref}',
-        )
-        return result  # type: ignore
-
-    @api_call
-    def list_repository_references(
-        self, organization_name: str, repository_name: str, ref: str
-    ) -> List[Dict[str, Any]]:
-        """List a repository references.
-
-        # Required parameters
-
-        - organization_name: a non-empty string
-        - repository_name: a non-empty string
-        - ref: a non-empty string (`heads` or `tags`)
-
-        # Returned value
-
-        A list of _references_.  A reference is a dictionary with the
-        following entries:
-
-        - ref: a string
-        - node_id: a string
-        - url: a string
-        - object: a dictionary
-
-        The `object` dictionary has the following entries:
-
-        - type: a string
-        - sha: a string
-        - url: a string
-        """
-        ensure_nonemptystring('organization_name')
-        ensure_nonemptystring('repository_name')
-        ensure_in('ref', ('heads', 'tags'))
-
-        result = self._get(
-            f'repos/{organization_name}/{repository_name}/git/refs/{ref}',
         )
         return result  # type: ignore
 
@@ -3140,22 +3300,22 @@ class GitHub:
     ####################################################################
     # GitHub hook operations
     #
-    # list_hooks
     # list_global_hooks
     # list_organization_hooks
+    # list_repository_hooks
     # get_organization_hook
-    # create_hook
     # create_global_hook
+    # create_repository_hook
     # create_organization_hook
-    # delete_hook
     # delete_global_hook
     # delete_organization_hook
-    # ping_hook
+    # delete_repository_hook
     # ping_global_hook
     # ping_organization_hook
+    # ping_repository_hook
 
     @api_call
-    def list_hooks(
+    def list_repository_hooks(
         self, organization_name: str, repository_name: str
     ) -> List[Dict[str, Any]]:
         """List web hooks for repository.
@@ -3170,9 +3330,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Repository`)
+        - type: a string (`'Repository'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3202,6 +3362,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks'
         )
 
+    list_hooks = list_repository_hooks
+
     @api_call
     def list_global_hooks(self) -> List[Dict[str, Any]]:
         """List global web hooks.
@@ -3211,9 +3373,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Global`)
+        - type: a string (`'Global'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3246,9 +3408,9 @@ class GitHub:
         A list of _hooks_.  A hook is a dictionary with the following
         entries:
 
-        - type: a string (`Organization`)
+        - type: a string (`'Organization'`)
         - id: an integer
-        - name: a string (always `web`)
+        - name: a string (always `'web'`)
         - active: a boolean
         - events: a list of strings
         - config: a dictionary
@@ -3291,7 +3453,7 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def create_hook(
+    def create_repository_hook(
         self,
         organization_name: str,
         repository_name: str,
@@ -3306,7 +3468,7 @@ class GitHub:
 
         - organization_name: a non-empty string
         - repository_name: a non-empty string
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3355,6 +3517,8 @@ class GitHub:
         )
         return result  # type: ignore
 
+    create_hook = create_repository_hook
+
     @api_call
     def create_global_hook(
         self,
@@ -3367,7 +3531,7 @@ class GitHub:
 
         # Required parameters
 
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3428,7 +3592,7 @@ class GitHub:
         # Required parameters
 
         - organization_name: a non-empty string
-        - name: a string (must be `web`)
+        - name: a string (must be `'web'`)
         - config: a dictionary
 
         # Optional parameters
@@ -3475,7 +3639,7 @@ class GitHub:
         return result  # type: ignore
 
     @api_call
-    def delete_hook(
+    def delete_repository_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
         """Delete a web hook.
@@ -3498,6 +3662,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}'
         )
         return result.status_code == 204
+
+    delete_hook = delete_repository_hook
 
     @api_call
     def delete_global_hook(self, hook_id: int) -> bool:
@@ -3538,7 +3704,7 @@ class GitHub:
         return result.status_code == 204
 
     @api_call
-    def ping_hook(
+    def ping_repository_hook(
         self, organization_name: str, repository_name: str, hook_id: int
     ) -> bool:
         """Ping a web hook.
@@ -3561,6 +3727,8 @@ class GitHub:
             f'repos/{organization_name}/{repository_name}/hooks/{hook_id}/pings'
         )
         return result.status_code == 204
+
+    ping_hook = ping_repository_hook
 
     @api_call
     def ping_global_hook(self, hook_id: int) -> bool:
@@ -3786,19 +3954,19 @@ class GitHub:
     def get_admin_stats(self, what: str = 'all') -> Dict[str, Any]:
         """Return admin stats.
 
+        Requires sysadmin rights.
+
         # Optional parameters
 
-        - what: a string (`all` by default)
+        - what: a non-empty string (`'all'` by default)
 
-        `what` can be `all`, `comments`, `gists`, `hooks`, `issues`,
-        `milestones`, `orgs`, `pages`, `pulls`, `repos`,
-        `security-products`, or `users`.
-
-        Requires sysadmin rights.
+        `what` can be `'all'`, `'comments'`, `'gists'`, `'hooks'`,
+        `'issues'`, `'milestones'`, `'orgs'`, `'pages'`, `'pulls'`,
+        `'repos'`, `'security-products'`, or `'users'`.
 
         # Returned value
 
-        A dictionary with either one entry (if `what` is not `all`)
+        A dictionary with either one entry (if `what` is not `'all'`)
         or one entry per item.
 
         Values are dictionaries.
