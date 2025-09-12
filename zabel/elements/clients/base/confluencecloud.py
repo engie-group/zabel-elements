@@ -100,7 +100,7 @@ class ConfluenceCloud:
     user = '...'
     token = '...'
     confluencecloud = ConfluenceCloud(url, basic_auth=(user, token))
-    confluencecloud.list_users()
+    confluencecloud.search_users()
     ```
     """
 
@@ -1317,23 +1317,40 @@ class ConfluenceCloud:
     # remove_group_member
 
     @api_call
-    def list_groups(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def list_groups(self, limit: int = 200) -> List[Dict[str, Any]]:
         """Return a list of groups.
-
+        
         # Optional parameters
-
-        - limit: an integer (default `100`)
-
+        - limit: an integer (default 200) 
         # Returned value
-
         A list of dictionaries, each representing a group.
         Please refer to #get_group() for more.
         """
         ensure_instance('limit', int)
 
-        params = {'limit': limit}
         url = join_url(self.url, 'rest/api/group')
-        return self.session().get(url, params=params)
+        start = 0
+        all_groups = []
+
+        while True:
+            params = {
+                'limit': limit,
+                'start': start,
+                'shouldReturnTotalSize': 'true'
+            }
+            response = self.session().get(url, params=params).json()
+    
+            results = response.get('results', [])
+            size = response.get('size', len(results))
+
+            all_groups.extend(results)
+            if size < limit:
+                break
+
+            start += size
+
+        return all_groups
+
 
     @api_call
     def get_group(self, name: str) -> Dict[str, Any]:
@@ -1402,7 +1419,7 @@ class ConfluenceCloud:
         self,
         group_name: str,
         expand: Optional[List[str]] = None,
-        limit: int = 100,
+        limit: int = 200,
     ) -> List[Dict[str, Any]]:
         """Return members of a group.
 
@@ -1424,12 +1441,33 @@ class ConfluenceCloud:
         ensure_noneorinstance('expand', list)
         ensure_instance('limit', int)
 
-        params = {'limit': limit}
-        add_if_specified(params, 'expand', expand)
-
         url = join_url(self.url, f'rest/api/group/{group_name}/member')
-        response = self.session().get(url, params=params).json()
-        return response['results']
+        all_members = []
+        start = 0
+
+        while True:
+
+            params = {
+                'limit': limit,
+                'start': start,
+                'shouldReturnTotalSize': 'true'
+            }
+            add_if_specified(params, 'expand', expand)
+            response = self.session().get(url, params=params).json()
+
+            results = response.get('results', [])
+            size = response.get('size', len(results))
+            total = response.get('totalSize')
+
+            all_members.extend(results)
+            if size < limit:
+                break
+            if len(all_members) >= total:
+                break
+
+            start += size
+
+        return all_members
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
