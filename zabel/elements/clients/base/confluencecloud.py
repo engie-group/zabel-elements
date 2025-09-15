@@ -146,6 +146,13 @@ class ConfluenceCloud:
     # list_space_pages
     # list_space_blogposts
     # create_space
+    # get_space_properties
+    # create_space_property
+    # list_available_space_permissions
+    # list_space_permissions
+    # add_space_permission
+    # remove_space_permission
+    # add_space_label
 
     @api_call
     def list_spaces(
@@ -156,7 +163,6 @@ class ConfluenceCloud:
         include_icons: bool = False,
         keys: Optional[List[str]] = None,
         labels: Optional[List[str]] = None,
-        limit: int = 100,
         not_favorited_by: Optional[str] = None,
         sort: Optional[str] = None,
         status: Optional[str] = None,
@@ -172,7 +178,6 @@ class ConfluenceCloud:
         - include_icons: a boolean
         - keys: a list of strings
         - labels: a list of strings
-        - limit: an integer (default: 100)
         - not_favorited_by: a string
         - sort: a string
         - status: a string
@@ -204,13 +209,12 @@ class ConfluenceCloud:
         ensure_instance('include_icons', bool)
         ensure_noneorinstance('keys', list)
         ensure_noneorinstance('labels', list)
-        ensure_noneorinstance('limit', int)
         ensure_noneorinstance('not_favorited_by', str)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', str)
         ensure_noneorinstance('space_type', str)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'description-format', description_format)
         add_if_specified(params, 'favorited-by', favorited_by)
         add_if_specified(params, 'ids', ids)
@@ -222,12 +226,12 @@ class ConfluenceCloud:
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'type', space_type)
 
-        return self._collect_data('spaces', params=params)
+        return self._collect_data_v2('spaces', params=params)
 
     @api_call
     def get_space(
         self,
-        space_id: str,
+        space_id: Union[int, str],
         description_format: Optional[str] = None,
         include_icon: bool = False,
         include_labels: bool = False,
@@ -240,7 +244,7 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_id: a string
+        - space_id: an integer or a string
 
         # Optional parameters
 
@@ -267,6 +271,7 @@ class ConfluenceCloud:
         - type: a string
         - _links: a dictionary
         """
+        ensure_instance('space_id', (int, str))
         ensure_noneorinstance('description_format', str)
         ensure_instance('include_icon', bool)
         ensure_instance('include_labels', bool)
@@ -285,17 +290,15 @@ class ConfluenceCloud:
         add_if_specified(
             params, 'include-role-assignments', include_role_assignments
         )
-        url = join_url(self.url, f'rest/api/space/{space_id}')
-        response = self.session().get(url, params=params)
-        return response.json()
+
+        return self._get(f'spaces/{space_id}', params=params)  # type: ignore
 
     @api_call
     def list_space_pages(
         self,
-        space_id: int,
+        space_id: Union[int, str],
         body_format: Optional[str] = None,
         depth: Optional[str] = None,
-        limit: int = 200,
         sort: Optional[str] = None,
         status: Optional[List[str]] = None,
         title: Optional[str] = None,
@@ -304,13 +307,12 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_id: an integer
+        - space_id: an integer or a string
 
         # Optional parameters
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default 200)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -320,30 +322,28 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a page.  Please refer
         to #get_page() for more.
         """
-        ensure_instance('space_id', int)
+        ensure_instance('space_id', (int, str))
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
-        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'body-format', body_format)
         add_if_specified(params, 'depth', depth)
         add_if_specified(params, 'sort', sort)
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'title', title)
 
-        return self._collect_data(f'spaces/{space_id}/pages', params=params)
+        return self._collect_data_v2(f'spaces/{space_id}/pages', params=params)
 
     @api_call
     def list_space_blogposts(
         self,
-        space_id: int,
+        space_id: Union[int, str],
         body_format: Optional[str] = None,
         depth: Optional[str] = None,
-        limit: int = 200,
         sort: Optional[str] = None,
         status: Optional[List[str]] = None,
         title: Optional[str] = None,
@@ -352,13 +352,12 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - space_id: an integer
+        - space_id: an integer or a string
 
         # Optional parameters
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default `200`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -367,22 +366,21 @@ class ConfluenceCloud:
 
         A list of dictionaries, each representing a blog post.
         """
-        ensure_instance('space_id', int)
+        ensure_instance('space_id', (int, str))
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
-        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'body-format', body_format)
         add_if_specified(params, 'depth', depth)
         add_if_specified(params, 'sort', sort)
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'title', title)
 
-        return self._collect_data(
+        return self._collect_data_v2(
             f'spaces/{space_id}/blogposts', params=params
         )
 
@@ -433,44 +431,42 @@ class ConfluenceCloud:
 
     @api_call
     def get_space_properties(
-        self, space_id: int, key: Optional[str] = None, limit: int = 100
+        self, space_id: Union[int, str], key: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Return properties of a space.
 
         # Required parameters
 
-        - space_id: an integer
+        - space_id: an integer or a string
 
         # Optional parameters
 
         - key: a string
-        - limit: an integer (default `100`)
 
         # Returned value
 
         A list of dictionaries, each representing a property of the
         space.  Please refer to #create_space_property() for more.
         """
-        ensure_instance('space_id', int)
+        ensure_instance('space_id', (int, str))
         ensure_noneorinstance('key', str)
-        ensure_instance('limit', int)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'key', key)
 
-        return self._collect_data(
+        return self._collect_data_v2(
             f'spaces/{space_id}/properties', params=params
         )
 
     @api_call
     def create_space_property(
-        self, space_id: int, key: str, value: Any
+        self, space_id: Union[int, str], key: str, value: Any
     ) -> Dict[str, Any]:
         """Create a property for a space.
 
         # Required parameters
 
-        - space_id: an integer
+        - space_id: an integer or a string
         - key: a non-empty string
         - value: any value (e.g., string, integer, dict, etc.)
 
@@ -485,44 +481,33 @@ class ConfluenceCloud:
         - createdAt: a string
         - _links: a dictionary
         """
-        ensure_instance('space_id', int)
+        ensure_instance('space_id', (int, str))
         ensure_nonemptystring('key')
 
         definition = {'key': key, 'value': value}
         return self._post(f'spaces/{space_id}/properties', definition)
 
     @api_call
-    def list_available_space_permissions(
-        self, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    def list_available_space_permissions(self) -> List[Dict[str, Any]]:
         """Return a list of available space permissions.
 
-        # Optional parameters
-
-        - limit: an integer (default 100)
+        **Experimental API endpoint**
 
         # Returned value
 
         A list of dictionaries, each representing a space permission.
         """
-        ensure_instance('limit', int)
-
-        params = {'limit': limit}
-        return self._collect_data('space-permissions', params=params)
+        return self._collect_data_v2('space-permissions')
 
     @api_call
     def list_space_permissions(
-        self, space_id: int, limit: int = 100
+        self, space_id: Union[int, str]
     ) -> List[Dict[str, Any]]:
         """Return permissions for a space.
 
         # Required parameters
 
-        - space_id: an integer
-
-        # Optional parameters
-
-        - limit: an integer (default `100`)
+        - space_id: an integer or a string
 
         # Returned value
 
@@ -532,13 +517,9 @@ class ConfluenceCloud:
         - principal: a dictionary
         - operation: a dictionary
         """
-        ensure_instance('space_id', int)
-        ensure_instance('limit', int)
+        ensure_instance('space_id', (int, str))
 
-        params = {'limit': limit}
-        return self._collect_data(
-            f'spaces/{space_id}/permissions', params=params
-        )
+        return self._collect_data_v2(f'spaces/{space_id}/permissions')
 
     @api_call
     def add_space_permission(
@@ -605,6 +586,28 @@ class ConfluenceCloud:
         return response.status_code == 204
 
     @api_call
+    def list_space_labels(
+        self, space_id: Union[int, str]
+    ) -> List[Dict[str, Any]]:
+        """Return a list of labels for a space.
+
+        # Required parameters
+
+        - space_id: an integer or a non-empty string
+
+        # Returned value
+
+        A list of dictionaries, each with the following entries:
+
+        - prefix: a string
+        - name: a string
+        - id: a string
+        """
+        ensure_instance('space_id', (int, str))
+
+        return self._collect_data_v2(f'spaces/{space_id}/label')
+
+    @api_call
     def add_space_label(
         self, space_key: str, label: str, prefix: str
     ) -> Dict[str, Any]:
@@ -633,7 +636,7 @@ class ConfluenceCloud:
         ensure_nonemptystring('prefix')
 
         definition = [{'prefix': prefix, 'name': label}]
-        url = join_url(self.url, f"rest/api/space/{space_key}/label")
+        url = join_url(self.url, f'rest/api/space/{space_key}/label')
         response = self.session().post(url, json=definition)
         return response.status_code == 200
 
@@ -656,7 +659,6 @@ class ConfluenceCloud:
         pace_id: int,
         body_format: Optional[str] = None,
         depth: Optional[str] = None,
-        limit: int = 100,
         sort: Optional[str] = None,
         status: Optional[List[str]] = None,
         title: Optional[str] = None,
@@ -671,7 +673,6 @@ class ConfluenceCloud:
 
         - body_format: a string
         - depth: a string
-        - limit: an integer (default `100`)
         - sort: a string
         - status: a list of strings
         - title: a string
@@ -684,19 +685,18 @@ class ConfluenceCloud:
         ensure_instance('pace_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
-        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
         ensure_noneorinstance('status', list)
         ensure_noneorinstance('title', str)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'body-format', body_format)
         add_if_specified(params, 'depth', depth)
         add_if_specified(params, 'sort', sort)
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'title', title)
 
-        return self._collect_data(f'spaces/{pace_id}/pages', params=params)
+        return self._collect_data_v2(f'spaces/{pace_id}/pages', params=params)
 
     @api_call
     def get_page(
@@ -807,7 +807,7 @@ class ConfluenceCloud:
 
     @api_call
     def list_page_children(
-        self, page_id: int, limit: int = 100, sort: Optional[str] = None
+        self, page_id: int, sort: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Return a list of children pages for a given page.
 
@@ -817,7 +817,6 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - limit: an integer (default `100`)
         - sort: a string
 
         # Returned value
@@ -826,13 +825,12 @@ class ConfluenceCloud:
         Please refer to #get_page() for more.
         """
         ensure_instance('page_id', int)
-        ensure_instance('limit', int)
         ensure_noneorinstance('sort', str)
 
-        params = {'limit': limit}
+        params = {}
         add_if_specified(params, 'sort', sort)
 
-        return self._collect_data(
+        return self._collect_data_v2(
             f'pages/{page_id}/direct-children', params=params
         )
 
@@ -1012,7 +1010,6 @@ class ConfluenceCloud:
         self,
         page_id: int,
         filename: Optional[str] = None,
-        limit: int = 100,
         media_type: Optional[str] = None,
         sort: Optional[str] = None,
         status: str = 'current',
@@ -1026,7 +1023,6 @@ class ConfluenceCloud:
         # Optional parameters
 
         - filename: a string
-        - limit: an integer (default `100`)
         - media_type: a string
         - sort: a string
         - status: a string (default `'current'`)
@@ -1059,12 +1055,12 @@ class ConfluenceCloud:
         ensure_noneorinstance('sort', str)
         ensure_in('status', ['current', 'archived', 'trashed'])
 
-        params = {'limit': limit, 'status': status}
+        params = {'status': status}
         add_if_specified(params, 'filename', filename)
         add_if_specified(params, 'mediaType', media_type)
         add_if_specified(params, 'sort', sort)
 
-        return self._collect_data(
+        return self._collect_data_v2(
             f'pages/{page_id}/attachments', params=params
         )
 
@@ -1167,25 +1163,20 @@ class ConfluenceCloud:
     ####################################################################
     # Confluence users
     #
+    # search_users
     # get_user
     # get_current_user
     # get_user_groups
 
     @api_call
     def search_users(
-        self,
-        cql: str = 'type=user',
-        limit: int = 100,
-        start: int = 0,
-        expand: Optional[List[str]] = None,
+        self, cql: str = 'type=user', expand: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Return a list of users.
 
         # Optional parameters
 
         - cql: a string (default `'type=user'`)
-        - limit: an integer (default `100`)
-        - start: an integer (default `0`)
         - expand: a list of strings
 
         # Returned value
@@ -1194,15 +1185,31 @@ class ConfluenceCloud:
         Please refer to #get_user() for more.
         """
         ensure_instance('cql', str)
-        ensure_instance('limit', int)
-        ensure_instance('start', int)
         ensure_noneorinstance('expand', list)
 
-        params = {'limit': limit, 'start': start, 'cql': cql}
-        add_if_specified(params, 'expand', expand)
+        # Cannot reuse _collect_data_v1, this endpoint does not use
+        # 'next' links.
 
         url = join_url(self.url, 'rest/api/search/user')
-        return self.session().get(url, params=params)
+        params = {'cql': cql, 'limit': 100}
+        add_if_specified(params, 'expand', expand)
+
+        start = 0
+        collected = []
+
+        while True:
+            params['start'] = start
+            response = self.session().get(url, params=params).json()
+
+            results = response.get('results', [])
+            if not results:
+                break
+
+            collected.extend(results)
+
+            start += len(results)
+
+        return collected
 
     @api_call
     def get_user(
@@ -1274,18 +1281,12 @@ class ConfluenceCloud:
         return self.session().get(url, params=params)
 
     @api_call
-    def get_user_groups(
-        self, account_id: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    def get_user_groups(self, account_id: str) -> List[Dict[str, Any]]:
         """Return groups of a user.
 
         # Required parameters
 
         - account_id: a non-empty string
-
-        # Optional parameters
-
-        - limit: an integer (default `100`)
 
         # Returned value
 
@@ -1298,12 +1299,10 @@ class ConfluenceCloud:
         - _links: a dictionary
         """
         ensure_nonemptystring('account_id')
-        ensure_instance('limit', int)
 
-        params = {'accountId': account_id, 'limit': limit}
+        params = {'accountId': account_id}
 
-        url = join_url(self.url, 'rest/api/user/memberof')
-        return self.session().get(url, params=params)
+        return self._collect_data_v1('rest/api/user/memberof', params=params)
 
     ####################################################################
     # Confluence cloud groups
@@ -1317,40 +1316,15 @@ class ConfluenceCloud:
     # remove_group_member
 
     @api_call
-    def list_groups(self, limit: int = 200) -> List[Dict[str, Any]]:
+    def list_groups(self) -> List[Dict[str, Any]]:
         """Return a list of groups.
-        
-        # Optional parameters
-        - limit: an integer (default 200) 
+
         # Returned value
+
         A list of dictionaries, each representing a group.
         Please refer to #get_group() for more.
         """
-        ensure_instance('limit', int)
-
-        url = join_url(self.url, 'rest/api/group')
-        start = 0
-        all_groups = []
-
-        while True:
-            params = {
-                'limit': limit,
-                'start': start,
-                'shouldReturnTotalSize': 'true'
-            }
-            response = self.session().get(url, params=params).json()
-    
-            results = response.get('results', [])
-            size = response.get('size', len(results))
-
-            all_groups.extend(results)
-            if size < limit:
-                break
-
-            start += size
-
-        return all_groups
-
+        return self._collect_data_v1('rest/api/group')
 
     @api_call
     def get_group(self, name: str) -> Dict[str, Any]:
@@ -1416,10 +1390,7 @@ class ConfluenceCloud:
 
     @api_call
     def list_group_members(
-        self,
-        group_name: str,
-        expand: Optional[List[str]] = None,
-        limit: int = 200,
+        self, group_name: str, expand: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Return members of a group.
 
@@ -1429,8 +1400,7 @@ class ConfluenceCloud:
 
         # Optional parameters
 
-        - expand: a list of strings
-        - limit: an integer (default `100`)
+        - expand: a list of strings or None (None by default)
 
         # Returned value
 
@@ -1439,35 +1409,11 @@ class ConfluenceCloud:
         """
         ensure_nonemptystring('group_name')
         ensure_noneorinstance('expand', list)
-        ensure_instance('limit', int)
 
-        url = join_url(self.url, f'rest/api/group/{group_name}/member')
-        all_members = []
-        start = 0
-
-        while True:
-
-            params = {
-                'limit': limit,
-                'start': start,
-                'shouldReturnTotalSize': 'true'
-            }
-            add_if_specified(params, 'expand', expand)
-            response = self.session().get(url, params=params).json()
-
-            results = response.get('results', [])
-            size = response.get('size', len(results))
-            total = response.get('totalSize')
-
-            all_members.extend(results)
-            if size < limit:
-                break
-            if len(all_members) >= total:
-                break
-
-            start += size
-
-        return all_members
+        params = {'expand': expand} if expand else None
+        return self._collect_data_v1(
+            f'rest/api/group/{group_name}/member', params=params
+        )
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
@@ -1551,7 +1497,7 @@ class ConfluenceCloud:
         api_url = join_url(join_url(self.url, 'api/v2/'), api)
         return self.session().delete(api_url)
 
-    def _collect_data(
+    def _collect_data_v2(
         self,
         api: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
@@ -1571,6 +1517,36 @@ class ConfluenceCloud:
                 raise ApiError(exception)
             more = 'next' in workload['_links']
             if more:
+                api_url = join_url(
+                    workload['_links']['base'], workload['_links']['next']
+                )
+                params = {}
+        return collected
+
+    def _collect_data_v1(
+        self,
+        api: str,
+        params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
+    ) -> List[Any]:
+        """Return confluence cloud GET api call results, collected.
+
+        For V1 APIs
+        """
+        api_url = join_url(self.url, api)
+        collected: List[Any] = []
+        more = True
+        while more:
+            response = self.session().get(api_url, params=params)
+            if response.status_code // 100 != 2:
+                raise ApiError(response.text)
+            try:
+                workload = response.json()
+                collected += workload['results']
+            except Exception as exception:
+                raise ApiError(exception)
+            more = 'next' in workload['_links']
+            if more:
+                print(workload['_links']['next'])
                 api_url = join_url(
                     workload['_links']['base'], workload['_links']['next']
                 )

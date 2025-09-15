@@ -95,18 +95,22 @@ class Artifactory(clients.Artifactory, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    Implementations are expected to extend this class with their
+    platform specifics (canonical user IDs, ...).
+
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `ARTIFACTORY_URL`: a string
-    - `ARTIFACTORY_USER`: a string
-    - `ARTIFACTORY_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `ARTIFACTORY_URL`         | a string
+    | `ARTIFACTORY_USER`        | a string
+    | `ARTIFACTORY_TOKEN`       | a string
 
     The `ARTIFACTORY_URL` entry refers to the API entry point:
 
         https://artifactory.example.com/artifactory/api/
-
-    Implementations are expected to extend this class with their
-    platform specifics (canonical user IDs, ...).
     """
 
     # pylint: disable=abstract-method
@@ -159,11 +163,15 @@ class CloudBeesJenkins(clients.CloudBeesJenkins, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `JENKINS_URL`: a string
-    - `JENKINS_USER`: a string
-    - `JENKINS_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `JENKINS_URL`             | a string
+    | `JENKINS_USER`            | a string
+    | `JENKINS_TOKEN`           | a string
 
     The environment may also contain a `JENKINS_COOKIES` entry.
 
@@ -224,22 +232,22 @@ class Confluence(clients.Confluence, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variable must exist:
 
-    - `CONFLUENCE_URL`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `CONFLUENCE_URL`          | a string
+    | `CONFLUENCE_USER`         | a string (basic auth)
+    | `CONFLUENCE_TOKEN`        | a string (basic auth)
+    | `CONFLUENCE_KEYCERT`      | a string (oauth)
+    | `CONFLUENCE_CONSUMERKEY`  | a string (oauth)
+    | `CONFLUENCE_ACCESSTOKEN`  | a string (oauth)
+    | `CONFLUENCE_ACCESSSECRET` | a string (oauth)
 
-    The environment also must have either the two following entries
-    (basic auth):
-
-    - `CONFLUENCE_USER`: a string
-    - `CONFLUENCE_TOKEN`: a string
-
-    Or the four following entries (oauth):
-
-    - `CONFLUENCE_KEYCERT`: a string
-    - `CONFLUENCE_CONSUMERKEY`: a string
-    - `CONFLUENCE_ACCESSTOKEN`: a string
-    - `CONFLUENCE_ACCESSSECRET`: a string
+    The environment must have either the two 'basic auth' entries or
+    the four 'oauth' entries.
 
     The `CONFLUENCE_URL` entry refers to the API entry point:
 
@@ -314,11 +322,15 @@ class GitHub(clients.GitHub, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `GITHUB_URL`: a string
-    - `GITHUB_USER`: a string
-    - `GITHUB_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `GITHUB_URL`              | a string
+    | `GITHUB_USER`             | a string
+    | `GITHUB_TOKEN`            | a string
 
     The environment may also have a `GITHUB_MNGT` entry (a string).
 
@@ -394,7 +406,7 @@ class Kubernetes(clients.Kubernetes, UtilityApp):
     - `KUBERNETES_CONFIG_SSL_CA_CERT`: a string (a base64-encoded
       certificate)
 
-    # Reusing an existing config file
+    ## Reusing an existing config file
 
     If `KUBERNETES_CONFIGFILE` and/or `KUBERNETES_CONTEXT` are present,
     there must be no `KUBERNETES_CONFIG_xxx` entries.
@@ -407,9 +419,9 @@ class Kubernetes(clients.Kubernetes, UtilityApp):
     specified Kubernetes context.  If not present, the default context
     will be used instead.
 
-    # Specifying an explicit configuration (no config file needed)
+    ## Using an explicit configuration
 
-    If `KUBERNETES_CONFIG_xxx` entries are present, they provide an
+    If the `KUBERNETES_CONFIG_xxx` entries are present, they provide an
     explicit configuration.  The possibly existing `~/.kube/config`
     config file will be ignored.
 
@@ -423,9 +435,10 @@ class Kubernetes(clients.Kubernetes, UtilityApp):
 
     The following two additional entries may be present:
 
-    `KUBERNETES_CONFIG_VERIFY` can be set to 'false' (case insensitive)
-    if disabling certificate checks for Kubernetes communication is
-    required.  Tons of warnings will occur if this is set to 'false'.
+    `KUBERNETES_CONFIG_VERIFY` can be set to `'false'` (case
+    insensitive) if disabling certificate checks for Kubernetes
+    communication is required.  Tons of warnings will occur if this is
+    set to `'false'`.
 
     `KUBERNETES_CONFIG_SSL_CA_CERT` is a base64-encoded certificate.
     """
@@ -464,22 +477,22 @@ class Jira(clients.Jira, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variable must exist:
 
-    - `JIRA_URL`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `JIRA_URL`                | a string
+    | `JIRA_USER`               | a string (basic auth)
+    | `JIRA_TOKEN`              | a string (basic auth)
+    | `JIRA_KEYCERT`            | a string (oauth)
+    | `JIRA_CONSUMERKEY`        | a string (oauth)
+    | `JIRA_ACCESSTOKEN`        | a string (oauth)
+    | `JIRA_ACCESSSECRET`       | a string (oauth)
 
-    The environment also must have either the two following entries
-    (basic auth):
-
-    - `JIRA_USER`: a string
-    - `JIRA_TOKEN`: a string
-
-    Or the four following entries (oauth):
-
-    - `JIRA_KEYCERT`: a string
-    - `JIRA_CONSUMERKEY`: a string
-    - `JIRA_ACCESSTOKEN`: a string
-    - `JIRA_ACCESSSECRET`: a string
+    The environment must have either the two 'basic auth' entries or the
+    four 'oauth' entries.
 
     The `JIRA_URL` entry refers to the API entry point:
 
@@ -552,10 +565,14 @@ class SonarQube(clients.SonarQube, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `SONARQUBE_URL`: a string
-    - `SONARQUBE_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `SONARQUBE_URL`           | a string
+    | `SONARQUBE_TOKEN`         | a string
 
     The `SONARQUBE_URL` entry refers to the API entry point:
 
@@ -610,11 +627,15 @@ class SquashTM(clients.SquashTM, ManagedServiceApp):
     - `list_members`
     - `get_member`
 
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `SQUASHTM_URL`: a string
-    - `SQUASHTM_USER`: a string
-    - `SQUASHTM_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `SQUASHTM_URL`            | a string
+    | `SQUASHTM_USER`           | a string
+    | `SQUASHTM_TOKEN`          | a string
 
     The `SQUASHTM_URL` entry refers to the API entry point:
 
@@ -671,10 +692,14 @@ class Okta(clients.Okta, UtilityApp):
 
     - `__init__()`
 
+    ## Environment variables
+
     The following environment variables must exist:
 
-    - `OKTA_URL`: a string
-    - `OKTA_TOKEN`: a string
+    | Environment variable {.m} | Description                       |
+    | ------------------------- | --------------------------------- |
+    | `OKTA_URL`                | a string
+    | `OKTA_TOKEN`              | a string
 
     The `OKTA_URL` entry refers to the API entry point:
 
