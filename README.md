@@ -11,6 +11,8 @@ LDAP server that can be managed or used by Zabel.
 This package provides the necessary wrappers for some elements commonly found
 in many workplaces, namely:
 
+<div class="grid cards" markdown>
+
 - Artifactory
 - Atlassian
 - CloudBeesJenkins
@@ -26,6 +28,8 @@ in many workplaces, namely:
 - SonarQube
 - SonatypeNexus
 - SquashTM
+
+</div>
 
 Elements are of two kinds: _Managed services_, which represent services that
 are managed by Zabel, and _Utilities_, which represent services that are used

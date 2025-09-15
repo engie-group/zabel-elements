@@ -70,7 +70,7 @@ class CloudBeesJenkins:
     handling groups and roles.
 
     Item creations and handling functions make use of two functions
-    provided by the #::commons.utils module,
+    provided by the #::zabel.commons.utils module,
     #::commons.utils#dict_to_xml() and #::commons.utils#xml_to_dict().
 
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
