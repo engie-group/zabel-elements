@@ -1385,7 +1385,6 @@ class ConfluenceCloud:
         url = join_url(self.url, 'rest/api/group/by-id')
         params = {'id': group_id}
         response = self.session().delete(url, params=params)
-        print(f"Response: {response.status_code} - {response.text}")
         return response.status_code == 204
 
     @api_call
@@ -1436,7 +1435,6 @@ class ConfluenceCloud:
         body = {'accountId': account_id}
 
         response = self.session().post(url, params=params, json=body)
-        print(f"Response: {response.status_code} - {response.text}")
 
         return response.status_code == 201
 
@@ -1460,7 +1458,6 @@ class ConfluenceCloud:
         params = {'groupId': group_id, 'accountId': account_id}
 
         response = self.session().delete(url, params=params)
-        print(f"Response: {response.status_code} - {response.text}")
 
         return response.status_code == 204
 
@@ -1546,7 +1543,6 @@ class ConfluenceCloud:
                 raise ApiError(exception)
             more = 'next' in workload['_links']
             if more:
-                print(workload['_links']['next'])
                 api_url = join_url(
                     workload['_links']['base'], workload['_links']['next']
                 )
