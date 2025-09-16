@@ -104,13 +104,19 @@ class ConfluenceCloud:
     ```
     """
 
-    def __init__(self, url: str, basic_auth: Tuple[str, str]) -> None:
+    def __init__(
+        self, url: str, basic_auth: Tuple[str, str], verify: bool = True
+    ) -> None:
         """Create a Confluence Cloud instance object.
 
         # Required parameters
 
         - url: a non-empty string
         - basic_auth: a string tuple (user, token)
+
+        # Optional parameters
+
+        - verify: a boolean (True by default)
 
         # Usage
 
@@ -128,7 +134,7 @@ class ConfluenceCloud:
 
         self.url = url
         self.basic_auth = basic_auth
-        self.session = prepare_session(self.basic_auth)
+        self.session = prepare_session(self.basic_auth, verify=verify)
 
     def __str__(self) -> str:
         return '{self.__class__.__name__}: {self.url}'
