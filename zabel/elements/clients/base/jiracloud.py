@@ -182,6 +182,7 @@ class JiraCloud:
     #
     # list_groups
     # create_group
+    # delete_group
     # list_group_users
     # add_group_user
     # remove_group_user
@@ -233,8 +234,24 @@ class JiraCloud:
         ensure_instance('group_name', str)
 
         response = self._post('group', json={'name': group_name})
-
         return response.status_code == 201
+
+    @api_call
+    def delete_group(self, group_name: str) -> bool:
+        """Delete an existing group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Returned value
+
+        A boolean.  True if successful, False otherwise.
+        """
+        ensure_instance('group_name', str)
+
+        response = self._delete('group', params={'groupname': group_name})
+        return response.status_code == 200
 
     @api_call
     def list_group_users(
@@ -297,7 +314,7 @@ class JiraCloud:
             params={'groupname': group_name},
             json={'accountId': account_id},
         )
-        return response.status_code == 204
+        return response.status_code == 201
 
     @api_call
     def remove_group_user(self, group_name: str, account_id: str) -> bool:
@@ -319,7 +336,7 @@ class JiraCloud:
             'group/user',
             params={'accountId': account_id, 'groupname': group_name},
         )
-        return response.status_code == 204
+        return response.status_code == 200
 
     ####################################################################
     # Jira Cloud groups
