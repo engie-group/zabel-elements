@@ -1441,7 +1441,6 @@ class ConfluenceCloud:
         body = {'accountId': account_id}
 
         response = self.session().post(url, params=params, json=body)
-
         return response.status_code == 201
 
     @api_call
@@ -1463,9 +1462,7 @@ class ConfluenceCloud:
         url = join_url(self.url, 'rest/api/group/userByGroupId')
         params = {'groupId': group_id, 'accountId': account_id}
 
-        response = self.session().delete(url, params=params)
-
-        return response.status_code == 204
+        return self.session().delete(url, params=params).status_code == 204
 
     ####################################################################
     # confluence cloud helpers
