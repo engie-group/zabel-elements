@@ -17,7 +17,7 @@ This module depends on the #::.base.artifactory module.
 
 from typing import Any, Dict, List, Optional
 
-from .base.artifactory import Artifactory as Base
+from .base.artifactory import Artifactory as Base, PACKAGE_TYPES
 
 
 class Artifactory(Base):
@@ -131,3 +131,16 @@ class Artifactory(Base):
             for p in [{'name': n} for n in permissions or []]
             or self.list_permissions()
         )
+
+    def list_packagetypes(self) -> List[str]:
+        """Return the list of supported package types.
+
+        Note that some package types are not eligible for certain
+        repository type.  Refer to <https://jfrog.com/help/r/jfrog-artifactory-documentation/repository-support-for-package-clients>
+        for more information.
+
+        # Returned value
+
+        A list of strings, each string being a supported package type.
+        """
+        return list(PACKAGE_TYPES)
