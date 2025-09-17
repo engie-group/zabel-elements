@@ -54,30 +54,40 @@ from zabel.commons.utils import (
 ########################################################################
 
 PACKAGE_TYPES = [
+    'alpine',
+    'ansible',
     'bower',
+    'cargo',
     'chef',
-    'cocoapods',  # new
+    'cocoapods',
     'composer',
     'conan',
-    'conda',  # really new (not on API documents :( )
-    'cran',  # new
+    'conda',
+    'cran',
     'debian',
     'docker',
     'gems',
     'generic',
     'gitlfs',
-    'go',  # new
+    'go',
     'gradle',
-    'helm',  # new
+    'helm',
+    'helmoci',
+    'huggingfaceml',
     'ivy',
     'maven',
     'npm',
     'nuget',
-    'opkg',  # new
+    'oci',
+    'opkg',
+    'pub',
     'puppet',
     'pypi',
-    'rpm',  # new
+    'rpm',
     'sbt',
+    'swift',
+    'terraform',
+    'terraformbackend',
     'vagrant',
     'yum',
 ]
