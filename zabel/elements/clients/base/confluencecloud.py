@@ -104,13 +104,19 @@ class ConfluenceCloud:
     ```
     """
 
-    def __init__(self, url: str, basic_auth: Tuple[str, str]) -> None:
+    def __init__(
+        self, url: str, basic_auth: Tuple[str, str], verify: bool = True
+    ) -> None:
         """Create a Confluence Cloud instance object.
 
         # Required parameters
 
         - url: a non-empty string
         - basic_auth: a string tuple (user, token)
+
+        # Optional parameters
+
+        - verify: a boolean (True by default)
 
         # Usage
 
@@ -128,7 +134,7 @@ class ConfluenceCloud:
 
         self.url = url
         self.basic_auth = basic_auth
-        self.session = prepare_session(self.basic_auth)
+        self.session = prepare_session(self.basic_auth, verify=verify)
 
     def __str__(self) -> str:
         return '{self.__class__.__name__}: {self.url}'
@@ -1385,7 +1391,6 @@ class ConfluenceCloud:
         url = join_url(self.url, 'rest/api/group/by-id')
         params = {'id': group_id}
         response = self.session().delete(url, params=params)
-        print(f"Response: {response.status_code} - {response.text}")
         return response.status_code == 204
 
     @api_call
@@ -1436,7 +1441,6 @@ class ConfluenceCloud:
         body = {'accountId': account_id}
 
         response = self.session().post(url, params=params, json=body)
-        print(f"Response: {response.status_code} - {response.text}")
 
         return response.status_code == 201
 
@@ -1460,7 +1464,6 @@ class ConfluenceCloud:
         params = {'groupId': group_id, 'accountId': account_id}
 
         response = self.session().delete(url, params=params)
-        print(f"Response: {response.status_code} - {response.text}")
 
         return response.status_code == 204
 
@@ -1546,7 +1549,6 @@ class ConfluenceCloud:
                 raise ApiError(exception)
             more = 'next' in workload['_links']
             if more:
-                print(workload['_links']['next'])
                 api_url = join_url(
                     workload['_links']['base'], workload['_links']['next']
                 )

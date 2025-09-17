@@ -48,6 +48,13 @@ class Atlassian:
     ## Reference URLs
 
     - <https://developer.atlassian.com/cloud/admin>
+    - <https://developer.atlassian.com/cloud/admin/rest-apis/>
+
+    Some methods target the underlying product (Confluence Cloud,
+    Jira Cloud, ...)
+
+    - <https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro>
+    - <https://developer.atlassian.com/cloud/confluence/rest/v2/intro>
 
     ## Implemented features
 
@@ -170,11 +177,30 @@ class Atlassian:
         """
         ensure_nonemptystring('site_url')
 
-        api_url = join_url(site_url, 'rest/api/3/users/search')
-        return self.session().get(api_url)
+        url = join_url(site_url, 'rest/api/3/users/search')
+
+        params = {'maxResults': 1000}
+
+        start = 0
+        collected: List[Any] = []
+
+        while True:
+            params['startAt'] = start
+            response = self.session().get(url, params=params).json()
+
+            if not response:
+                break
+
+            collected.extend(response)
+
+            start += len(response)
+
+        return collected
 
     @api_call
-    def search_site_user(self, site_url: str, query: str) -> Dict[str, Any]:
+    def search_site_user(
+        self, site_url: str, query: str
+    ) -> List[Dict[str, Any]]:
         """Search for site user details.
 
         # Required parameters
@@ -184,16 +210,16 @@ class Atlassian:
 
         # Returned value
 
-        A _user_.  See #list_site_users() for details on its structure.
+        A possibly empty list of _users_.  See #list_site_users() for
+        details on its structure.
         """
         ensure_nonemptystring('site_url')
         ensure_nonemptystring('query')
+
         params = {'query': query}
 
         api_url = join_url(site_url, 'rest/api/3/user/search')
         return self.session().get(api_url, params=params)
-
-    get_user = search_site_user
 
     ####################################################################
     # atlassian private helpers
