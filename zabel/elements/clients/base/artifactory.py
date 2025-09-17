@@ -89,7 +89,6 @@ PACKAGE_TYPES = [
     'terraform',
     'terraformbackend',
     'vagrant',
-    'yum',
 ]
 
 INCOMPATIBLE_PARAM = '%s cannot be specified when json is provided'
