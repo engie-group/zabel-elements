@@ -29,6 +29,8 @@ from .base.confluence import Confluence as Base
 class Confluence(Base):
     """Confluence Server and Data Center Low-Level Wrapper.
 
+    An interface to Confluence, including users and groups management.
+
     There can be as many Confluence instances as needed.
 
     This class depends on the public **requests** library.  It also
@@ -36,40 +38,46 @@ class Confluence(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
-    <https://docs.atlassian.com/ConfluenceServer/rest/latest>
-    <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
-    <https://developer.atlassian.com/confdev/confluence-server-rest-api>
-    <https://developer.atlassian.com/server/confluence/remote-confluence
-        -methods>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/latest>
+    - <https://docs.atlassian.com/ConfluenceServer/rest/8.5.5/>
+    - <https://developer.atlassian.com/confdev/confluence-server-rest-api>
+    - <https://developer.atlassian.com/server/confluence/remote-confluence-methods>
 
     WADLs are also available on a given instance:
 
-    <https://{instance}/rest/api/application.wadl>
-    <https://{instance}/rest/mobile/1.0/application.wadl>
+    - <https://{instance}/rest/api/application.wadl>
+    - <https://{instance}/rest/mobile/1.0/application.wadl>
 
-    An interface to Confluence, including users and groups management.
-
-    # Implemented features
+    ## Implemented features
 
     - groups&users
     - pages
     - search
     - spaces
-    - misc. features (index,long tasks, ...)
+    - misc. features (index, long tasks, ...)
 
     What is accessible through the API depends on account rights.
 
     Whenever applicable, the provided features handle pagination (i.e.,
-    they return all relevant elements, not only the first n).
+    they return all relevant elements, not only the first _n_).
 
-    # Sample use
+    ## Content types ans statuses
+
+    | Name               | Description
+    | ------------------ | -----------
+    | `CONTENT_TYPES`    | `'page'`, `'blogpost'`, `'comment'`, `'attachment'`
+    | `CONTENT_STATUSES` | `'current'`, `'trashed'`, `'historical'`, `'draft'`
+
+    ## Examples
 
     ```python
     from zabel.elements.clients import Confluence
 
     url = 'https://confluence.example.com'
+    user = '...'
+    token = '...'
     confluence = Confluence(url, basic_auth=(user, token))
     confluence.list_users()
     ```
@@ -77,17 +85,17 @@ class Confluence(Base):
 
     @api_call
     def list_users(self) -> List[str]:
-        """Return a list of confluence users.
+        """Return a list of Confluence users.
 
         # Returned value
 
-        A list of _users_.  Each user is a string (the user 'username').
+        A list of _users_.  Each user is a string (the user's username).
 
         Users are not properly speaking managed by Confluence.  The
         returned list is the aggregation of group member, with no
         duplication.
 
-        The 'jira-*' groups are ignored.
+        The `'jira-*'` groups are ignored.
 
         Handles pagination (i.e., it returns all group users, not only
         the first n users).

@@ -94,15 +94,16 @@ class SonarQube:
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://docs.sonarqube.org/display/DEV/Web+API>
+    - <https://next.sonarqube.com/sonarqube/web_api_v2>
 
-    # Web API URL
+    ### Web API URLs
 
     - <https://sonar.example.com/sonar/web_api>
 
-    # Implemented features
+    ## Implemented features
 
     - applications (incomplete)
     - components (incomplete)
@@ -125,9 +126,9 @@ class SonarQube:
     When using SonarCloud, the `organization_key` parameter must be
     specified for methods that declare it.
 
-    Tested on SonarQube v9.9.
+    Tested on SonarQube v9.9 and v10.4.
 
-    # Conventions
+    ## Conventions
 
     `'_'` are removed from SonarQube entrypoints names, to prevent
     confusion.
@@ -138,20 +139,39 @@ class SonarQube:
     `list_xxx` methods take a possibly optional filter argument and
     return a list of matching items.
 
-    # Sample use
+    ## Permissions, qualifiers and event categories
+
+    | Item                  | Possible values
+    | ---                   | -----
+    | `PROJECT_PERMISSIONS` | `'admin'`, `'codeviewer'`, `'issueadmin'`,
+                              `'scan'`, `'user'`, `'securityhotspotadmin'`
+    | `GLOBAL_PERMISSIONS`  | `'admin'`, `'gateadmin'`, `'profileadmin'`,
+                              `'provisioning'`, `'scan'`,
+                              `'applicationcreator'`, `'portfoliocreator'`
+    | `QUALIFIERS`          | `'BRC'`, `'DIR'`,` 'FIL'`, `'TRK'`, `'UTS'`
+    | `EVENT_CATEGORIES`    | `'VERSION'`, `'OTHER'`, `'QUALITY_PROFILE'`,
+                              `'QUALITY_GATE'`, `'DEFINITION_CHANGE'`
+
+    ## Examples
+
+    Using a private SonarQube instance:
 
     ```python
     from zabel.elements.clients import SonarQube
 
     url = 'https://sonar.example.com/sonar/api/'
+    token = '...'
     sq = SonarQube(url, token)
     sq.list_projects()
     ```
+
+    Using SonarCloud:
 
     ```python
     from zabel.elements.clients import SonarQube
 
     url = 'https://sonarcloud.io/api/'
+    token = '...'
     sq = SonarQube(url, token)
     sq.list_projects(organization_key='my_organization')
     ```
@@ -168,12 +188,19 @@ class SonarQube:
         - url: a non-empty string
         - token: a string
 
-        The `url` parameter is the top-level API point. E.g.,
-        `https://sonar.example.com/sonar/api/`
-
         # Optional parameters
 
         - verify: a boolean (True by default)
+
+        # Usage
+
+        The `url` parameter is the top-level API point. For example:
+
+            'https://sonar.example.com/sonar/api/'
+
+        If you are using the public SonarCloud instance, it would be:
+
+            'https://sonarcloud.io/api/'
 
         `verify` can be set to False if disabling certificate checks for
         SonarQube communication is required.  Tons of warnings will
@@ -253,11 +280,11 @@ class SonarQube:
 
         # Required parameters
 
-        - key: a string
+        - key: a non-empty string
 
         # Optional parameters
 
-        - branch: a string or None (None by default)
+        - branch: a non-empty string or None (None by default)
 
         # Returned value
 
@@ -383,7 +410,7 @@ class SonarQube:
         metric_keys: str,
         additional_fields: Optional[str] = None,
         branch: Optional[str] = None,
-        pull_request: Optional[int] = None,
+        pull_request: Optional[Union[int, str]] = None,
     ) -> List[Dict[str, Any]]:
         """Return component with specified measures.
 
@@ -394,15 +421,14 @@ class SonarQube:
 
         # Optional parameters
 
-        - additional_fields: a string
-        - branch: a string
-        - pull_request: a string
+        - additional_fields: a string or None (None by default)
+        - branch: a string or None (None by default)
+        - pull_request: a integer or a string or None (None by default)
 
         # Returned value
 
         A dictionary.
         """
-
         ensure_instance('component_key', str)
         ensure_instance('metric_keys', str)
 
@@ -426,6 +452,7 @@ class SonarQube:
     def add_permission_group(
         self,
         permission: str,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         project_id: Optional[int] = None,
@@ -472,6 +499,7 @@ class SonarQube:
         self,
         permission: str,
         login: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -512,6 +540,7 @@ class SonarQube:
     def remove_permission_group(
         self,
         permission: str,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         project_id: Optional[int] = None,
@@ -558,6 +587,7 @@ class SonarQube:
         self,
         permission: str,
         login: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -631,8 +661,8 @@ class SonarQube:
 
         The `permissionTemplate` dictionary has the following entries:
 
-        - name: a string
         - description: a string
+        - name: a string
         - projectKeyPattern: a string
         """
         ensure_nonemptystring('name')
@@ -669,13 +699,13 @@ class SonarQube:
         A list of _permissions templates_.  Each permissions template
         is a dictionary with the following entries:
 
-        - permissions: a list
         - createdAt: a string (containing a timestamp)
-        - updatedAt: a string (containing a timestamp)
-        - name: a string
-        - id: a string
         - description: a string
+        - id: a string
+        - name: a string
+        - permissions: a list
         - projectKeyPattern: a string (if present)
+        - updatedAt: a string (containing a timestamp)
 
         Each entry in the `permissions` list is a dictionary with the
         following entries:
@@ -729,11 +759,11 @@ class SonarQube:
 
         The `permissionTemplate` dictionary has the following entries:
 
+        - createdAt: a string (an ISO timestamp)
+        - description: a string
         - id: a string
         - name: a string
-        - description: a string
         - projectKeyPattern: a string
-        - createdAt: a string (an ISO timestamp)
         - updatedAt: a string (an ISO timestamp)
         """
         ensure_nonemptystring('permissionstemplate_id')
@@ -760,9 +790,9 @@ class SonarQube:
 
         # Required parameters
 
-        - template_name: a string
-        - group_name: a string
-        - permission: a string
+        - template_name: a non-empty string
+        - group_name: a non-empty string
+        - permission: a non-empty string
         """
         ensure_nonemptystring('template_name')
         ensure_nonemptystring('group_name')
@@ -784,6 +814,7 @@ class SonarQube:
     def apply_permissionstemplate(
         self,
         template_name: str,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> None:
@@ -791,9 +822,12 @@ class SonarQube:
 
         # Required parameters
 
-        - `template_name`: a string
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - template_name: a non-empty string
+        - project_id: an integer or None
+        - project_key: a non-empty string or None (None by default)
+
+        One and only one of `project_id` or `project_key` must be
+        provided.
         """
         ensure_nonemptystring('template_name')
         ensure_onlyone('project_id', 'project_key')
@@ -850,12 +884,12 @@ class SonarQube:
 
         The `user` dictionary with the following entries:
 
+        - active: a boolean
+        - email: a string
+        - local: a boolean
         - login: a string
         - name: a string
-        - email: a string
         - scmAccount: a list of strings
-        - active: a boolean
-        - local: a boolean
         """
         ensure_nonemptystring('login')
         ensure_instance('name', str)
@@ -901,11 +935,11 @@ class SonarQube:
         A list of _groups_.  Each group is a dictionary with the
         following entries:
 
-        - name: a string
         - default: a boolean
-        - id: an integer
-        - selected: a boolean
         - description: a string
+        - id: an integer
+        - name: a string
+        - selected: a boolean
         """
         ensure_nonemptystring('login')
         ensure_instance('selected', str)
@@ -943,7 +977,7 @@ class SonarQube:
         - local: a boolean
         - login: a string
         - name: a string
-        - tokensCount: an int
+        - tokensCount: an integer
         """
         ensure_noneornonemptystring('query')
 
@@ -1067,7 +1101,6 @@ class SonarQube:
         # Optional parameters
 
         - external_identity: a string or None (None by default)
-
         """
         ensure_nonemptystring('login')
         ensure_noneornonemptystring('provider')
@@ -1104,8 +1137,8 @@ class SonarQube:
 
         A dictionary with the following two entries:
 
-        - name: a string
         - id: an integer
+        - name: a string
 
         # Raised exceptions
 
@@ -1217,10 +1250,10 @@ class SonarQube:
 
         - isDefault: a boolean
         - isInherited: a boolean
+        - key: a string
         - language: a string
         - languageName: a string
         - name: a string
-        - key: a string
         """
         ensure_nonemptystring('profile_name')
         ensure_in('language', [l['key'] for l in self.list_languages()])
@@ -1258,18 +1291,18 @@ class SonarQube:
         A list of _quality profiles_.  Each quality profile is a
         dictionary with the following entries:
 
+        - actions: a dictionary
+        - activeDeprecatedRuleCount: an integer
+        - activeRuleCount: an integer
+        - isBuiltIn: a boolean
+        - isDefault: a boolean
+        - isInherited: a boolean
         - key: a string
-        - name: a string
         - language: a string
         - languageName: a string
-        - isInherited: a boolean
-        - isBuiltIn: a boolean
-        - activeRuleCount: an integer
-        - activeDeprecatedRuleCount: an integer
-        - isDefault: a boolean
-        - ruleUpdatedAt: a string
         - lastUsed: a string
-        - actions: a dictionary
+        - name: a string
+        - ruleUpdatedAt: a string
         """
         ensure_instance('defaults', bool)
         ensure_noneornonemptystring('language')
@@ -1312,8 +1345,8 @@ class SonarQube:
 
         # Raised exceptions
 
-        An _ApiError_ exception is raised if `profile_key` or
-        `profile_key` does not exist.
+        An _ApiError_ exception is raised if `profile_name` or
+        `project_key` does not exist.
         """
         ensure_nonemptystring('profile_name')
         ensure_nonemptystring('language')
@@ -1477,8 +1510,8 @@ class SonarQube:
         A list of _tokens_.  Each token is a dictionary with the
         following two entries:
 
-        - name: a string
         - createdAt: a string (a timestamp)
+        - name: a string
         """
         ensure_nonemptystring('login')
 
@@ -1503,7 +1536,8 @@ class SonarQube:
     ) -> List[Dict[str, Any]]:
         """Return a list of matching projects.
 
-        `organization_key` is required querying a SonarCloud instance.
+        `organization_key` is required when querying a SonarCloud
+        instance.
 
         # Optional parameters
 
@@ -1512,22 +1546,22 @@ class SonarQube:
         - on_provisioned_only: a boolean (False by default)
         - projects: a string (comma-separated list of project keys) or
           None (None by default)
-        - organization_key: a non-empty string or None (None by default)
         - qualifiers: a string (comma-separated list, `'TRK'` by
           default)
+        - organization_key: a non-empty string or None (None by default)
 
         # Returned value
 
         A list of _projects_.  Each project is a dictionary with the
         following entries:
 
-        - organization: a string
         - id: a string
         - key: a string
+        - lastAnalysisDate: a string (ISO Timestamp representation)
         - name: a string
+        - organization: a string
         - qualifier: a string, one of `'APP'`, `'VW'`, or `'TRK'`
         - visibility: a string, either `'public'` or `'private'`
-        - lastAnalysisDate: a string (ISO Timestamp representation)
         """
         ensure_noneornonemptystring('analyze_before')
         ensure_noneorinstance('on_provisioned_only', bool)
@@ -1551,9 +1585,10 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_key` : a string
+        - project_key: a non-empty string
         """
         ensure_nonemptystring('project_key')
+
         return self._post('projects/delete', {'project': project_key})
 
     ####################################################################
@@ -1593,15 +1628,15 @@ class SonarQube:
         A list of _project analyses_.  Each project analysis is a
         dictionary with the following three entries:
 
-        - key: a string
-        - events: a list of dictionaries
         - date: a string (ISO timestamp representation)
+        - events: a list of dictionaries
+        - key: a string
 
         Entries in the `events` list have the following entries:
 
+        - category: a string
         - key: a string
         - name: a string
-        - category: a string
 
         There may be other entries, depending on the event category.
         """
@@ -1622,13 +1657,14 @@ class SonarQube:
         )
 
     ####################################################################
-    # SonarQube projectlinks
+    # SonarQube project links
     #
     # list_projectlinks
 
     @api_call
     def list_projectlinks(
         self,
+        *,
         project_id: Optional[int] = None,
         project_key: Optional[str] = None,
     ) -> List[Dict[str, str]]:
@@ -1636,13 +1672,16 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_id` OR `project_key`: an integer or a string (None by
-          default)
+        - project_id: an integer or None (None by default)
+        - project_key: a non-empty string or None (None by defult)
+
+        One and only one of `project_id` or `project_key` must be
+        provided.
 
         # Returned value
 
-        A list of _project links_. Each project links_ is a
-        dictionary with the following four entries:
+        A list of _project links_.  Each project links_ is a dictionary
+        with the following four entries:
 
         - id: a string
         - name: a string
@@ -1656,10 +1695,10 @@ class SonarQube:
         add_if_specified(params, 'projectKey', project_key)
 
         result = self._get('project_links/search', params=params).json()
-        return result.get('links', {})
+        return result.get('links', [])
 
     ####################################################################
-    # SonarQube projectBranches
+    # SonarQube project branches
     #
     # list_projectbranches
 
@@ -1672,27 +1711,26 @@ class SonarQube:
 
         # Required parameters
 
-        - `project_key` : a string
+        - project_key: a non-empty string
 
         # Returned value
 
         A list of _project branches_. Each project branch is a
         dictionary with the following four entries:
 
-        - name: a string
-        - type: a string
-        - isMain: a boolean
         - analysisDate: a string
-        - status: a dictionary
         - excludedFromPurge: a boolean
+        - isMain: a boolean
+        - name: a string
+        - status: a dictionary
+        - type: a string
         """
-
         ensure_nonemptystring('project_key')
 
         result = self._get(
             'project_branches/list', params={'project': project_key}
         ).json()
-        return result.get('branches', {})
+        return result.get('branches', [])
 
     ####################################################################
     # SonarQube usergroups
@@ -1729,12 +1767,12 @@ class SonarQube:
 
         The `group` dictionary has the following entries:
 
-        - id: an integer or a string
-        - organization: a string
-        - name: a string
-        - description: a string
-        - membersCount: an integer
         - default: a boolean
+        - description: a string
+        - id: an integer or a string
+        - membersCount: an integer
+        - name: a string
+        - organization: a string
         """
         ensure_nonemptystring('name')
         ensure_noneorinstance('description', str)
@@ -1750,6 +1788,7 @@ class SonarQube:
     @api_call
     def add_usergroup_user(
         self,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         login: Optional[str] = None,
@@ -1763,8 +1802,8 @@ class SonarQube:
 
         # Required parameters
 
-        - group_id: an integer or None
-        - group_name: a string or None
+        - group_id: an integer or None (None by default)
+        - group_name: a string or None (None by default)
 
         One and only one of `group_id` or `group_name` must be provided.
 
@@ -1790,6 +1829,7 @@ class SonarQube:
     @api_call
     def remove_usergroup_user(
         self,
+        *,
         group_id: Optional[int] = None,
         group_name: Optional[str] = None,
         login: Optional[str] = None,
@@ -1803,8 +1843,8 @@ class SonarQube:
 
         # Required parameters
 
-        - group_id: an integer or None
-        - group_name: a string or None
+        - group_id: an integer or None (None by default)
+        - group_name: a string or None (None by default)
 
         One and only one of `group_id` or `group_name` must be provided.
 
@@ -1826,13 +1866,19 @@ class SonarQube:
 
     @api_call
     def delete_usergroup(
-        self, group_id: Optional[int] = None, group_name: Optional[str] = None
+        self,
+        *,
+        group_id: Optional[int] = None,
+        group_name: Optional[str] = None,
     ) -> None:
         """Delete a group.
 
         # Required parameters
 
-        - `group_id` OR `group_name`: an integer or a string
+        - group_id: an integer or None (None by default)
+        - group_name: an non-empty string or None (None by default)
+
+        One and only one of `group_id` or `group_name` must be provided.
         """
         ensure_onlyone('group_id', 'group_name')
 
@@ -1864,11 +1910,11 @@ class SonarQube:
         A list of _groups_.  Each group is a dictionary with the
         following entries (assuming the default value for `fields`):
 
-        - id: an integer
-        - name: a string
-        - description: a string
-        - membersCount: an integer
         - default: a boolean
+        - description: a string
+        - id: an integer
+        - membersCount: an integer
+        - name: a string
         """
         ensure_noneornonemptystring('query')
         ensure_noneornonemptystring('fields')
@@ -1907,31 +1953,31 @@ class SonarQube:
         A list of _available upgrades_.  An available upgrade is a
         dictionary with the following entries:
 
-        - releaseDate: a string
-        - downloadUrl: a string
         - changeLogUrl: a string
-        - version: a string
         - description: a string
+        - downloadUrl: a string
         - plugins: a dictionary
+        - releaseDate: a string
+        - version: a string
 
         The `plugins` entry is a dictionary with the following entries:
 
-        - requireUpdate: a possibly empty list of plugins
         - incompatible: a possibly empty list of plugins
+        - requireUpdate: a possibly empty list of plugins
 
         Items in the `requireUpdate` list are dictionaries with the
         following entries:
 
-        - homepageUrl: a sting
-        - license: a string
-        - version: a string
-        - issueTrackerUrl: a string
-        - organizationUrl: a string
-        - key: a string
         - category: a string
-        - name: a string
         - description: a string
+        - homepageUrl: a sting
+        - issueTrackerUrl: a string
+        - key: a string
+        - license: a string
+        - name: a string
         - organizationName: a string
+        - organizationUrl: a string
+        - version: a string
         """
         return self._collect_data('system/upgrades', 'upgrades')
 
@@ -1943,9 +1989,9 @@ class SonarQube:
 
         A dictionary with the following entries:
 
-        - state: a string
         - message: a string
         - startedAt: a string (a timestamp)
+        - state: a string
         """
         return self._post('system/migrate_db')  # type: ignore
 
@@ -1957,18 +2003,18 @@ class SonarQube:
 
         A dictionary with the following entries:
 
-        - state: a string
         - message: a string
         - startedAt: a string (a timestamp)
+        - state: a string
 
-        `state` values are:
+        `state` possible values are:
 
-        - NO_MIGRATION
-        - NOT_SUPPORTED
-        - MIGRATION_RUNNING
-        - MIGRATION_SUCCEEDED
-        - MIGRATION_FAILED
-        - MIGRATION_REQUIRES
+        - `'NO_MIGRATION'`
+        - `'NOT_SUPPORTED'`
+        - `'MIGRATION_RUNNING'`
+        - `'MIGRATION_SUCCEEDED'`
+        - `'MIGRATION_FAILED'`
+        - `'MIGRATION_REQUIRES'`
         """
         return self._get('system/db_migration_status')  # type: ignore
 
@@ -1981,17 +2027,17 @@ class SonarQube:
         A dictionary with the following entries:
 
         - id: a string
-        - version: a string
         - status: a string
+        - version: a string
 
-        `status` values are:
+        `status` possible values are:
 
-        - STARTING
-        - UP
-        - DOWN
-        - RESTARTING
-        - DB_MIGRATION_NEEDED
-        - DB_MIGRATION_RUNNING
+        - `'STARTING'`
+        - `'UP'`
+        - `'DOWN'`
+        - `'RESTARTING'`
+        - `'DB_MIGRATION_NEEDED'`
+        - `'DB_MIGRATION_RUNNING'`
         """
         return self._get('system/status')  # type: ignore
 
@@ -2003,8 +2049,8 @@ class SonarQube:
 
         A dictionary with the following entries:
 
-        - health: a string (`'GREEN'`, `'YELLOW'` or `'RED'`)
         - causes: a dictionary
+        - health: a string (`'GREEN'`, `'YELLOW'` or `'RED'`)
         - nodes: a list of dictionaries
 
         `causes` contains the following entry:
@@ -2013,13 +2059,13 @@ class SonarQube:
 
         Items in `nodes` are dictionaries with the following entries:
 
-        - name: a string
-        - type: a string
+        - causes: a dictionary
+        - health: a string (`'GREEN'`, `'YELLOW'` or `'RED'`)
         - host: a string
+        - name: a string
         - port: an integer
         - startedAt: a string (a timestamp)
-        - health: a string (`'GREEN'`, `'YELLOW'` or `'RED'`)
-        - causes: a dictionary
+        - type: a string
         """
         return self._get('system/health')  # type: ignore
 
@@ -2049,21 +2095,21 @@ class SonarQube:
         A list of _installed plugins_.  An installed plugin is a
         dictionary with the following entries:
 
-        - key: a string
-        - name: a string
         - description: a string
-        - version: a string
-        - license: a string
-        - organizationName: a string
-        - organizationUrl: a string
         - editionBundled: a boolean,
-        - homepageUrl: a string
-        - issueTrackerUrl: a string
-        - implementationBuild: a string
         - filename: a string
         - hash: a string
+        - homepageUrl: a string
+        - implementationBuild: a string
+        - issueTrackerUrl: a string
+        - key: a string
+        - license: a string
+        - name: a string
+        - organizationName: a string
+        - organizationUrl: a string
         - sonarLintSupported: a string
         - updatedAt: an integer
+        - version: a string
         """
         ensure_noneornonemptystring('fields')
 
@@ -2082,30 +2128,30 @@ class SonarQube:
         A list of _upgradeable plugins_.  An upgradeable plugin is a
         dictionary with the following entries:
 
-        - key: a string
-        - name: a string
         - category: a string
         - description: a string
+        - editionBundled: a boolean
+        - key: a string
         - license: a string
+        - name: a string
         - organizationName: a string
         - organizationUrl: a string
         - termsAndConditionsUrl: a string
-        - editionBundled: a boolean
         - updates: a list of dictionaries
 
         Items in the `updates` list are dictionaries containing the
         following entries:
 
         - release: a dictionary
-        - status: a string
         - requires: a list
+        - status: a string
 
         `release` is a dictionary with the following entries:
 
-        - version: a string
+        - changeLogUrl: a string
         - date: a string
         - description: a string
-        - changeLogUrl: a string
+        - version: a string
         """
         return self._collect_data('plugins/updates', 'plugins')
 

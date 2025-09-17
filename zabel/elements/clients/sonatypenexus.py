@@ -30,7 +30,7 @@ from .base.sonatypenexus import SonatypeNexus as Base
 class SonatypeNexus(Base):
     """Sonatype Nexus Low-Level Wrapper.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://help.sonatype.com/en/api-reference.html>
     - <https://pypi.org/project/nexus_api_client/>
@@ -40,7 +40,7 @@ class SonatypeNexus(Base):
         components and assets validation on some supported versions
         (PRO 3.70.4-02)
 
-    # Implemented features
+    ## Implemented features
 
     - repositories
     - tags
@@ -49,14 +49,15 @@ class SonatypeNexus(Base):
     - privileges
     - misc. features (sources, metrics, ...)
 
-    # Sample use
+    ## Examples
 
     ```python
     # standard use
     from zabel.elements.clients import SonatypeNexus
 
     url = 'https://nexus.example.com/nexus/service/rest'
-    nx = SonatypeNexus(url, bearer_token=access_token)
+    token = '...'
+    nx = SonatypeNexus(url, bearer_token=token)
     nx.list_repositories()
     ```
     """

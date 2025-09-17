@@ -31,11 +31,27 @@ class OktaException(Exception):
 
 
 class Okta:
-    """Okta Base-Level Wrapper.
+    """Okta Low-Level Wrapper.
 
-    # Reference url
+    ## Reference URLs
 
     <https://developer.okta.com/docs/reference/api/groups/>
+
+    ## Implemented features
+
+    - users
+    - groups
+
+    ## Examples
+
+    ```python
+    from zabel.elements.clients import Okta
+
+    url = 'https://okta.example.com'
+    token = '...'
+    okta = Okta(url, token)
+    user = okta.get_user_info('JP5300')
+    ```
     """
 
     def __init__(
@@ -43,6 +59,19 @@ class Okta:
         url: str,
         token: str,
     ):
+        """Create an Okta instance object.
+
+        # Required parameters
+
+        - url: a non-empty string
+        - token: a non-empty string
+
+        # Usage
+
+        `url` must be the URL of your Okta instance.  For example:
+
+            'https://your-domain.okta-emea.com'
+        """
         ensure_nonemptystring('url')
         ensure_nonemptystring('token')
 
@@ -113,18 +142,37 @@ class Okta:
 
         A dictionary with following entries:
 
-        - id: a string
-        - status: an enum
-        - created: a timestamp
-        - activated: a timestamp
-        - statusChanged: a timestamp
-        - lastLogin: a timestamp
-        - lastUpdated: a timestamp
-        - passwordChanged: a boolean
-        - type: a dictionary
-        - profile: a dictionary
+        - activated: a string (a timestamp)
+        - created: a string (a timestamp)
         - credentials: a dictionary
+        - id: a string
+        - lastLogin: a string (a timestamp)
+        - lastUpdated: a string (a timestamp)
+        - passwordChanged: a boolean
+        - profile: a dictionary
+        - status: an enum
+        - statusChanged: a string (a timestamp)
+        - type: a dictionary
 
+        The `profile` dictionary contains the user profile information:
+
+        - countryCode: a string
+        - department: a string
+        - displayName: a string
+        - division: a string
+        - email: a string
+        - engieb2ectrl: a string
+        - equansb2ectrl: a string
+        - firstName: a string
+        - gbu: a string
+        - gid: a string
+        - lastName: a string
+        - locale: a string
+        - login: a string
+        - organization: a string
+        - orgid: a string
+        - userType: a string
+        - userprincipalname: a string
         """
         ensure_nonemptystring('user')
 
@@ -149,16 +197,15 @@ class Okta:
 
         - user_id: a non-empty string
 
-        # Raised exceptions
-
-        Raises an _ApiError_ exception if error is throw by Okta.
-
         # Returned value
 
         Return a list of groups. Refer to #get_group_by_name() for more
         information.
-        """
 
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if an error is thrown by Okta.
+        """
         ensure_nonemptystring('user_id')
 
         async def list_groups_by_user_id_async(self, user_id: str):
@@ -234,8 +281,8 @@ class Okta:
 
         # Raised exceptions
 
-        Raises an _ApiError_ exception if error is throw by Okta during add
-        user to group operation.
+        Raises an _ApiError_ exception if an error is thrown by Okta
+        during the operation.
         """
         ensure_nonemptystring('group_id')
         ensure_nonemptystring('user_id')
@@ -263,9 +310,8 @@ class Okta:
 
         # Raised exceptions
 
-        Raises an _ApiError_ exception if error is throw by Okta during remove
-        user from group operation.
-
+        Raises an _ApiError_ exception if an error is thrown by Okta
+        during the operation.
         """
         ensure_nonemptystring('group_id')
         ensure_nonemptystring('user_id')
@@ -290,13 +336,14 @@ class Okta:
 
         - group_id: a non-empty string
 
-        # Raised exceptions
-
-        Raises an _ApiError_ exception if error is throw by Okta.
-
         # Returned value
 
-        Return a list of users. Refer to #get_user_info() for more information.
+        Return a list of users. Refer to #get_user_info() for more
+        information.
+
+        # Raised exceptions
+
+        Raises an _ApiError_ exception if an error is thrown by Okta.
         """
         ensure_nonemptystring('group_id')
 

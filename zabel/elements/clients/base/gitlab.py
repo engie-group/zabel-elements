@@ -61,33 +61,34 @@ def _expand(items: Any) -> List[Dict[str, Any]]:
 class GitLab:
     """GitLab Low-Level Wrapper.
 
-    # Reference URL
+    !!! note
+        Reuse the **python-gitlab** library whenever possible, but
+        always returns 'raw' values (dictionaries, ..., not classes).
+
+    ## Reference URLs
 
     - <https://docs.gitlab.com/api/rest/>
     - <https://docs.gitlab.com/api/api_resources/>
     - <https://python-gitlab.readthedocs.io/en/stable/>
 
-    # Implemented features
+    ## Implemented features
 
     - namespaces
     - groups
     - projects
     - members
 
-    # Sample use
+    ## Examples
 
     ```python
     # standard use
     from zabel.elements.clients import GitLab
 
     url = 'https://gitlab.com/'
-    gl = GitLab(url, private_token)
+    token = '...'
+    gl = GitLab(url, private_token=token)
     gl.list_project_protectedbranches()
     ```
-
-    !!! note
-        Reuse the **python-gitlab** library whenever possible, but
-        always returns 'raw' values (dictionaries, ..., not classes).
     """
 
     def __init__(
@@ -117,6 +118,13 @@ class GitLab:
         # Optional parameters
 
         - verify: a boolean or string
+
+        # Usage
+
+        `url ` is the GitLab instance URL.  For example, if you are
+        using the public `gitlab.com` instance:
+
+            'https://gitlab.com/'
 
         `verify` can be set to False if disabling certificate checks for
         GitLab communication is required.  Tons of warnings will occur
@@ -196,7 +204,7 @@ class GitLab:
         # Returned value
 
         A _namespace_ dictionary.  The namespace's `kind` entry may be
-        either `user` or `group`.
+        either `'user'` or `'group'`.
         """
         ensure_nonemptystring('name')
 
@@ -296,7 +304,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -332,7 +340,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -366,7 +374,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -402,7 +410,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -436,7 +444,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'opened')
+        - state: a string (default: `'opened'`)
         - filter: additional filters
 
         # Returned value
@@ -470,7 +478,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'opened')
+        - state: a string (default: `'opened'`)
         - filter: additional filters
 
         # Returned value
@@ -822,7 +830,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'opened')
+        - state: a string (default: `'opened'`)
         - filter: additional filters
 
         # Returned value
@@ -858,7 +866,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -894,7 +902,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'all')
+        - state: a string (default: `'all'`)
         - filter: additional filters
 
         # Returned value
@@ -958,7 +966,7 @@ class GitLab:
 
         # Optional parameters
 
-        - state: a string (default: 'opened')
+        - state: a string (default: `'opened'`)
         - filter: additional filters
 
         # Returned value

@@ -28,12 +28,12 @@ class SquashTM(Base):
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://www.squashtest.org/fr/actualites/faq-squash-tm/fonctionnalites/api-squash-tm-documentation>
     - <https://squash-tm.tools.digital.engie.com/squash/api/rest/latest/docs/api-documentation.html>
 
-    # Implemented features
+    ## Implemented features
 
     - campaigns (read-only)
     - executions (read-only)
@@ -47,13 +47,15 @@ class SquashTM(Base):
     - testsuites (read-only)
     - users
 
-    # Sample use
+    ## Examples
 
     ```python
     from zabel.elements.clients import SquashTM
 
     url = 'https://squash-tm.example.com/squash/api/rest/latest/'
-    tm = SquashTM(url, user, token)
-    tm.get_projects()
+    user = '...'
+    token = '...'
+    tm = SquashTM(url, basic_auth=(user, token))
+    tm.list_projects()
     ```
     """

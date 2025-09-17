@@ -31,17 +31,33 @@ class Kubernetes(Base):
     This module depends on the public **kubernetes** library.  It also
     depends on one **zabel-commons** module, #::zabel.commons.utils.
 
-    # Reference URL
+    ## Reference URLs
 
     - <https://github.com/kubernetes-client/python>
 
-    # Implemented features
+    ## Implemented features
 
     - namespaces
     - resource quota
     - create and patch from YAML manifests
 
-    # Sample use
+    ## Exceptions
+
+    A _KubernetesError_ exception, extending _ApiError_ is raised if an
+    error occurs while handling a Kubernetes object.  The exception
+    contains a list of _ApiException_ objects, each one corresponding to
+    a failed Kubernetes operation.
+
+    ```python
+    class KubernetesError(zabel.commons.exceptions.ApiError):
+
+        def __init__(
+            self,
+            api_exceptions: list[kubernetes.client.rest.ApiException]
+        ) -> None
+    ```
+
+    ## Examples
 
     Using the default context as defined in the `~/.kube/config`
     configuration file:
@@ -58,13 +74,14 @@ class Kubernetes(Base):
     ```python
     from zabel.elements.clients import Kubernetes
 
-    K8S_URL = 'https://kubernetes.example.com'
+    url = 'https://kubernetes.example.com'
+    api_key = '...'
     k8s = Kubernetes(
-        config={
-            'url': K8S_URL,
-            'api_key': '...',
-            'verify': False,
-        }
+      config={
+        'url': url,
+        'api_key': api_key,
+        'verify': False,
+      }
     )
     namespaces = k8s.list_namespaces()
     ```
@@ -88,7 +105,7 @@ class Kubernetes(Base):
 
         # Optional parameters
 
-        - namespace: a non-empty string (`default` by default)
+        - namespace: a non-empty string (`'default'` by default)
         - kwargs: other keyword arguments
 
         Other keywords parameters can be specified.  They will be passed
@@ -128,7 +145,7 @@ class Kubernetes(Base):
 
         # Optional parameters
 
-        - namespace: a non-empty string (`default` by default)
+        - namespace: a non-empty string (`'default'` by default)
         - kwargs: other keyword arguments
 
         Other keywords parameters can be specified.  They will be passed

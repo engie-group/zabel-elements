@@ -35,38 +35,48 @@ from zabel.commons.utils import (
 class GitHubCloud:
     """GitHubCloud Low-Level Wrapper.
 
-    There can be as many GitHub instances as needed.
-
     A class wrapping the GitHub Cloud APIs.
 
-    This module depends ont the **requests** public library. It also depends
-    on three **zabel-commons** modules, #::zabel.commons.exceptions,
-    #::zabel.commons.sessions, and #::zabel.commons.utils.
+    There can be as many GitHub Cloud instances as needed.
 
-    # Reference URLs
+    This module depends on the **requests** public library. It also
+    depends on three **zabel-commons** modules,
+    #::zabel.commons.exceptions, #::zabel.commons.sessions, and
+    #::zabel.commons.utils.
+
+    ## Reference URLs
 
     - <https://docs.github.com/en/enterprise-cloud@latest/rest?apiVersion=2022-11-28>
     - <https://docs.github.com/en/enterprise-cloud@latest/graphql>
 
-    # Sample use
+    ## Examples
 
     ```python
     # standard use
     from zabel.elements.clients import GitHubCloud
 
     url = 'https://api.github.com'
+    token = '...'
     ghc = GitHubCloud(url, bearer_auth=token)
     ghc.list_organizations('my_enterprise')
     ```
     """
 
     def __init__(self, url: str, bearer_auth: str) -> None:
-        """Create a GitHubCloud instance object.
+        """Create a GitHub Cloud instance object.
 
         # Required parameters
 
         - url: The URL of the GitHub Cloud instance
         - bearer_auth: The bearer token to authenticate the user
+
+        # Usage
+
+        `url` must be a non-empty string representing the URL of the
+        GitHub Cloud instance.  For example, if you are using the public
+        `github.com` instance:
+
+            'https://api.github.com'
         """
         ensure_nonemptystring('url')
         ensure_nonemptystring('bearer_auth')
@@ -93,8 +103,8 @@ class GitHubCloud:
         """Return the list of users.
 
         This API returns users, bots and organizations.  Use the `type`
-        entry in the returned items to distinguish (`User` or
-        `Organization` or `Bot`).
+        entry in the returned items to distinguish (`'User'` or
+        `'Organization'` or `'Bot'`).
 
         # Returned value
 
@@ -187,7 +197,7 @@ class GitHubCloud:
     # add_organization_outsidecollaborator
     # remove_organization_outsidecollaborator
     # list_organization_saml_identities
-    # list_orgnization_invitations
+    # list_organization_invitations
 
     @api_call
     def list_organizations(self, enterprise_name: str) -> List[Dict[str, Any]]:
@@ -442,8 +452,8 @@ class GitHubCloud:
 
         # Optional parameters
 
-        - role: a non-empty string, one of `all`, `member`, or `admin`
-          (`all` by default)
+        - role: a non-empty string, one of `'all'`, `'member'`, or
+          `'admin'` (`'all'` by default)
 
         # Returned value
 
@@ -493,7 +503,7 @@ class GitHubCloud:
 
         # Optional parameters
 
-        - role: a string, either `member` or `admin` (`member` by
+        - role: a string, either `'member'` or `'admin'` (`'member'` by
           default)
         """
         ensure_nonemptystring('organization_name')
@@ -698,8 +708,8 @@ class GitHubCloud:
 
         # Returned value
 
-        A list of seat assignments. Each seat is a dictionary with the
-        following entries:
+        A list of _seat assignments_.  Each seat assignment is a
+        dictionary with the following entries:
 
         - total_seats: an integer
         - created_at: a string
@@ -709,41 +719,42 @@ class GitHubCloud:
         - last_activity_editor: a string
         - plan_type: a string,
 
-        - assignee: a dictionary with user details :
-            login: a string
-            id: an integer
-            node_id: a string
-            avatar_url: a string
-            gravatar_id: a string
-            url: a string
-            html_url: a string
-            followers_url: a string
-            following_url: a string
-            gists_url: a string
-            starred_url: a string
-            subscriptions_url: a string
-            organizations_url: a string
-            repos_url: a string
-            events_url: a string
-            received_events_url: a string
-            type: a string
-            site_admin: a boolean
+        - assignee: a dictionary with user details:
 
-        - assigning_team: a dictionary with team details :
-            -id: an integer
-            - node_id: a string
-            - url: a string
-            - html_url: a string
-            - name: a string
-            - slug: a string
-            - description: a string
-            - privacy: a string
-            - notification_setting: a string
-            - permission: a string
-            - members_url: a string
-            - repositories_url: a string
-            - parent: an object or null
+            * login: a string
+            * id: an integer
+            * node_id: a string
+            * avatar_url: a string
+            * gravatar_id: a string
+            * url: a string
+            * html_url: a string
+            * followers_url: a string
+            * following_url: a string
+            * gists_url: a string
+            * starred_url: a string
+            * subscriptions_url: a string
+            * organizations_url: a string
+            * repos_url: a string
+            * events_url: a string
+            * received_events_url: a string
+            * type: a string
+            * site_admin: a boolean
 
+        - assigning_team: a dictionary with team details:
+
+            * id: an integer
+            * node_id: a string
+            * url: a string
+            * html_url: a string
+            * name: a string
+            * slug: a string
+            * description: a string
+            * privacy: a string
+            * notification_setting: a string
+            * permission: a string
+            * members_url: a string
+            * repositories_url: a string
+            * parent: an object or null
         """
         ensure_nonemptystring('organization_name')
 
@@ -1056,8 +1067,8 @@ class GitHubCloud:
 
         - description: a string
         - private: a boolean
-        - visibility: a string, one of `public`, `private`, or
-          `internal`
+        - visibility: a string, one of `'public'`, `'private'`, or
+          `'internal'`
         - has_issues: a boolean
         - has_projects: a boolean
         - has_wiki: a boolean
@@ -1158,7 +1169,7 @@ class GitHubCloud:
 
         # Returned value
 
-        A list of _teams_. Each team is a dictionary with the following
+        A list of _teams_.  Each team is a dictionary with the following
         keys:
 
         - name
@@ -1246,8 +1257,8 @@ class GitHubCloud:
 
         # Optional parameters
 
-        - permission: a non-empty string, one of `pull`, `triage`,
-          `push`, `maintain`, or `admin` (`pull` by default)
+        - permission: a non-empty string, one of `'pull'`, `'triage'`,
+          `'push'`, `'maintain'`, or `'admin'` (`'pull'` by default)
 
         # Returned value
 
@@ -1397,7 +1408,7 @@ class GitHubCloud:
         - github_com_two_factor_auth: a boolean
         - github_com_two_factor_auth_required_by_date: a datetime as a
           string
-        - enterprise_server_primary_emails: a list of stringsF
+        - enterprise_server_primary_emails: a list of strings
         - visual_studio_license_status: a string
         - visual_studio_subscription_email: a string
         - total_user_accounts: an integer
@@ -1538,6 +1549,13 @@ class GitHubCloud:
 
         SCIM stands for _System for Cross-domain Identity Management_.
 
+        Possible filters are on userName, externalId, id, or
+        displayName.
+
+        For example:
+
+            userName eq "Octocat"
+
         # Required parameters
 
         - enterprise_name: a non-empty string
@@ -1547,7 +1565,6 @@ class GitHubCloud:
         - start_index: an integer, the index of the first user to return
         - count: an integer, the number of users to return
         - filter: a string, a filter to apply to the list of users.
-          Possible filters are: userName, externalId, id, displayName.
 
         # Returned value
 
@@ -1556,12 +1573,12 @@ class GitHubCloud:
 
         - schemas: a dictionary
         - active: a boolean
-        - emails: a list of dictionaries, each with 'value' and
-          'primary' keys
+        - emails: a list of dictionaries, each with `value` and
+          `primary` keys
         - ?externalId: a string
         - userName: a string
-        - name: a dictionary with 'givenName', 'familyName', and
-          'formatted' keys
+        - name: a dictionary with `givenName`, `familyName`, and
+          `formatted` keys
         - ?displayName: a string
         - roles: a dictionary
         """

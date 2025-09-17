@@ -1,13 +1,14 @@
 site_name: Zabel Elements
 
 sort: name
+
 external_links:
   zabel.commons.exceptions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/exceptions
   zabel.commons.sessions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/sessions
   zabel.commons.utils: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/utils
 
 generate:
-  - clients.md:
+  - clients/index.md:
     - zabel.elements.clients++
   - clients/artifactory.md:
     - zabel.elements.clients.Artifactory@
@@ -15,6 +16,8 @@ generate:
     - zabel.elements.clients.Atlassian@
   - clients/confluence.md:
     - zabel.elements.clients.Confluence@
+  - clients/confluencecloud.md:
+    - zabel.elements.clients.ConfluenceCloud@
   - clients/github.md:
     - zabel.elements.clients.GitHub@
   - clients/githubcloud.md:
@@ -37,36 +40,72 @@ generate:
     - zabel.elements.clients.SonatypeNexus@
   - clients/squashtm.md:
     - zabel.elements.clients.SquashTM@
-  - images.md:
-    - zabel.elements.images++
+  - images/index.md:
+    - zabel.elements.images
+  - images/utilityapp.md:
+    - zabel.elements.images.UtilityApp++
+  - images/managedserviceapp.md:
+    - zabel.elements.images.ManagedServiceApp++
+  - images/artifactory.md:
+    - zabel.elements.images.Artifactory++
+  - images/cloudbeesjenkins.md:
+    - zabel.elements.images.CloudBeesJenkins++
+  - images/confluence.md:
+    - zabel.elements.images.Confluence++
+  - images/github.md:
+    - zabel.elements.images.GitHub++
+  - images/kubernetes.md:
+    - zabel.elements.images.Kubernetes++
+  - images/jira.md:
+    - zabel.elements.images.Jira++
+  - images/sonarqube.md:
+    - zabel.elements.images.SonarQube++
+  - images/squashtm.md:
+    - zabel.elements.images.SquashTM++
+  - images/okta.md:
+    - zabel.elements.images.Okta++
 
 pages:
   - Home: index.md << ../README.md
   - Installation: installation.md << installation.md
   - API Documentation:
     - Clients:
-      - Overview: clients.md
-      - Tools:
-        - Artifactory: clients/artifactory.md
-        - Atlassian: clients/atlassian.md
-        - CloudBeesJenkins: clients/jenkins.md
-        - Confluence: clients/confluence.md
-        - GitHub: clients/github.md
-        - GitHubCloud: clients/githubcloud.md
-        - GitLab: clients/gitlab.md
-        - Jira: clients/jira.md
-        - JiraCloud: clients/jiracloud.md
-        - Kubernetes: clients/kubernetes.md
-        - Okta: clients/okta.md
-        - SonarQube: clients/sonarqube.md
-        - SonatypeNexus: clients/sonatypenexus.md
-        - SquashTM: clients/squashtm.md
+      - Clients Overview: clients/index.md
+      - Artifactory: clients/artifactory.md
+      - Atlassian: clients/atlassian.md
+      - CloudBeesJenkins: clients/jenkins.md
+      - Confluence: clients/confluence.md
+      - ConfluenceCloud: clients/confluencecloud.md
+      - GitHubCloud: clients/githubcloud.md
+      - GitHubCloudDR: clients/githubcloud2.md
+      - GitHubServer: clients/github.md
+      - GitLab: clients/gitlab.md
+      - Jira: clients/jira.md
+      - JiraCloud: clients/jiracloud.md
+      - Kubernetes: clients/kubernetes.md
+      - Okta: clients/okta.md
+      - SonarQube: clients/sonarqube.md
+      - SonatypeNexus: clients/sonatypenexus.md
+      - SquashTM: clients/squashtm.md
     - Images:
-      - Overview: images.md
+      - Images Overview: images/index.md
+      - ManagedServiceApp: images/managedserviceapp.md
+      - UtilityApp: images/utilityapp.md
+      - Artifactory: images/artifactory.md
+      - CloudBeesJenkins: images/cloudbeesjenkins.md
+      - Confluence: images/confluence.md
+      - GitHub: images/github.md
+      - Kubernetes: images/kubernetes.md
+      - Jira: images/jira.md
+      - SonarQube: images/sonarqube.md
+      - SquashTM: images/squashtm.md
+      - Okta: images/okta.md
 
 theme:
   features:
     - navigation.indexes
+    - content.code.copy
+    - content.tabs.link
     # - navigation.tabs
   name: material
   palette:
@@ -78,6 +117,12 @@ theme:
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
+
+extra_javascript:
+  - js/github-links.js
+extra_css:
+  - css/extra.css
+  - css/github-links.css
 
 markdown_extensions:
   - admonition            # https://squidfunk.github.io/mkdocs-material/reference/admonitions/

@@ -27,7 +27,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='zabel-elements',
-    version='1.34.1',
+    version='1.36.0',
     description='The Zabel default clients and images',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -36,7 +36,7 @@ setup(
     author_email='martin.lafaix@external.engie.com',
     license='Eclipse Public License 2.0',
     packages=find_namespace_packages(include=['zabel.*']),
-    install_requires=['zabel-commons>=1.7'],
+    install_requires=['zabel-commons>=1.8'],
     extras_require={
         'gitlab': ['python-gitlab>=6.1'],
         'jira': ['Jira>=3.0'],
@@ -58,5 +58,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>= 3.12.0',
+    python_requires='>= 3.10.0',
 )

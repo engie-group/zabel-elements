@@ -101,28 +101,28 @@ class Jira:
         This class reuses the JIRA library whenever possible, but always
         returns 'raw' values (dictionaries, ..., not classes).
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.atlassian.com/server/jira/platform/rest/>
     - <https://docs.atlassian.com/software/jira/docs/api/REST/9.4.8>
     - <https://docs.atlassian.com/jira-servicedesk/REST/4.9.0/>
 
-    # Agile references
+    ### Agile references
 
     - <https://docs.atlassian.com/jira-software/REST/9.4.8/>
 
-    # Using the jira.JIRA python library
+    ### The jira.JIRA python library
 
     - <http://jira.readthedocs.io/en/latest/>
 
-    # Other interesting links
+    ### Other interesting links
 
     The various WADLs, such as:
 
     - <https://jira.example.com/rest/greenhopper/1.0/application.wadl>
     - <https://jira.example.com/rest/bitbucket/1.0/application.wadl>
 
-    # Implemented features
+    ## Implemented features
 
     - anonymization
     - boards
@@ -154,7 +154,7 @@ class Jira:
     It is the responsibility of the user to be sure the provided
     authentication has enough rights to perform the requested operation.
 
-    # Expansion
+    ## Expansion
 
     The Jira REST API uses resource expansion.  This means the API will
     only return parts of the resource when explicitly requested.
@@ -197,12 +197,27 @@ class Jira:
     expand the widgets collection and also the _fringel_ property of
     each widget.
 
-    # Sample use
+    ## Search methods
+
+    The search methods, #search() and #search_users(), return a limited
+    number of results.
+
+    This limit can be configured by passing a `max_results` parameter,
+    but this limit is constrained by the Jira server to a maximum
+    value, which is defined by its `jira.search.views.default.max`
+    property.
+
+    The default value used by this library is `MAX_RESULTS` (`1000`),
+    but this is subject to the above restriction.
+
+    ## Examples
 
     ```python
     from zabel.elements.clients import Jira
 
     url = 'https://jira.example.com'
+    user = '...'
+    token = '...'
     jc = Jira(url, basic_auth=(user, token))
     jc.list_users()
     ```
@@ -235,8 +250,9 @@ class Jira:
 
         # Usage
 
-        `url` must be the URL of the Jira instance, e.g.,
-        `https://jira.example.com`.
+        `url` must be the URL of the Jira instance.  For example:
+
+            `https://jira.example.com`
 
         The `oauth` dictionary is expected to have the following
         entries:
@@ -668,7 +684,7 @@ class Jira:
         self,
         name: str,
         description: Optional[str] = None,
-        permissions: List[Dict[str, Any]] = [],
+        permissions: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Create new permission scheme.
 
@@ -679,7 +695,7 @@ class Jira:
         # Optional parameters
 
         - description: a string or None (None by default)
-        - permissions: a possibly empty list of dictionaries (`[]` by
+        - permissions: a possibly empty list of dictionaries (None by
           default)
 
         # Returned value
@@ -698,9 +714,9 @@ class Jira:
         """
         ensure_nonemptystring('name')
         ensure_noneorinstance('description', str)
-        ensure_instance('permissions', list)
+        ensure_noneorinstance('permissions', list)
 
-        scheme = {'name': name, 'permissions': permissions}
+        scheme = {'name': name, 'permissions': permissions or []}
         add_if_specified(scheme, 'description', description)
 
         result = self.session().post(
@@ -971,6 +987,11 @@ class Jira:
         - scheme_id: an integer or a non-empty string
         - issuetypescheme: a dictionary.
 
+        # Returned value
+
+        A dictionary. See #list_issuetypeschemes2() for details on its
+        structure
+
         # Usage
 
         `issuetypescheme` is a dictionary with the following entries:
@@ -980,11 +1001,6 @@ class Jira:
         - description: a string
         - defaultIssueTypeId : an integer
         - issueTypeIds: a list of integers
-
-        # Returned value
-
-        A dictionary. See #list_issuetypeschemes2() for details on its
-        structure
         """
         ensure_instance('scheme_id', (int, str))
 
@@ -1129,7 +1145,7 @@ class Jira:
 
         # Optional parameters
 
-        - expand: a string (`deletable` by default)
+        - expand: a string (`'deletable'` by default)
 
         # Returned value
 
@@ -1356,7 +1372,7 @@ class Jira:
         - name: a string
         - active: a boolean
 
-        `active` is true if the priority scheme is used in any project.
+        `active` is true if the priority scheme is used in a project.
         """
         uri = 'secure/admin/ViewPrioritySchemes.jspa'
         pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
@@ -1536,7 +1552,7 @@ class Jira:
         - active: a boolean
 
         `active` is true if the field configuration scheme is used in
-        any project.
+        a project.
         """
         uri = 'secure/admin/ViewFieldLayoutSchemes.jspa'
         pat_name = r'<strong data-scheme-field="name">([^<]+)</strong>'
@@ -1605,7 +1621,7 @@ class Jira:
         - active: a boolean
 
         `active` is true if the field configuration scheme is used in
-        any project.
+        a project.
         """
         uri = 'secure/admin/ViewFieldLayouts.jspa'
         pat_name = r'<span data-scheme-field="name" class="field-name">\s+.*?title="Edit field properties">([^<]+)'
@@ -2131,31 +2147,34 @@ class Jira:
         - project_id_or_key: an integer or a non-empty string
         - project: a dictionary
 
-        `project` is dictionary with the following optional entries:
-
-        - name
-        - projectTypeKey
-        - projectTemplateKey
-        - description
-        - lead
-        - url
-        - assigneeType
-        - avatarId
-        - issueSecurityScheme
-        - permissionScheme
-        - notificationScheme
-        - categoryId
-
-        This dictionary respects the format returned by
-        #list_projects().
-
-        If an entry is not specified or is None, its corresponding
-        value in the project will remain unchanged.
-
         # Returned value
 
         A dictionary.  See #list_projects() for details on its
         structure.
+
+        # Usage
+
+        `project` is dictionary with the following optional entries:
+
+        - assigneeType: a string (`'PROJECT_LEAD'` or `'UNASSIGNED'`)
+        - avatarId: an integer
+        - categoryId: an integer
+        - description: a string
+        - issueSecurityScheme: an integer
+        - key: a string
+        - lead: a string
+        - name: a string
+        - notificationScheme: an integer
+        - permissionScheme: an integer
+        - projectTemplateKey: a string
+        - projectTypeKey: a string
+        - url: a string
+
+        This dictionary respects the format returned by
+        #list_projects().
+
+        If an entry is not specified, its corresponding value in the
+        project will remain unchanged.
         """
         ensure_instance('project_id_or_key', (str, int))
 
@@ -2785,7 +2804,7 @@ class Jira:
 
         - project_id_or_key: a non-empty string
         - name: a non-empty string
-        - preset: one of 'kanban', 'scrum'
+        - preset: a string, either `'kanban'` or `'scrum'`
 
         # Returned value
 
@@ -3268,17 +3287,17 @@ class Jira:
 
         A dictionary with the following entries:
 
+        - businessLogicValidationFailed: a boolean
+        - deleted: a boolean
+        - displayName: a string
+        - email: a dictionary
         - errors: a dictionary
-        - warnings: a dictionary
         - expand: a string
+        - operations: a dictionary
+        - success: a boolean
         - userKey: a string
         - userName: a string
-        - displayName: a string
-        - deleted: a boolean
-        - email: a dictionary
-        - success: a boolean
-        - operations: a dictionary
-        - businessLogicValidationFailed: a boolean
+        - warnings: a dictionary
         """
         ensure_nonemptystring('user_key')
         ensure_noneorinstance('expand', str)
@@ -3303,19 +3322,19 @@ class Jira:
 
         A dictionary with the following entries:
 
+        - currentProgress: an integer
         - errors: a dictionary
-        - warnings: a dictionary
+        - executingNode: a string
+        - fullName: a string
+        - isRerun: a boolean
+        - operations: a list
+        - progressUrl: a string
+        - rerun: a boolean
+        - status: a string
+        - submittedTime: a string (an ISO8601 timestamp)
         - userKey: a string
         - userName: a string
-        - fullName: a string
-        - progressUrl: a string
-        - currentProgress: an integer
-        - submittedTime: a string (an ISO8601 timestamp)
-        - operations: a list
-        - status: a string
-        - executingNode: a string
-        - isRerun: a boolean
-        - rerun: a boolean
+        - warnings: a dictionary
         """
         ensure_nonemptystring('user_key')
         ensure_nonemptystring('new_owner_key')
@@ -3353,7 +3372,8 @@ class Jira:
         - startTime: a string (an ISO8601 timestamp)
         - finishTime: a string (an ISO8601 timestamp)
         - operations: a list of strings
-        - status: a string with following values: 'COMPLETED', 'IN_PROGRESS', 'INTERRUPTED', 'VALIDATION_FAILED'
+        - status: a string with following values: `'COMPLETED'`,
+          `'IN_PROGRESS'`, `'INTERRUPTED'`, or `'VALIDATION_FAILED'`
         - executingNode: a string
         - isRerun: a boolean
         - rerun: a boolean
@@ -3391,6 +3411,16 @@ class Jira:
 
         - params: a dictionary or None (None by default)
 
+        # Returned value
+
+        A list of _boards_.  Each board is a dictionary with the
+        following entries:
+
+        - name: a string
+        - type: a string (`'scrum'` or `'kanban'`)
+        - id: an integer
+        - self: a string (URL)
+
         # Usage
 
         `params`, if provided, is a dictionary with at least one of the
@@ -3407,16 +3437,6 @@ class Jira:
         - type: a string
         - userkeyLocation: a string
         - usernameLocation: a string
-
-        # Returned value
-
-        A list of _boards_.  Each board is a dictionary with the
-        following entries:
-
-        - name: a string
-        - type: a string (`'scrum'` or `'kanban'`)
-        - id: an integer
-        - self: a string (URL)
         """
         ensure_noneorinstance('params', dict)
 
@@ -3520,7 +3540,7 @@ class Jira:
         following entries:
 
         - key: a string
-        - id: a string (or an int)
+        - id: a string (or an integer)
         - avatarUrls: a dictionary
         - name: a string
         - self: a string
@@ -3549,7 +3569,7 @@ class Jira:
         - color: a dictionary
         - done: a boolean
 
-        The `color` dictionary has one key, `'key'`, with its value
+        The `color` dictionary has one key, `key`, with its value
         being a string (the epic color, for example `'color_1'`).
         """
         ensure_instance('board_id', int)
@@ -3674,16 +3694,6 @@ class Jira:
         - board_id: an integer
         - board_admins: a dictionary
 
-        # Usage
-
-        The `board_admins` dictionary has the following two entries:
-
-        - groupKeys: a list of strings
-        - userKeys: a list of strings
-
-        The lists can be empty.  Their items must be valid group keys
-        or user keys, respectively.
-
         # Returned value
 
         A dictionary with the following entries:
@@ -3702,6 +3712,16 @@ class Jira:
         # Raised exceptions
 
         Raises an _ApiError_ if a provided key is invalid.
+
+        # Usage
+
+        The `board_admins` dictionary has the following two entries:
+
+        - groupKeys: a list of strings
+        - userKeys: a list of strings
+
+        The lists can be empty.  Their items must be valid group keys
+        or user keys, respectively.
         """
         ensure_instance('board_id', int)
         ensure_instance('board_admins', dict)
@@ -3735,6 +3755,15 @@ class Jira:
 
         If specified, it must be the ID of a valid statistic field.
 
+        # Returned value
+
+        A dictionary.
+
+        # Raised exceptions
+
+        Raises an _ApiError_ if the provided columns definition is
+        invalid.
+
         # Usage
 
         Each item in the `columns_template` list has the following
@@ -3754,15 +3783,6 @@ class Jira:
 
         If `id` is None, a new column is created.  If it is not None,
         the column must already exist, and will be updated if needed.
-
-        # Returned value
-
-        A dictionary.
-
-        # Raised exceptions
-
-        Raises an _ApiError_ if the provided columns definition is
-        invalid.
         """
         ensure_instance('board_id', int)
         ensure_instance('columns_template', list)
@@ -3882,11 +3902,11 @@ class Jira:
         An _issue_.  An issue is a  dictionary with the following
         entries:
 
+        - expand: a string
         - fields: a dictionary
-        - self: a string
         - id: a string
         - key: a string
-        - expand: a string
+        - self: a string (an URI)
 
         `fields` contains one entry per field associated with the issue.
         The key is the field name (`resolution`, `customfield_11038`,
@@ -3920,12 +3940,12 @@ class Jira:
         A list of _comments_.  Each comment is a dictionary with the
         following entries:
 
-        - self: a string (an URL)
-        - id: a string
         - author: a dictionary
         - body: a string
-        - updateAuthor
         - created: a string (a timestamp)
+        - id: a string
+        - self: a string (an URI)
+        - updateAuthor
         - updated: a string (a timestamp)
         """
         return [c.raw for c in self._client().comments(issue_id_or_key)]
@@ -4034,7 +4054,7 @@ class Jira:
 
     @api_call
     def get_issue_link(self, issue_link_id: str) -> Dict[str, Any]:
-        """Get a issue link by id.
+        """Get a issue link by ID.
 
         # Required parameters
 
@@ -4045,12 +4065,12 @@ class Jira:
         An _issue link_.  An issue link is a dictionary with the
         following entries:
 
+        - fields: a dictionary
         - id: a string
-        - type: a dictionary
         - inwardIssue: a dictionary
         - outwardIssue: a dictionary
-        - self: a string
-        - fields: a dictionary
+        - self: a string (an URI)
+        - type: a dictionary
         """
         ensure_nonemptystring('issue_link_id')
 
@@ -4058,7 +4078,7 @@ class Jira:
 
     @api_call
     def delete_issue_link(self, issue_link_id: str) -> bool:
-        """Delete issue link by id.
+        """Delete issue link by ID.
 
         # Required parameters
 
@@ -4088,9 +4108,9 @@ class Jira:
         A list of _transitions_.  Each transition is a dictionary with
         the following entries:
 
-        - to: a dictionary
         - id: a string
         - name: a string
+        - to: a dictionary
 
         It returns the available transitions, depending on issue current
         state.
@@ -4153,24 +4173,24 @@ class Jira:
 
         - fields: a dictionary
 
+        # Returned value
+
+        A dictionary representing the issue.  Refer to #get_issue() for
+        more details on its content.
+
         # Usage
 
         `fields` is a dictionary with at least the following entries:
 
-        - project: a dictionary
-        - summary: a string
         - description: a string
         - issuetype: a dictionary
+        - project: a dictionary
+        - summary: a string
 
         `project` is a dictionary with either an `id` entry or a `key`
         entry.
 
         `issuetype` is a dictionary with a `name` entry.
-
-        # Returned value
-
-        A dictionary representing the issue.  Refer to #get_issue() for
-        more details on its content.
         """
         return self._client().create_issue(fields=fields).raw
 
@@ -4189,11 +4209,11 @@ class Jira:
         A list of _issues_.  Each issue is a dictionary with the
         following entries:
 
-        - status: a string (`'Success'` or `'Error'`)
         - error: a string or None (in case of success)
-        - issue: a dictionary or None
         - input_fields: a dictionary, the corresponding entry in
           `issue_list`
+        - issue: a dictionary or None
+        - status: a string (`'Success'` or `'Error'`)
         """
         ensure_instance('issue_list', list)
 
@@ -4283,9 +4303,9 @@ class Jira:
         """Add attachment to issue.
 
         !!! note
-            If rename_to contains non-ASCII symbols, this may
-            fail with an HTTP error (code 500).  Some (?) Jira versions
-            fail to handle that properly.
+            If `rename_to` contains non-ASCII symbols, this may
+            fail with an HTTP error (code `500`).  Some (?) Jira
+            versions fail to handle that properly.
 
         # Required parameters
 
@@ -4340,7 +4360,6 @@ class Jira:
         - enabled: a a boolean
         - uploadLimit: an integer
         """
-
         result = self._get_json('attachment/meta')
         return result
 
@@ -4381,7 +4400,7 @@ class Jira:
 
     @api_call
     def get_sprint(self, sprint_id: int) -> Dict[str, Any]:
-        """Get a sprint by id.
+        """Get a sprint by ID.
 
         # Required parameters
 
@@ -4501,7 +4520,7 @@ class Jira:
     def delete_sprint(self, sprint_id: int) -> bool:
         """Delete sprint.
 
-        !!! important
+        !!! note
             Only future sprints can be deleted.
 
         # Required parameters
@@ -4510,7 +4529,7 @@ class Jira:
 
         # Returned value
 
-        None.
+        A boolean.
         """
         ensure_instance('sprint_id', int)
 
@@ -4548,6 +4567,19 @@ class Jira:
 
         - params: a dictionary or None (None by default)
 
+        # Returned value
+
+        A list of _issues_.  Each issue is a dictionary with the
+        following entries:
+
+        - fields: a dictionary
+        - id: a string
+        - key: a string
+        - self: a string (an URI)
+        - transitions: a list of dictionaries
+
+        There may be other entries.
+
         # Usage
 
         `params`, if provided, is a dictionary with at least one of the
@@ -4559,17 +4591,6 @@ class Jira:
         - validateQuery: a boolean
         - fields: a list of strings
         - expand: a string
-
-        # Returned value
-
-        A list of _issues_.  Each issue is a dictionary with the
-        following entries:
-
-        - status: a string (`'Success'` or `'Error'`)
-        - error: a string or None (in case of success)
-        - issue: a dictionary or None
-        - input_fields: a dictionary, the corresponding entry in
-          `issue_list
         """
         ensure_instance('sprint_id', int)
         ensure_noneorinstance('params', dict)
@@ -4609,16 +4630,16 @@ class Jira:
         A list of _versions_.  Each version is a dictionary with the
         following entries:
 
-        - self: a string
-        - id: a string
-        - description: a string
-        - name: a string
         - archived: a boolean
+        - description: a string
+        - id: a string
+        - name: a string
+        - overdue: a boolean
+        - projectId: an integer
         - released: a boolean
         - releaseDate: a string
-        - overdue: a boolean
+        - self: a string (an URI)
         - userReleaseDate: a string
-        - projectId: an integer
         """
 
         ensure_noneorinstance('start_at', int)
@@ -4652,16 +4673,16 @@ class Jira:
 
         A _version_ dictionary with the following entries:
 
-        - self: a string
-        - id: a string
-        - description: a string
-        - name: a string
         - archived: a boolean
+        - description: a string
+        - id: a string
+        - name: a string
+        - overdue: a boolean
+        - projectId: an integer
         - released: a boolean
         - releaseDate: a string
-        - overdue: a boolean
+        - self: a string (an URI)
         - userReleaseDate: a string
-        - projectId: an integer
         """
         ensure_instance('version_id', (str, int))
 
@@ -4678,8 +4699,8 @@ class Jira:
         description: Optional[str] = None,
         release_date: Optional[str] = None,
         start_date: Optional[str] = None,
-        archived: Optional[bool] = False,
-        released: Optional[bool] = False,
+        archived: bool = False,
+        released: bool = False,
     ) -> Dict[str, Any]:
         """Create a new version.
 
@@ -4700,7 +4721,6 @@ class Jira:
 
         A dictionary.
         """
-
         ensure_nonemptystring('name')
         ensure_nonemptystring('project_key')
         ensure_noneorinstance('description', str)
@@ -4712,12 +4732,12 @@ class Jira:
         params = {
             'name': name,
             'project': project_key,
+            'archived': archived,
+            'released': released,
         }
         add_if_specified(params, 'description', description)
         add_if_specified(params, 'releaseDate', release_date)
         add_if_specified(params, 'startDate', start_date)
-        add_if_specified(params, 'archived', archived)
-        add_if_specified(params, 'released', released)
 
         return self._post('version', json=params)
 
@@ -4749,7 +4769,6 @@ class Jira:
 
         A boolean.  True if the deletion was successful.
         """
-
         ensure_instance('version_id', (str, int))
 
         response = self._delete(f'version/{version_id}')
@@ -4789,19 +4808,19 @@ class Jira:
         A list of _components_.  Each component is a dictionary with the
         following entries:
 
-        - self: a string
-        - id: a string
-        - name: a string
-        - description: a string
-        - leadUserName: a string
-        - lead: a dictionary
-        - assigneeType: a string
         - assignee: a dictionary
-        - realAssigneeType: a string
-        - realAssignee: a dictionary
+        - assigneeType: a string
+        - description: a string
+        - id: a string
         - isAssigneeTypeValid: a boolean
+        - lead: a dictionary
+        - leadUserName: a string
+        - name: a string
         - project: a string
         - projectId: an integer
+        - realAssignee: a dictionary
+        - realAssigneeType: a string
+        - self: a string (an URI)
         """
         ensure_noneorinstance('start_at', int)
         ensure_noneorinstance('max_results', int)
@@ -4871,13 +4890,12 @@ class Jira:
     def update_component(
         self, component_id: Union[str, int], component: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        Update a component in Jira.
+        """Update a component.
 
         # Required parameters
 
         - component_id: a non-empty string or integer
-        - component: a dictionary containing the component fields to update
+        - component: a dictionary, the component fields to update
 
         # Returned value
 
@@ -4943,13 +4961,12 @@ class Jira:
 
         A list of dictionary with the following entries:
 
+        - alias: a string (the project key)
+        - avatarId: an integer
         - icon: a string
         - name: a string (the project name)
-        - alias: a string (the project key)
         - pid: an integer
-        - avatarId: an integer
         - type: a string (the project type)
-
         """
         max_projects = self._get_max_xray_projects()
 
@@ -5032,7 +5049,7 @@ class Jira:
 
     @api_call
     def list_servicedesks(
-        self, include_archived: Optional[bool] = False
+        self, include_archived: bool = False
     ) -> List[Dict[str, Any]]:
         """Return the available service desks.
 
@@ -5046,24 +5063,20 @@ class Jira:
         with the following entries:
 
         - id: a string
-        - projectName: a string
-        - projectKey: a string
         - projectId: a string
+        - projectKey: a string
+        - projectName: a string
         - _links: a dictionary
         """
         ensure_instance('include_archived', bool)
 
-        params = {}
-        add_if_specified(params, 'includeArchived', include_archived)
+        params = {'includeArchived': include_archived}
 
         return self._collect_sd_data('servicedesk', params)
 
     @api_call
     def create_request(
-        self,
-        servicedesk_id: str,
-        requesttype_id: str,
-        fields: Dict[str, Any],
+        self, servicedesk_id: str, requesttype_id: str, fields: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Create new request on specified service desk.
 
@@ -5073,21 +5086,21 @@ class Jira:
         - requesttype_id: a non-empty string
         - fields: a dictionary
 
+        # Returned value
+
+        The created _request_ details.  Please refer to #get_request()
+        for more information.
+
         # Usage
 
         The `fields` dictionary content depends on the request type (as
         specified by `requesttype_id`).  It typically has at least the
         following two entries:
 
-        - summary: a string
         - description: a string
+        - summary: a string
 
         Refer to #list_requesttypes() for more information.
-
-        # Returned value
-
-        The created _request_ details.  Please refer to #get_request()
-        for more information.
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
@@ -5124,16 +5137,16 @@ class Jira:
 
         The _request_ details, a dictionary with the following entries:
 
+        - active: a boolean
+        - createDate: a dictionary
+        - currentStatus: a dictionary
         - issueId: a string
         - issueKey: a string
+        - reporter: a dictionary
+        - requestFieldValues: a dictionary
         - requestTypeId: a string
         - serviceDeskId: a string
-        - createDate: a dictionary
-        - reporter: a dictionary
-        - active: a boolean
         - timeZone: a string
-        - currentStatus: a dictionary
-        - requestFieldValues: a dictionary
 
         There may be additional fields depending on the specified
         `expand` parameter.
@@ -5145,6 +5158,7 @@ class Jira:
             params: Optional[Dict[str, str]] = {'expand': expand}
         else:
             params = None
+
         response = requests.get(
             join_url(
                 self.SERVICEDESK_BASE_URL, f'request/{request_id_or_key}'
@@ -5171,10 +5185,10 @@ class Jira:
         A list of _request comments_.  Each request comment is a
         dictionary with the following entries:
 
-        - id: a string
         - author: a dictionary
         - body: a string
         - created: a string (a timestamp)
+        - id: a string
         - public: a boolean
         - _links: a dictionary
         """
@@ -5202,29 +5216,29 @@ class Jira:
         A _request comment_.  A request comment is a dictionary with the
         following entries:
 
-        - id: a string
-        - _links: a dictionary
         - author: a dictionary
         - body: a string
         - created: a dictionary
+        - id: a string
         - public: a boolean
+        - _links: a dictionary
 
         The `author` dictionary has the following entries:
 
-        - name: a string
-        - key: a string
-        - emailAddress: a string
-        - displayName: a string
         - active: a boolean
+        - displayName: a string
+        - emailAddress: a string
+        - key: a string
+        - name: a string
         - timeZone: a string
         - _links: a dictionary
 
         The `created` dictionary has the following entries:
 
+        - epochMillis: an integer
+        - friendly: a string
         - iso8601: a string (an ISO8601 timestamp)
         - jira: a string (an ISO8601 timestamp)
-        - friendly: a string
-        - epochMillis: an integer
         """
         ensure_nonemptystring('request_id_or_key')
         ensure_instance('body', str)
@@ -5275,8 +5289,8 @@ class Jira:
 
         # Required parameters
 
-        - context_id: a string
-        - customfield_id: a string
+        - context_id: a non-empty string
+        - customfield_id: a non-empty string
 
         # Returned value
 
@@ -5349,13 +5363,13 @@ class Jira:
         A list _request types_.  Each request type is a dictionary with
         the following entries:
 
+        - description: a string
+        - groupIds: a list of strings
+        - helpText: a string
+        - icon: a dictionary
         - id: a string
         - name: a string
-        - description: a string
-        - helpText: a string
         - serviceDeskId: a string
-        - groupIds: a list of strings
-        - icon: a dictionary
         - _links: a dictionary
         """
         ensure_nonemptystring('servicedesk_id')
@@ -5380,17 +5394,18 @@ class Jira:
         A list _request types_.  Each request type is a dictionary with
         the following entries:
 
+        - description: a string
+        - groupIds: a list of strings
+        - helpText: a string
+        - icon: a dictionary
         - id: a string
         - name: a string
-        - description: a string
-        - helpText: a string
         - serviceDeskId: a string
-        - groupIds: a list of strings
-        - icon: a dictionary
         - _links: a dictionary
         """
         ensure_nonemptystring('servicedesk_id')
         ensure_nonemptystring('requesttype_id')
+
         result = requests.get(
             join_url(
                 self.SERVICEDESK_BASE_URL,
@@ -5400,25 +5415,26 @@ class Jira:
             verify=self.verify,
             timeout=TIMEOUT,
         )
-        return result
+        return result  # type: ignore
 
     @api_call
     def list_servicedesk_organizations(
-        self, servicedesk_id: Union[int, str]
+        self, servicedesk_id: str
     ) -> List[Dict[str, Any]]:
-        """Return the list of all service desk organizations.
+        """Return the list of service desk's organizations.
 
         # Required parameters
 
-        - servicedesk_id: an integer or a string
+        - servicedesk_id: a non-empty string
 
         # Returned value
 
         A list of _organizations_.  An organization is a dictionary.
 
-        Refer to
-        #get_organization() for details on its structure.
+        Refer to #get_organization() for details on its structure.
         """
+        ensure_nonemptystring('servicedesk_id')
+
         organizations = self._collect_sd_data(
             f'servicedesk/{servicedesk_id}/organization',
             headers={'X-ExperimentalApi': 'opt-in'},
@@ -5547,6 +5563,7 @@ class Jira:
         - _links: a dictionary
         """
         ensure_instance('organization_id', int)
+
         return self._collect_sd_data(
             f'organization/{organization_id}/user',
             headers={'X-ExperimentalApi': 'opt-in'},
@@ -5554,9 +5571,7 @@ class Jira:
 
     @api_call
     def add_organization_users(
-        self,
-        organization_id: int,
-        usernames: List[str],
+        self, organization_id: int, usernames: List[str]
     ) -> bool:
         """Add user(s) to organization.
 
@@ -5624,7 +5639,7 @@ class Jira:
     def add_servicedesk_organization(
         self, servicedesk_id: Union[int, str], organization_id: int
     ) -> bool:
-        """Add organization to servicedesk.
+        """Add organization to service desk.
 
         # Required parameters
 
@@ -5635,7 +5650,6 @@ class Jira:
 
         A boolean.  True if successful, False otherwise.
         """
-
         ensure_instance('servicedesk_id', (str, int))
         ensure_instance('organization_id', (str, int))
 
@@ -5722,29 +5736,29 @@ class Jira:
 
         A dictionary with the following entries:
 
-        - versionNumbers: a list of integers
-        - serverTitle: a string
+        - baseUrl: a string
+        - buildDate: a datetime as a string
         - buildNumber: an integer
         - deploymentType: a string
-        - version: a string
-        - baseUrl: a string
         - scmInfo: a string
-        - buildDate: a datetime as a string
         - serverTime: a datetime as a string
+        - serverTitle: a string
+        - version: a string
+        - versionNumbers: a list of integers
 
         For example:
 
         ```python
         {
-            'versionNumbers': [7, 3, 8],
-            'serverTitle': 'JIRA Dev',
-            'buildNumber': 73019,
-            'deploymentType': 'Server',
-            'version': '7.3.8',
-            'baseUrl': 'https://jira.example.com',
-            'scmInfo': '94e8771b8094eef96c119ec22b8e8868d286fa88',
-            'buildDate': '2017-06-12T00:00:00.000+0000',
-            'serverTime': '2018-01-15T11:07:40.690+0000'
+          'versionNumbers': [7, 3, 8],
+          'serverTitle': 'JIRA Dev',
+          'buildNumber': 73019,
+          'deploymentType': 'Server',
+          'version': '7.3.8',
+          'baseUrl': 'https://jira.example.com',
+          'scmInfo': '94e8771b8094eef96c119ec22b8e8868d286fa88',
+          'buildDate': '2017-06-12T00:00:00.000+0000',
+          'serverTime': '2018-01-15T11:07:40.690+0000'
         }
         ```
         """
@@ -5773,8 +5787,8 @@ class Jira:
 
         # Required parameters
 
-        - kind: one of 'FOREGROUND', 'BACKGROUND',
-          'BACKGROUND_PREFFERED', or 'BACKGROUND_PREFERRED'.
+        - kind: a string, one of `'FOREGROUND'`, `'BACKGROUND'`,
+          `'BACKGROUND_PREFFERED'`, or `'BACKGROUND_PREFERRED'`.
 
         # Optional parameters
 
@@ -5789,12 +5803,12 @@ class Jira:
 
         A dictionary with the following entries:
 
-        - progressUrl: a string
         - currentProgress: an integer
         - currentSubTask: a string
-        - submittedTime: a string (an ISO timestamp)
-        - startTime: a string (an ISO timestamp)
         - finishTime: a string (an ISO timestamp)
+        - progressUrl: a string
+        - startTime: a string (an ISO timestamp)
+        - submittedTime: a string (an ISO timestamp)
         - success: a boolean
         """
         ensure_instance('index_comments', bool)

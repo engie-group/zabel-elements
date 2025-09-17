@@ -42,50 +42,61 @@ MAX_ATTEMPTS = 3
 
 
 class GitHub(Base):
-    """GitHub Low-Level Wrapper.
+    """GitHub Enterprise Server Low-Level Wrapper.
 
-    There can be as many GitHub instances as needed.
+    There can be as many GitHub Enterprise Server instances as needed.
 
     This class depends on the public **requests** library.  It also
     depends on three **zabel-commons** modules,
     #::zabel.commons.exceptions, #::zabel.commons.sessions,
     and #::zabel.commons.utils.
 
-    # Reference URLs
+    ## Reference URLs
 
     - <https://developer.github.com/v3/>
     - <https://docs.github.com/en/enterprise-server@3.10/rest/orgs/orgs>
     - <https://stackoverflow.com/questions/10625190>
 
-    # Implemented features
+    ## Implemented features
 
-    - users
-    - organizations
-    - repositories
+    - apps
     - branches
+    - copilot
+    - hooks
+    - organizations
     - pullrequests
     - references
-    - hooks
-    - copilot
+    - repositories
+    - users
+    - workflows
     - misc. operations (version, staff reports & stats)
 
     Some methods require an Enterprise Cloud account.
 
-    # Sample use
+    ## Examples
+
+    Standard use:
 
     ```python
-    # standard use
     from zabel.elements.clients import GitHub
 
     url = 'https://github.example.com/api/v3/'
+    user = '...'
+    token = '...'
     gh = GitHub(url, basic_auth=(user, token))
     gh.list_users()
+    ```
 
-    # enabling management features
-    from zabel.elements import clients
+    Enabling management features (for a private GitHub Enterprise
+    server):
 
+    ```python
+    from zabel.elements.clients import GitHub
+
+    url = 'https://github.example.com/api/v3/'
+    token = '...'
     mngt = 'https://github.example.com/'
-    gh = clients.GitHub(url, bearer_auth=token, management_url=mngt)
+    gh = GitHub(url, bearer_auth=token, management_url=mngt)
     gh.create_organization('my_organization', 'admin')
     ```
     """
@@ -326,7 +337,7 @@ class GitHub(Base):
         both).
 
         If `sha` is not specified, the sha is retrieved from the
-        `branch` branch, and up to `MAX_ATTMEPTS` attempts are made to
+        `branch` branch, and up to `MAX_ATTEMPTS` attempts are made to
         update the file, in case the branch is updated between the
         retrieval of the sha and the update of the file.
 
@@ -483,8 +494,8 @@ class GitHub(Base):
 
         # Optional parameters
 
-        - visibility: a string, one of 'all', 'private', or 'selected'
-          ('all' by default)
+        - visibility: a string, one of `'all'`, `'private'`, or
+        `'selected'` (`'all'` by default)
         - repositories_ids: a list of integers or None (None by default)
 
         # Returned value
