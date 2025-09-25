@@ -2,8 +2,15 @@
 ConfluenceCloud client module providing access to Confluence Cloud API.
 """
 
+from typing import Any, Dict, List, Optional
 from .base.confluencecloud import ConfluenceCloud as Base
+from zabel.commons.utils import (
+    api_call,
+    ensure_nonemptystring,
+    ensure_noneorinstance,
+)
 
+from zabel.commons.exceptions import ApiError
 
 class ConfluenceCloud(Base):
     """Confluence Cloud Low-Level Wrapper.
@@ -48,3 +55,36 @@ class ConfluenceCloud(Base):
 
     # Inherits all methods from Base class
     # No additional methods or properties are defined here
+    @api_call
+    def list_group_members(
+        self, group_name: str, expand: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Return members of a group.
+
+        # Required parameters
+
+        - group_name: a non-empty string
+
+        # Optional parameters
+
+        - expand: a list of strings or None (None by default)
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more.
+        """
+        ensure_nonemptystring('group_name')
+        ensure_noneorinstance('expand', list)
+
+        # Resolve group name to groupId via picker (v1)
+        grp = self.get_group(group_name)
+        if not grp or not grp.get('id'):
+            raise ApiError(f"Group '{group_name}' not found")
+        group_id = grp.get('id')
+        if not grp or not group_id:
+            raise ApiError(f"Group '{group_name}' not found")
+
+        # Delegate to the by-id variant
+        expand_str: Optional[str] = ",".join(expand) if expand else None
+        return self.list_group_members_by_id(group_id, limit=200, expand=expand_str)

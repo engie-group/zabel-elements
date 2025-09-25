@@ -1333,12 +1333,12 @@ class ConfluenceCloud:
         return self._collect_data_v1('rest/api/group')
 
     @api_call
-    def get_group(self, name: str) -> Dict[str, Any]:
+    def get_group(self, group_name: str) -> Dict[str, Any]:
         """Return details of a group.
 
         # Required parameters
 
-        - name: a non-empty string
+        - group_name: a non-empty string
 
         # Returned value
 
@@ -1349,14 +1349,18 @@ class ConfluenceCloud:
         - id: a string
         - _links: a dictionary
         """
-        ensure_nonemptystring('name')
-
-        group_id = self._find_group_id_by_name(name)
-        if not group_id:
-            raise ApiError(f"Group '{name}' not found")
-
-        url = join_url(self.url, f'rest/api/group/{group_id}')
-        return self.session().get(url)
+        ensure_nonemptystring('group_name')
+        url = join_url(self.url, 'rest/api/group/picker')
+        params = {'query': group_name, 'limit': 200, 'shouldReturnTotalSize': 'true'}
+        r = self.session().get(url, params=params)
+        if r.status_code // 100 != 2:
+            raise ApiError(r.text)
+        data = r.json()
+        for g in data.get('results', []):
+            if g.get('name') == group_name:
+                print("group:", g)
+                return g
+        return None
 
     @api_call
     def create_group(self, name: str) -> Dict[str, Any]:
@@ -1396,37 +1400,6 @@ class ConfluenceCloud:
         params = {'id': group_id}
         response = self.session().delete(url, params=params)
         return response.status_code == 204
-
-    @api_call
-    def list_group_members(
-        self, group_name: str, expand: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
-        """Return members of a group.
-
-        # Required parameters
-
-        - group_name: a non-empty string
-
-        # Optional parameters
-
-        - expand: a list of strings or None (None by default)
-
-        # Returned value
-
-        A list of dictionaries, each representing a user.
-        Please refer to #get_user() for more.
-        """
-        ensure_nonemptystring('group_name')
-        ensure_noneorinstance('expand', list)
-
-        # Resolve group name to groupId via picker (v1)
-        group_id = self._find_group_id_by_name(group_name)
-        if not group_id:
-            raise ApiError(f"Group '{group_name}' not found")
-
-        # Delegate to the by-id variant
-        expand_str: Optional[str] = ",".join(expand) if expand else None
-        return self.list_group_members_by_id(group_id, limit=200, expand=expand_str)
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
@@ -1472,30 +1445,33 @@ class ConfluenceCloud:
 
         return self.session().delete(url, params=params).status_code == 204
 
-    @api_call
-    def _find_group_id_by_name(self, group_name: str) -> Optional[str]:
-        """Resolve a group name to its groupId using the picker endpoint. (v1)"""
-        ensure_nonemptystring('group_name')
-        url = join_url(self.url, 'rest/api/group/picker')
-        params = {
-            'query': group_name,
-            'limit': 200,
-            'shouldReturnTotalSize': 'true',
-        }
-        r = self.session().get(url, params=params)
-        if r.status_code // 100 != 2:
-            raise ApiError(r.text)
-        data = r.json()
-        for g in data.get('results', []):
-            if g.get('name') == group_name:
-                return g.get('id')
-        return None
 
     @api_call
     def list_group_members_by_id(
         self, group_id: str, limit: int = 200, expand: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """List members of a group by ID using membersByGroupId. (v1)"""
+        """Return members of a group by group ID.
+
+        This method uses the v1 membersByGroupId API to list all members
+        of a group identified by its UUID. It handles pagination automatically.
+
+        # Required parameters
+
+        - group_id: a non-empty string (UUID format)
+
+        # Optional parameters
+
+        - limit: an integer (default 200)
+        - expand: a string or None (None by default)
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more details on user structure.
+
+        Handles pagination (i.e., it returns all members, not only the
+        first _n_ members).
+        """
         ensure_nonemptystring('group_id')
         url = join_url(self.url, f'rest/api/group/{group_id}/membersByGroupId')
         start = 0
