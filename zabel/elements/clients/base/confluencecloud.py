@@ -1333,7 +1333,7 @@ class ConfluenceCloud:
         return self._collect_data_v1('rest/api/group')
 
     @api_call
-    def get_group(self, group_name: str) -> Dict[str, Any]:
+    def get_group(self, group_name: str) -> Optional[Dict[str, Any]]:
         """Return details of a group.
 
         # Required parameters
@@ -1351,14 +1351,17 @@ class ConfluenceCloud:
         """
         ensure_nonemptystring('group_name')
         url = join_url(self.url, 'rest/api/group/picker')
-        params = {'query': group_name, 'limit': 200, 'shouldReturnTotalSize': 'true'}
+        params = {
+            'query': group_name,
+            'limit': 200,
+            'shouldReturnTotalSize': 'true',
+        }
         r = self.session().get(url, params=params)
         if r.status_code // 100 != 2:
             raise ApiError(r.text)
         data = r.json()
         for g in data.get('results', []):
             if g.get('name') == group_name:
-                print("group:", g)
                 return g
         return None
 
@@ -1444,7 +1447,6 @@ class ConfluenceCloud:
         params = {'groupId': group_id, 'accountId': account_id}
 
         return self.session().delete(url, params=params).status_code == 204
-
 
     @api_call
     def list_group_members_by_id(
