@@ -81,10 +81,7 @@ class ConfluenceCloud(Base):
         grp = self.get_group(group_name)
         if not grp or not grp.get('id'):
             raise ApiError(f"Group '{group_name}' not found")
-        group_id = grp.get('id')
-        if not grp or not group_id:
-            raise ApiError(f"Group '{group_name}' not found")
 
         # Delegate to the by-id variant
         expand_str: Optional[str] = ",".join(expand) if expand else None
-        return self.list_group_members_by_id(group_id, limit=200, expand=expand_str)
+        return self.list_group_members_by_id(grp.get('id'), limit=200, expand=expand_str)
