@@ -662,7 +662,7 @@ class ConfluenceCloud:
     @api_call
     def search_pages(
         self,
-        pace_id: int,
+        space_id: int,
         body_format: Optional[str] = None,
         depth: Optional[str] = None,
         sort: Optional[str] = None,
@@ -673,7 +673,7 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - pace_id: an integer
+        - space_id: an integer
 
         # Optional parameters
 
@@ -688,7 +688,7 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a page.
         Please refer to #get_page() for more.
         """
-        ensure_instance('pace_id', int)
+        ensure_instance('space_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
         ensure_noneorinstance('sort', str)
@@ -702,7 +702,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'title', title)
 
-        return self._collect_data_v2(f'spaces/{pace_id}/pages', params=params)
+        return self._collect_data_v2(f'spaces/{space_id}/pages', params=params)
 
     @api_call
     def get_page(
@@ -1351,7 +1351,11 @@ class ConfluenceCloud:
         """
         ensure_nonemptystring('name')
 
-        url = join_url(self.url, f'rest/api/group/{name}')
+        group_id = self._find_group_id_by_name(name)
+        if not group_id:
+            raise ApiError(f"Group '{name}' not found")
+
+        url = join_url(self.url, f'rest/api/group/{group_id}')
         return self.session().get(url)
 
     @api_call
@@ -1415,10 +1419,14 @@ class ConfluenceCloud:
         ensure_nonemptystring('group_name')
         ensure_noneorinstance('expand', list)
 
-        params = {'expand': expand} if expand else None
-        return self._collect_data_v1(
-            f'rest/api/group/{group_name}/member', params=params
-        )
+        # Resolve group name to groupId via picker (v1)
+        group_id = self._find_group_id_by_name(group_name)
+        if not group_id:
+            raise ApiError(f"Group '{group_name}' not found")
+
+        # Delegate to the by-id variant
+        expand_str: Optional[str] = ",".join(expand) if expand else None
+        return self.list_group_members_by_id(group_id, limit=200, expand=expand_str)
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
@@ -1463,6 +1471,54 @@ class ConfluenceCloud:
         params = {'groupId': group_id, 'accountId': account_id}
 
         return self.session().delete(url, params=params).status_code == 204
+
+    @api_call
+    def _find_group_id_by_name(self, group_name: str) -> Optional[str]:
+        """Resolve a group name to its groupId using the picker endpoint. (v1)"""
+        ensure_nonemptystring('group_name')
+        url = join_url(self.url, 'rest/api/group/picker')
+        params = {
+            'query': group_name,
+            'limit': 200,
+            'shouldReturnTotalSize': 'true',
+        }
+        r = self.session().get(url, params=params)
+        if r.status_code // 100 != 2:
+            raise ApiError(r.text)
+        data = r.json()
+        for g in data.get('results', []):
+            if g.get('name') == group_name:
+                return g.get('id')
+        return None
+
+    @api_call
+    def list_group_members_by_id(
+        self, group_id: str, limit: int = 200, expand: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """List members of a group by ID using membersByGroupId. (v1)"""
+        ensure_nonemptystring('group_id')
+        url = join_url(self.url, f'rest/api/group/{group_id}/membersByGroupId')
+        start = 0
+        members: List[Dict[str, Any]] = []
+        while True:
+            params: Dict[str, Any] = {
+                'start': start,
+                'limit': limit,
+                'shouldReturnTotalSize': 'true',
+            }
+            add_if_specified(params, 'expand', expand)
+            r = self.session().get(url, params=params)
+            if r.status_code // 100 != 2:
+                raise ApiError(r.text)
+            payload = r.json()
+            results = payload.get('results', [])
+            size = payload.get('size', len(results))
+            total = payload.get('totalSize', start + size)
+            members.extend(results)
+            if start + size >= total or size == 0:
+                break
+            start += size
+        return members
 
     ####################################################################
     # confluence cloud helpers
