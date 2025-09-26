@@ -12,6 +12,7 @@ from zabel.commons.utils import (
 
 from zabel.commons.exceptions import ApiError
 
+
 class ConfluenceCloud(Base):
     """Confluence Cloud Low-Level Wrapper.
 
@@ -57,7 +58,7 @@ class ConfluenceCloud(Base):
     # No additional methods or properties are defined here
     @api_call
     def list_group_members(
-        self, group_name: str, expand: Optional[List[str]] = None
+        self, group_name: str, expand: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Return members of a group.
 
@@ -67,7 +68,7 @@ class ConfluenceCloud(Base):
 
         # Optional parameters
 
-        - expand: a list of strings or None (None by default)
+        - expand: a comma-separated string of fields to expand.
 
         # Returned value
 
@@ -83,4 +84,6 @@ class ConfluenceCloud(Base):
         group_id = grp['id']
 
         expand_str: Optional[str] = ",".join(expand) if expand else None
-        return self.list_group_members_by_id(group_id, limit=200, expand=expand_str)
+        return self.list_group_members_by_id(
+            group_id, limit=200, expand=expand_str
+        )
