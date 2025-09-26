@@ -1288,6 +1288,8 @@ class JiraCloud:
     # list_issuetypescreenschemes
     # list_notificationschemes
     # list_permissionschemes
+    # list_permissionscheme_grants
+    # list_project_roles
     # list_workflowschemes
 
     @api_call
