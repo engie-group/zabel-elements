@@ -69,6 +69,7 @@ class ConfluenceCloud(Base):
         # Optional parameters
 
         - expand: a comma-separated string of fields to expand.
+        Possible values are: `operations`, `personalSpace`
 
         # Returned value
 
@@ -83,7 +84,6 @@ class ConfluenceCloud(Base):
             raise ApiError(f"Group '{group_name}' not found")
         group_id = grp['id']
 
-        expand_str: Optional[str] = ",".join(expand) if expand else None
         return self.list_group_members_by_id(
-            group_id, limit=200, expand=expand_str
+            group_id, limit=200, expand=expand
         )
