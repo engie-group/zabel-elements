@@ -438,6 +438,21 @@ class JiraCloud:
         add_if_specified(params, 'maxResults', max_results)
         add_if_specified(params, 'accountId', account_id)
 
+        start = 0
+        collected: List[Any] = []
+        while True:
+            params['startAt'] = start
+            response = self.session().get(self._get_url('user/search'), params=params).json()
+
+            if not response:
+                break
+
+            collected.extend(response)
+
+            start += len(response)
+
+        return collected
+
         return self._get('user/search', params=params)  # type: ignore
 
     ####################################################################

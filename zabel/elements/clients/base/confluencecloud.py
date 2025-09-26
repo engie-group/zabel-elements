@@ -1195,7 +1195,7 @@ class ConfluenceCloud:
 
         # Cannot reuse _collect_data_v1, this endpoint does not use
         # 'next' links.
-
+        print(self.url)
         url = join_url(self.url, 'rest/api/search/user')
         params = {'cql': cql, 'limit': 100}
         add_if_specified(params, 'expand', expand)
