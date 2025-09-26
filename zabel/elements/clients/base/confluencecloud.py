@@ -1360,10 +1360,14 @@ class ConfluenceCloud:
         if r.status_code // 100 != 2:
             raise ApiError(r.text)
         data = r.json()
-        for g in data.get('results', []):
-            if g.get('name') == group_name:
-                return g
-        return None
+        return next(
+            (
+                g
+                for g in data.get('results', [])
+                if g.get('name') == group_name
+            ),
+            None,
+        )
 
     @api_call
     def create_group(self, name: str) -> Dict[str, Any]:
