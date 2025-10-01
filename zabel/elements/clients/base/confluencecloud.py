@@ -1555,9 +1555,11 @@ class ConfluenceCloud:
                 raise ApiError(exception)
             more = 'next' in workload['_links']
             if more:
-                api_url = join_url(
-                    workload['_links']['base'], workload['_links']['next']
-                )
+                base = workload['_links']['base']
+                next_path = workload['_links']['next']
+                if base.endswith('/wiki'):
+                    base = base[:-5]
+                api_url = join_url(base, next_path)
                 params = {}
         return collected
 
