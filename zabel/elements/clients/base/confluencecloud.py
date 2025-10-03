@@ -1557,7 +1557,7 @@ class ConfluenceCloud:
             if more:
                 base = workload['_links']['base']
                 next_path = workload['_links']['next']
-                if base.endswith('/wiki'):
+                if base.endswith('/wiki') and next_path.startswith('/wiki'):
                     base = base[:-5]
                 api_url = join_url(base, next_path)
                 params = {}
