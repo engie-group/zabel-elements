@@ -438,6 +438,21 @@ class JiraCloud:
         add_if_specified(params, 'maxResults', max_results)
         add_if_specified(params, 'accountId', account_id)
 
+        start = 0
+        collected: List[Any] = []
+        while True:
+            params['startAt'] = start
+            response = self.session().get(self._get_url('user/search'), params=params).json()
+
+            if not response:
+                break
+
+            collected.extend(response)
+
+            start += len(response)
+
+        return collected
+
         return self._get('user/search', params=params)  # type: ignore
 
     ####################################################################
@@ -1273,6 +1288,8 @@ class JiraCloud:
     # list_issuetypescreenschemes
     # list_notificationschemes
     # list_permissionschemes
+    # list_permissionscheme_grants
+    # list_project_roles
     # list_workflowschemes
 
     @api_call
@@ -1335,6 +1352,64 @@ class JiraCloud:
         - self: a string (an URL)
         """
         return self._get('permissionscheme')  # type: ignore
+    
+    @api_call
+    def list_permissionscheme_grants(
+        self, scheme_id: int, expand: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return the list of grants attached to permission scheme.
+
+        # Required parameters
+
+        - scheme_id: an integer
+
+        # Optional parameters
+
+        - expand: a string (optional, used for expanding additional
+          fields e.g., `user`, `group`, `projectRole`, `field`, `all`)
+
+        # Returned value
+
+        A list of _grants_.  Each grant is a dictionary with the
+        following entries:
+
+        - id: an integer
+        - holder: a dictionary
+        - permission: a string
+
+        `holder` contains the following entries:
+
+        - parameter: a string
+        - type: a string
+        - value: a string
+        """
+        ensure_instance('scheme_id', int)
+        ensure_noneorinstance('expand', str)
+
+        params = {}
+        add_if_specified(params, 'expand', expand)
+        result = self._get(f'permissionscheme/{scheme_id}/permission', params=params).json()
+        return result['permissions']  # type: ignore
+    
+    @api_call
+    def list_project_roles(
+        self, project_id_or_key: Union[int, str]
+    ) -> Dict[str, Any]:
+        """Return the project roles.
+
+        # Required parameters
+
+        - project_id_or_key: an integer or a string
+
+        # Returned value
+
+        A dictionary.  Keys are role names, and values are URIs
+        containing details for the role.
+        """
+        ensure_instance('project_id_or_key', (str, int))
+
+        result = self._get(f'project/{project_id_or_key}/role').json()
+        return result
 
     @api_call
     def list_workflowschemes(

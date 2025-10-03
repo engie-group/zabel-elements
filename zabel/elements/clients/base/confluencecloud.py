@@ -662,7 +662,7 @@ class ConfluenceCloud:
     @api_call
     def search_pages(
         self,
-        pace_id: int,
+        space_id: int,
         body_format: Optional[str] = None,
         depth: Optional[str] = None,
         sort: Optional[str] = None,
@@ -673,7 +673,7 @@ class ConfluenceCloud:
 
         # Required parameters
 
-        - pace_id: an integer
+        - space_id: an integer
 
         # Optional parameters
 
@@ -688,7 +688,7 @@ class ConfluenceCloud:
         A list of dictionaries, each representing a page.
         Please refer to #get_page() for more.
         """
-        ensure_instance('pace_id', int)
+        ensure_instance('space_id', int)
         ensure_noneorinstance('body_format', str)
         ensure_noneorinstance('depth', str)
         ensure_noneorinstance('sort', str)
@@ -702,7 +702,7 @@ class ConfluenceCloud:
         add_if_specified(params, 'status', status)
         add_if_specified(params, 'title', title)
 
-        return self._collect_data_v2(f'spaces/{pace_id}/pages', params=params)
+        return self._collect_data_v2(f'spaces/{space_id}/pages', params=params)
 
     @api_call
     def get_page(
@@ -1195,7 +1195,7 @@ class ConfluenceCloud:
 
         # Cannot reuse _collect_data_v1, this endpoint does not use
         # 'next' links.
-
+        print(self.url)
         url = join_url(self.url, 'rest/api/search/user')
         params = {'cql': cql, 'limit': 100}
         add_if_specified(params, 'expand', expand)
@@ -1333,12 +1333,12 @@ class ConfluenceCloud:
         return self._collect_data_v1('rest/api/group')
 
     @api_call
-    def get_group(self, name: str) -> Dict[str, Any]:
+    def get_group(self, group_name: str) -> Optional[Dict[str, Any]]:
         """Return details of a group.
 
         # Required parameters
 
-        - name: a non-empty string
+        - group_name: a non-empty string
 
         # Returned value
 
@@ -1349,10 +1349,25 @@ class ConfluenceCloud:
         - id: a string
         - _links: a dictionary
         """
-        ensure_nonemptystring('name')
-
-        url = join_url(self.url, f'rest/api/group/{name}')
-        return self.session().get(url)
+        ensure_nonemptystring('group_name')
+        url = join_url(self.url, 'rest/api/group/picker')
+        params = {
+            'query': group_name,
+            'limit': 200,
+            'shouldReturnTotalSize': 'true',
+        }
+        r = self.session().get(url, params=params)
+        if r.status_code // 100 != 2:
+            raise ApiError(r.text)
+        data = r.json()
+        return next(
+            (
+                g
+                for g in data.get('results', [])
+                if g.get('name') == group_name
+            ),
+            None,
+        )
 
     @api_call
     def create_group(self, name: str) -> Dict[str, Any]:
@@ -1392,33 +1407,6 @@ class ConfluenceCloud:
         params = {'id': group_id}
         response = self.session().delete(url, params=params)
         return response.status_code == 204
-
-    @api_call
-    def list_group_members(
-        self, group_name: str, expand: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
-        """Return members of a group.
-
-        # Required parameters
-
-        - group_name: a non-empty string
-
-        # Optional parameters
-
-        - expand: a list of strings or None (None by default)
-
-        # Returned value
-
-        A list of dictionaries, each representing a user.
-        Please refer to #get_user() for more.
-        """
-        ensure_nonemptystring('group_name')
-        ensure_noneorinstance('expand', list)
-
-        params = {'expand': expand} if expand else None
-        return self._collect_data_v1(
-            f'rest/api/group/{group_name}/member', params=params
-        )
 
     @api_call
     def add_group_member(self, group_id: str, account_id: str) -> bool:
@@ -1463,6 +1451,56 @@ class ConfluenceCloud:
         params = {'groupId': group_id, 'accountId': account_id}
 
         return self.session().delete(url, params=params).status_code == 204
+
+    @api_call
+    def list_group_members_by_id(
+        self, group_id: str, limit: int = 200, expand: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return members of a group by group ID.
+
+        This method uses the v1 membersByGroupId API to list all members
+        of a group identified by its UUID. It handles pagination automatically.
+
+        # Required parameters
+
+        - group_id: a non-empty string (UUID format)
+
+        # Optional parameters
+
+        - limit: an integer (default 200)
+        - expand: a string or None (None by default)
+
+        # Returned value
+
+        A list of dictionaries, each representing a user.
+        Please refer to #get_user() for more details on user structure.
+
+        Handles pagination (i.e., it returns all members, not only the
+        first _n_ members).
+        """
+        ensure_nonemptystring('group_id')
+        url = join_url(self.url, f'rest/api/group/{group_id}/membersByGroupId')
+        start = 0
+        members: List[Dict[str, Any]] = []
+        while True:
+            params: Dict[str, Any] = {
+                'start': start,
+                'limit': limit,
+                'shouldReturnTotalSize': 'true',
+            }
+            add_if_specified(params, 'expand', expand)
+            r = self.session().get(url, params=params)
+            if r.status_code // 100 != 2:
+                raise ApiError(r.text)
+            payload = r.json()
+            results = payload.get('results', [])
+            size = payload.get('size', len(results))
+            total = payload.get('totalSize', start + size)
+            members.extend(results)
+            if start + size >= total or size == 0:
+                break
+            start += size
+        return members
 
     ####################################################################
     # confluence cloud helpers
@@ -1517,9 +1555,11 @@ class ConfluenceCloud:
                 raise ApiError(exception)
             more = 'next' in workload['_links']
             if more:
-                api_url = join_url(
-                    workload['_links']['base'], workload['_links']['next']
-                )
+                base = workload['_links']['base']
+                next_path = workload['_links']['next']
+                if base.endswith('/wiki') and next_path.startswith('/wiki'):
+                    base = base[:-5]
+                api_url = join_url(base, next_path)
                 params = {}
         return collected
 
