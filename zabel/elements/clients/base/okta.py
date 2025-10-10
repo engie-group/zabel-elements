@@ -113,7 +113,7 @@ class Okta:
         group_ids: Optional[List[str]] = None,
         user_type: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ):
+    ) -> Dict[str, Any]:
         """Create an Okta user.
 
         # Required parameters
@@ -136,7 +136,7 @@ class Okta:
         # Returned value
 
         A dictionary with following entries:
-        
+
         - activated: a string (a timestamp)
         - created: a string (a timestamp)
         - credentials: a dictionary
