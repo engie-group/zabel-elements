@@ -728,9 +728,9 @@ class GitHubCloud:
         """
         ensure_nonemptystring('organization_name')
 
-        return self._get(f'orgs/{organization_name}/installations').json()[
-            'installations'
-        ]
+        return self._collect_data(
+            f'orgs/{organization_name}/installations', key='installations'
+        )
 
     ####################################################################
     # GitHubCloud Copilot
