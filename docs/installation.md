@@ -101,16 +101,43 @@ There, in the 'Security' tab, generate your new token:
 
 #### SquashTM
 
-In order to get your SquashTM token, you need to connect to SquashTM using the global
-admin account.
+Recent versions of SquashTM can use a personal API token (from 7.1.0 onward).
 
-Go to the administration page, and then to the users page:
+To get your SquashTM personal API token, go to your account page (click on your
+initials in the bottom left corner):
 
-![SonarQube tokens](img/SquashTM_admin.png)
-![SonarQube tokens](img/SquashTM_users.png)
+![SquashTM user profile](img/SquashTM_profile.png)
 
-Select your account in the list, and click on the 'reset password' link.  This will
-by your token (be sure to generate a safe random password).
+And there, in the 'Personal API Tokens' section, create a token by clicking on the '+' icon
+in the left right corner:
+
+![SquashTM Personal API tokens pane](img/SquashTM_pat.png)
+
+Then, give it a name, read or read/write permissions, and specify an expiry date, if so desired.
+
+![SquashTM Personal API tokens pane](img/SquashTM_pat_add.png)
+
+Get the newly generated token by clicking on the 'Copy' icon:
+
+![SquashTM Personal API tokens pane](img/SquashTM_pat_newtoken.png)
+
+??? note "SquashTM Token for Old Versions"
+    Starting from version 7.1.0, SquashTM can use a personal API token.  If you have
+    an older version, you will have to use the global admin account to get a token
+    (and you should upgrade your SquashTM instance).
+
+    To get your SquashTM token, you need to connect to SquashTM using the global
+    admin account.
+
+    Go to the administration page, and then to the users page:
+
+    ![SquashTM administration page](img/SquashTM_admin.png)
+
+    Select your account in the list, and click on the 'reset password' link.  This will
+    be your token (be sure to generate a safe random password).
+
+    ![SquashTM user password reset](img/SquashTM_reset_password.png)
+    ![SquashTM user password reset confirmation](img/SquashTM_reset_password_confirm.png)
 
 ### OAuth Tokens Credentials
 
