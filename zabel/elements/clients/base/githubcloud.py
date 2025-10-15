@@ -691,6 +691,47 @@ class GitHubCloud:
 
         return self._collect_data(f'orgs/{organization_name}/invitations')
 
+    @api_call
+    def list_organization_installations(
+        self, organization_name: str
+    ) -> List[Dict[str, Any]]:
+        """Return app installations.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+
+        # Returned value
+
+        A list of _installations_.  Each installation is a dictionary
+        with the following keys:
+
+        - access_tokens_url: a string
+        - account: a dictionary
+        - app_id: an integer
+        - app_slug: a string
+        - created_at: a string
+        - events: a list of strings
+        - ?has_multiple_single_files: a boolean
+        - html_url: a string
+        - id: an integer
+        - permissions: a dictionary
+        - repositories_url: a string
+        - repository_selection: a string
+        - single_file_name: a string
+        - ?single_file_paths: a list of strings
+        - suspended_at: a string or None
+        - suspended_by: a dictionary or None
+        - target_id: an integer
+        - target_type: a string
+        - updated_at: a string
+        """
+        ensure_nonemptystring('organization_name')
+
+        return self._collect_data(
+            f'orgs/{organization_name}/installations', key='installations'
+        )
+
     ####################################################################
     # GitHubCloud Copilot
     #
