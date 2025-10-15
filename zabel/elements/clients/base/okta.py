@@ -15,12 +15,17 @@ libraries.  It also depend on two **zabel-commons** modules,
 #::zabel.commons.exceptions and #::zabel.commons.utils.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import asyncio
 
 from zabel.commons.exceptions import ApiError
-from zabel.commons.utils import ensure_nonemptystring, api_call
+from zabel.commons.utils import (
+    ensure_nonemptystring,
+    ensure_noneorinstance,
+    api_call,
+    add_if_specified,
+)
 
 
 class OktaException(Exception):
@@ -36,6 +41,7 @@ class Okta:
     ## Reference URLs
 
     <https://developer.okta.com/docs/reference/api/groups/>
+    <https://developer.okta.com/docs/reference/api/users/>
 
     ## Implemented features
 
@@ -91,9 +97,88 @@ class Okta:
     ####################################################################
     # users
     #
+    # create_user
     # list_users
     # get_user_info
     # list_groups_by_user_id
+
+    @api_call
+    def create_user(
+        self,
+        login: str,
+        first_name: str,
+        last_name: str,
+        email: str,
+        credentials: Optional[Dict[str, Any]] = None,
+        group_ids: Optional[List[str]] = None,
+        user_type: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Create an Okta user.
+
+        # Required parameters
+
+        - login: a non-empty string
+        - first_name: a non-empty string
+        - last_name: a non-empty string
+        - email: a non-empty string
+
+        # Optional parameters
+
+        - credentials: a dictionary.  Refer to Okta API documentation
+          for more information.
+        - group_ids: a list of strings.  Each string is a group ID.
+        - user_type: a dictionary.  Refer to Okta API documentation
+          for more information.
+        - kwargs: other profile attributes.  Refer to Okta API
+          documentation for more information.
+
+        # Returned value
+
+        A dictionary with following entries:
+
+        - activated: a string (a timestamp)
+        - created: a string (a timestamp)
+        - credentials: a dictionary
+        - id: a string
+        - lastLogin: a string (a timestamp)
+        - lastUpdated: a string (a timestamp)
+        - passwordChanged: a boolean
+        - profile: a dictionary
+        - status: an enum
+        - statusChanged: a string (a timestamp)
+        - type: a dictionary
+        """
+        ensure_nonemptystring('login')
+        ensure_nonemptystring('first_name')
+        ensure_nonemptystring('last_name')
+        ensure_nonemptystring('email')
+        ensure_noneorinstance('credentials', dict)
+        ensure_noneorinstance('group_ids', list)
+        ensure_noneorinstance('user_type', dict)
+
+        async def create_user_async(self, body: Dict[str, Any]):
+            user, _, error = await self._client().create_user(body)
+            if error:
+                raise ApiError(error)
+            return user.as_dict()
+
+        body = {
+            'profile': {
+                'login': login,
+                'firstName': first_name,
+                'lastName': last_name,
+                'email': email,
+                **kwargs,
+            }
+        }
+
+        add_if_specified(body, 'credentials', credentials)
+        add_if_specified(body, 'groupIds', group_ids)
+        add_if_specified(body, 'type', user_type)
+
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(create_user_async(self, body))
 
     @api_call
     def list_users(
