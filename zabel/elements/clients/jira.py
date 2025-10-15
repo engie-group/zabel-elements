@@ -17,11 +17,15 @@ This module depends on the #::.base.jira module.
 
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+import requests
+
 from zabel.commons.exceptions import ApiError
 from zabel.commons.utils import (
     api_call,
+    ensure_in,
     ensure_instance,
     ensure_nonemptystring,
+    join_url,
 )
 
 from .base.jira import Jira as Base
@@ -313,3 +317,42 @@ class Jira(Base):
             }
             for user in picked
         ]
+
+    @api_call
+    def create_project_board(
+        self, project_id_or_key: Union[int, str], name: str, preset: str
+    ) -> Dict[str, Any]:
+        """Create new board associated to project.
+
+        # Required parameters
+
+        - project_id_or_key: a non-empty string
+        - name: a non-empty string
+        - preset: a string, either `'kanban'` or `'scrum'`
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - id: an integer
+        - name: a string
+
+        KLUDGE we shouldn't switch to greenhopper
+        """
+        ensure_nonemptystring('project_id_or_key')
+        ensure_nonemptystring('name')
+        ensure_in('preset', ['kanban', 'scrum'])
+
+        project = self.get_project(project_id_or_key)
+
+        return requests.post(
+            join_url(self.GREENHOPPER_BASE_URL, 'rapidview/create/presets'),
+            json={
+                'name': name,
+                'projectIds': [project['id']],
+                'preset': preset,
+            },
+            auth=self.auth,
+            verify=self.verify,
+            timeout=60,
+        )
