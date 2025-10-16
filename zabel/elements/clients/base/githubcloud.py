@@ -736,6 +736,7 @@ class GitHubCloud:
     # GitHubCloud Copilot
     #
     # list_organization_copilot_seats
+    # get_enterprise_premium_request_usage
 
     @api_call
     def list_organization_copilot_seats(
@@ -801,6 +802,79 @@ class GitHubCloud:
 
         return self._collect_data(
             f'orgs/{organization_name}/copilot/billing/seats', key='seats'
+        )
+
+    @api_call
+    def get_enterprise_premium_request_usage(
+        self,
+        enterprise_name: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        organization: Optional[str] = None,
+        user: Optional[str] = None,
+        model: Optional[str] = None,
+        product: Optional[str] = None,
+        cost_center_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the enterprise premium support request.
+
+        # Required parameters
+
+        - enterprise_name: a non-empty string
+
+        # Optional parameters
+
+        - year: an integer or None (None by default)
+        - month: an integer or None (None by default)
+        - day: an integer or None (None by default)
+        - organization: a string or None (None by default)
+        - user: a string or None (None by default)
+        - model: a string or None (None by default)
+        - product: a string or None (None by default)
+
+        # Returned value
+
+        A dictionary with the following entries:
+
+        - timePeriod: a dictionary
+        - enterprise: a string
+        - usageItems: a list of dictionaries with the following entries:
+            - product: a string
+            - sku: a string
+            - model: a string
+            - unitType: a string
+            - pricePerUnit: a float
+            - grossQuantity: a float
+            - grossAmount: a float
+            - discountQuantity: a float
+            - discountAmount: a float
+            - netQuantity: a float
+            - netAmount: a float
+        """
+        ensure_nonemptystring('enterprise_name')
+        ensure_noneorinstance('year', int)
+        ensure_noneorinstance('month', int)
+        ensure_noneorinstance('day', int)
+        ensure_noneorinstance('organization', str)
+        ensure_noneorinstance('user', str)
+        ensure_noneorinstance('model', str)
+        ensure_noneorinstance('product', str)
+        ensure_noneorinstance('cost_center_id', str)
+
+        params = {}
+        add_if_specified(params, 'year', year)
+        add_if_specified(params, 'month', month)
+        add_if_specified(params, 'day', day)
+        add_if_specified(params, 'organization', organization)
+        add_if_specified(params, 'user', user)
+        add_if_specified(params, 'model', model)
+        add_if_specified(params, 'product', product)
+        add_if_specified(params, 'cost_center_id', cost_center_id)
+
+        return self._get(
+            f'enterprises/{enterprise_name}/settings/billing/premium_request/usage',
+            params=params,
         )
 
     ####################################################################
