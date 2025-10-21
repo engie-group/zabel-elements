@@ -736,7 +736,7 @@ class GitHubCloud:
     # GitHubCloud Copilot
     #
     # list_organization_copilot_seats
-    # get_enterprise_premium_request_usage
+    # get_enterprise_premiumrequest_usage
 
     @api_call
     def list_organization_copilot_seats(
@@ -805,7 +805,7 @@ class GitHubCloud:
         )
 
     @api_call
-    def get_enterprise_premium_request_usage(
+    def get_enterprise_premiumrequest_usage(
         self,
         enterprise_name: str,
         year: Optional[int] = None,
