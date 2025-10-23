@@ -63,36 +63,37 @@ be raised.
 
 __all__ = [
     'Artifactory',
+    'Atlassian',
     'CloudBeesJenkins',
     'Confluence',
+    'ConfluenceCloud',
     'GitHub',
+    'GitHubCloud',
+    'GitLab',
     'Jira',
+    'JiraCloud',
     'Kubernetes',
     'Okta',
     'OktaException',
     'SonarQube',
+    'SonatypeNexus',
     'SquashTM',
-    'GitHubCloud',
-    'Atlassian',
-    'ConfluenceCloud',
-    'JiraCloud',
 ]
 
 
 from .artifactory import Artifactory
-from .jenkins import CloudBeesJenkins
+from .atlassian import Atlassian
+from .base.okta import OktaException
 from .confluence import Confluence
+from .confluencecloud import ConfluenceCloud
 from .github import GitHub
 from .githubcloud import GitHubCloud
 from .gitlab import GitLab
+from .jenkins import CloudBeesJenkins
 from .jira import Jira
+from .jiracloud import JiraCloud
 from .kubernetes import Kubernetes
+from .okta import Okta
 from .sonarqube import SonarQube
 from .sonatypenexus import SonatypeNexus
 from .squashtm import SquashTM
-from .okta import Okta
-from .base.okta import OktaException
-from .githubcloud import GitHubCloud
-from .atlassian import Atlassian
-from .confluencecloud import ConfluenceCloud
-from .jiracloud import JiraCloud

@@ -2845,7 +2845,7 @@ class GitHub:
 
         # Returned value
 
-        A _pull request_.  See #list_pullrequests for its description.
+        A _pull request_.  See #list_pullrequests() for its description.
         """
         ensure_nonemptystring('organization_name')
         ensure_nonemptystring('repository_name')
