@@ -365,7 +365,23 @@ class JiraCloud:
         - self: a string
         - timeZone: a string
         """
-        return self._get('users/search')
+        url = self._get_url('users/search')
+        params = {'maxResults': 1000}
+
+        start = 0
+        collected = []
+
+        while True:
+            params['startAt'] = start
+            response = self.session().get(url, params=params).json()
+            if not response:
+                break
+
+            collected.extend(response)
+
+            start += len(response)
+
+        return collected
 
     @api_call
     def get_user(self, account_id: str) -> Dict[str, Any]:
@@ -442,7 +458,11 @@ class JiraCloud:
         collected: List[Any] = []
         while True:
             params['startAt'] = start
-            response = self.session().get(self._get_url('user/search'), params=params).json()
+            response = (
+                self.session()
+                .get(self._get_url('user/search'), params=params)
+                .json()
+            )
 
             if not response:
                 break
@@ -1352,7 +1372,7 @@ class JiraCloud:
         - self: a string (an URL)
         """
         return self._get('permissionscheme')  # type: ignore
-    
+
     @api_call
     def list_permissionscheme_grants(
         self, scheme_id: int, expand: Optional[str] = None
@@ -1388,9 +1408,11 @@ class JiraCloud:
 
         params = {}
         add_if_specified(params, 'expand', expand)
-        result = self._get(f'permissionscheme/{scheme_id}/permission', params=params).json()
+        result = self._get(
+            f'permissionscheme/{scheme_id}/permission', params=params
+        ).json()
         return result['permissions']  # type: ignore
-    
+
     @api_call
     def list_project_roles(
         self, project_id_or_key: Union[int, str]

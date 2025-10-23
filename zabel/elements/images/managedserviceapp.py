@@ -86,7 +86,7 @@ class ManagedServiceApp(ApiApp, Image):
         """
         raise NotImplementedError
 
-    @entrypoint('/v1/members/{member_id}')
+    @entrypoint('/v1/members/{canonical_id}')
     def get_member(self, canonical_id: str) -> Any:
         """Return details on user.
 
