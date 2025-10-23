@@ -474,7 +474,7 @@ class Jira:
         """
         ensure_nonemptystring('group_name')
 
-        return self._client().add_group(group_name)
+        return self._post('group', json={'name': group_name})
 
     @api_call
     def delete_group(self, group_name: str) -> bool:
@@ -3183,9 +3183,15 @@ class Jira:
         ensure_nonemptystring('email_address')
         ensure_noneorinstance('password', str)
         ensure_instance('display_name', str)
-
-        return self._client().add_user(
-            name, email_address, password=password, fullname=display_name
+        
+        return self._post(
+            'user',
+            json={
+                'name': name,
+                'password': password,
+                'emailAddress': email_address,
+                'displayName': display_name,
+            },
         )
 
     @api_call
