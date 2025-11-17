@@ -297,7 +297,7 @@ class GitHub:
         return self._get(f'users/{user_name}')  # type: ignore
 
     @api_call
-    def get_user_organizations(self, login: str) -> Dict[str, Any]:
+    def list_user_organizations(self, login: str) -> List[Dict[str, Any]]:
         """Get the organizations the user belongs to.
 
         # Required parameters
@@ -306,12 +306,14 @@ class GitHub:
 
         # Returned value
 
-        A dictionary containing the organizations the user belongs to.
+        A list of _organizations_ the user belongs to.
         """
         ensure_nonemptystring('login')
 
         response = self._get(f'users/{login}/orgs')
         return response  # type: ignore
+
+    get_user_organizations = list_user_organizations
 
     @api_call
     def create_user(
@@ -2210,6 +2212,7 @@ class GitHub:
         author: Optional[str] = None,
         since: Optional[str] = None,
         until: Optional[str] = None,
+        per_page: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Return the list of commits.
 
@@ -2227,6 +2230,7 @@ class GitHub:
           (None by default)
         - until: a non-empty string (an ISO 8601 timestamp) or None
           (None by default)
+        - per_page: a integer or None (None by default)
 
         # Returned value
 
@@ -2241,6 +2245,7 @@ class GitHub:
         add_if_specified(params, 'author', author)
         add_if_specified(params, 'since', since)
         add_if_specified(params, 'until', until)
+        add_if_specified(params, 'per_page', per_page)
 
         result = self._get(
             f'repos/{organization_name}/{repository_name}/commits',
