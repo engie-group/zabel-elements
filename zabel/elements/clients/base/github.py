@@ -3483,7 +3483,7 @@ class GitHub:
 
         # Returned value
 
-        A _hook_.  See #list_hooks() for its format.
+        A _hook_.  See #list_repository_hooks() for its format.
 
         # Usage
 
