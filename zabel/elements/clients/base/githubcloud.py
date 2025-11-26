@@ -832,6 +832,7 @@ class GitHubCloud:
         - user: a string or None (None by default)
         - model: a string or None (None by default)
         - product: a string or None (None by default)
+        - cost_center_id: a string or None (None by default)
 
         # Returned value
 

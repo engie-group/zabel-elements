@@ -23,9 +23,9 @@ from zabel.commons.servers import ApiApp, entrypoint
 class ManagedServiceApp(ApiApp, Image):
     """Abstract Managed Service API app.
 
-    This class extends #ApiApp and is abstract.  It declares a
-    minimal set of features a managed service must provide, in addition
-    to the #ApiApp ones:
+    This class extends #::zabel.commons.servers.ApiApp and is abstract.
+    It declares a minimal set of features a managed service app must
+    provide:
 
     - canonical user names management
     - members getters

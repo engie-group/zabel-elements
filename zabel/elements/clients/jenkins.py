@@ -132,8 +132,8 @@ class CloudBeesJenkins(Base):
 
     Item creations and handling functions make use of two functions
     provided by the #::zabel.commons.utils module,
-    #::zabel.commons.utils#dict_to_xml() and
-    #::zabel.commons.utils#xml_to_dict().
+    #::zabel.commons.utils.dict_to_xml() and
+    #::zabel.commons.utils.xml_to_dict().
 
     Things to check: <https://github.com/cloudbees/jenkins-scripts>
 
