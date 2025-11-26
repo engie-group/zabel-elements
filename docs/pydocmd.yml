@@ -6,6 +6,7 @@ external_links:
   zabel.commons.exceptions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/exceptions
   zabel.commons.sessions: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/sessions
   zabel.commons.utils: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/utils
+  zabel.commons.servers: https://pages.github.tools.digital.engie.com/GBSEngieDigitalWalnut/zabel-commons/commons/servers
 
 generate:
   - clients/index.md:

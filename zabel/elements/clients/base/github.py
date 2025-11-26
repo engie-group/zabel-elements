@@ -297,7 +297,7 @@ class GitHub:
         return self._get(f'users/{user_name}')  # type: ignore
 
     @api_call
-    def get_user_organizations(self, login: str) -> Dict[str, Any]:
+    def list_user_organizations(self, login: str) -> List[Dict[str, Any]]:
         """Get the organizations the user belongs to.
 
         # Required parameters
@@ -306,12 +306,14 @@ class GitHub:
 
         # Returned value
 
-        A dictionary containing the organizations the user belongs to.
+        A list of _organizations_ the user belongs to.
         """
         ensure_nonemptystring('login')
 
         response = self._get(f'users/{login}/orgs')
         return response  # type: ignore
+
+    get_user_organizations = list_user_organizations
 
     @api_call
     def create_user(
@@ -2210,6 +2212,7 @@ class GitHub:
         author: Optional[str] = None,
         since: Optional[str] = None,
         until: Optional[str] = None,
+        per_page: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Return the list of commits.
 
@@ -2227,6 +2230,7 @@ class GitHub:
           (None by default)
         - until: a non-empty string (an ISO 8601 timestamp) or None
           (None by default)
+        - per_page: a integer or None (None by default)
 
         # Returned value
 
@@ -2241,6 +2245,7 @@ class GitHub:
         add_if_specified(params, 'author', author)
         add_if_specified(params, 'since', since)
         add_if_specified(params, 'until', until)
+        add_if_specified(params, 'per_page', per_page)
 
         result = self._get(
             f'repos/{organization_name}/{repository_name}/commits',
@@ -2426,6 +2431,8 @@ class GitHub:
     #
     # get_repository_readme
     # get_repository_content
+    # get_repository_tarball
+    # get_repository_zipball
     # create_repository_file
     # update_repository_file
 
@@ -2516,6 +2523,74 @@ class GitHub:
             except requests.exceptions.JSONDecodeError:
                 return result.text
         return result  # type: ignore
+
+    @api_call
+    def get_repository_tarball(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: Optional[str] = None,
+    ) -> bytes:
+        """Return the repository tarball archive.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - ref: a non-empty string or None (None by default)
+
+        # Returned value
+
+        The tarball archive as bytes.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_noneornonemptystring('ref')
+
+        params = {'ref': ref} if ref is not None else None
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/tarball',
+            params=params,
+            stream=True,
+        )
+        return result.content
+
+    @api_call
+    def get_repository_zipball(
+        self,
+        organization_name: str,
+        repository_name: str,
+        ref: Optional[str] = None,
+    ) -> bytes:
+        """Return the repository zipball archive.
+
+        # Required parameters
+
+        - organization_name: a non-empty string
+        - repository_name: a non-empty string
+
+        # Optional parameters
+
+        - ref: a non-empty string or None (None by default)
+
+        # Returned value
+
+        The zipball archive as bytes.
+        """
+        ensure_nonemptystring('organization_name')
+        ensure_nonemptystring('repository_name')
+        ensure_noneornonemptystring('ref')
+
+        params = {'ref': ref} if ref is not None else None
+        result = self._get(
+            f'repos/{organization_name}/{repository_name}/zipball',
+            params=params,
+            stream=True,
+        )
+        return result.content  # type: ignore
 
     @api_call
     def create_repository_file(
@@ -3478,7 +3553,7 @@ class GitHub:
 
         # Returned value
 
-        A _hook_.  See #list_hooks() for its format.
+        A _hook_.  See #list_repository_hooks() for its format.
 
         # Usage
 
@@ -4025,10 +4100,13 @@ class GitHub:
         api: str,
         params: Optional[Mapping[str, Union[str, List[str], None]]] = None,
         headers: Optional[Mapping[str, str]] = None,
+        stream: Optional[bool] = None,
     ) -> requests.Response:
         """Return GitHub API call results, as Response."""
         api_url = join_url(self.url, api)
-        return self.session().get(api_url, headers=headers, params=params)
+        return self.session().get(
+            api_url, headers=headers, params=params, stream=stream
+        )
 
     def _collect_data(
         self,

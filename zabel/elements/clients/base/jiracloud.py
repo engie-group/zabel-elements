@@ -440,7 +440,7 @@ class JiraCloud:
 
         # Returned value
 
-        A list of _users_.  Refer to #list_user() for details on its
+        A list of _users_.  Refer to #list_users() for details on its
         structure.
         """
         ensure_noneornonemptystring('query')
