@@ -5864,7 +5864,6 @@ class Jira:
             Mapping[str, Union[str, Iterable[str], int, bool]]
         ] = None,
     ) -> requests.Response:
-        print(join_url(self.url, uri))
         return requests.get(
             join_url(self.url, uri),
             params=params,
