@@ -5650,9 +5650,52 @@ class Jira:
     ####################################################################
     # JIRA misc. operation
     #
+    # get_applicationrole
+    # list_applicationroles
     # list_plugins
     # get_server_info
     # reindex
+
+    @api_call
+    def get_applicationrole(self, key: str) -> Dict[str, Any]:
+        """Return the detail of the application role.
+        
+        # Required parameters
+
+        - key: a string
+
+        # Returned value
+
+        A dictionary.  See #list_applicationroles() for details on its
+        structure.
+        """
+        ensure_nonemptystring('key')
+        return self._get(f'/rest/api/2/applicationrole/{key}')
+
+    @api_call
+    def list_applicationroles(self) -> List[Dict[str, Any]]:
+        """Return a list of application roles.
+
+        # Returned value
+
+        A list of _applicationroles_.  An applicationrole is a dictionary with the
+        following entries:
+
+        - key: a string
+        - groups: a list
+        - name: a string
+        - defaultGroups: a list
+        - selectedByDefault: a boolean
+        - defined: a boolean
+        - numberOfSeats: an integer
+        - remainingSeats: an integer
+        - userCount: an integer
+        - userCountDescription: a string
+        - hasUnlimitedSeats: a boolean
+        - platform: a boolean
+        """
+        return self._get('/rest/api/2/applicationrole')
+
 
     @api_call
     def list_plugins(self) -> List[Dict[str, Any]]:
